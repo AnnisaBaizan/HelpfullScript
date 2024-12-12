@@ -25,7 +25,7 @@
   let processedIndex = parseInt(localStorage.getItem(PROCESSED_KEY)) || 0;
   let elementCounter = 0;
 
-  async function waitForElement(selector, timeout = 10000) {
+  async function waitForElement(selector, timeout = 30000) {
       const startTime = Date.now();
       while (Date.now() - startTime < timeout) {
           const element = document.querySelector(selector);
@@ -50,33 +50,45 @@
 
               console.log(`Processing dataId: ${dataId}`);
 
-              const editButton = await waitForElement(`button[data-id='${dataId}'][data-type='editip']`);
+              const editButton = await waitForElement(`button.btn.btn-warning.btn-xs.btn-flat[data-id='${dataId}'][data-type='editip']`);
               editButton.click();
 
-              const inputNoSK = await waitForElement('#u_nosk');
-              const inputTglSK = await waitForElement('#u_tglsk');
-
-              inputNoSK.value = valueNoSK;
-              inputTglSK.value = valueTglSK;
-
-              // Simpan indeks pemrosesan ke localStorage **sebelum** mengklik tombol simpan
               processedIndex = globalIndex;
               localStorage.setItem(PROCESSED_KEY, processedIndex);
               console.log(`DataId ${dataId} processed and saved with index ${processedIndex}`);
 
-              const saveButton = await waitForElement(`button[data-id='${dataId}'][data-type='updateip']`);
-              saveButton.click();
+              const inputNoSK = await waitForElement('#u_nosk');
+              if (inputNoSK) {
+                  inputNoSK.value = valueNoSK;
+              } else {
+                  console.error(`Input #u_nosk tidak ditemukan untuk dataId ${dataId}`);
+              }
+
+              const inputTglSK = await waitForElement('#u_tglsk');
+              if (inputTglSK) {
+                  inputTglSK.value = valueTglSK;
+              } else {
+                  console.error(`Input #u_tglsk tidak ditemukan untuk dataId ${dataId}`);
+              }
+
+              const saveButton = await waitForElement(`button.btn.btn-success.btn-xs.btn-flat[data-id='${dataId}'][data-type='updateip']`, 30000);
+              if (saveButton) {
+                  saveButton.removeAttribute('disabled'); // Hapus "disabled" jika ada
+                  saveButton.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+                  console.log(`Klik tombol simpan untuk dataId ${dataId}`);
+                  await new Promise(resolve => setTimeout(resolve, 5000)); // Tunggu 5 detik setelah klik
+              } else {
+                  console.error(`Tombol simpan tidak ditemukan untuk dataId ${dataId}`);
+              }
 
               console.log('Waiting for page to reload after saving...');
 
-              // Tunggu sejenak setelah mengklik simpan untuk memastikan halaman sepenuhnya diperbarui
               await new Promise(resolve => setTimeout(resolve, 10000)); // Tambahkan jeda tambahan 10 detik
 
-              // Pastikan bahwa tombol edit berikutnya tersedia sebelum melanjutkan iterasi
               const nextDataId = `20241/PO71242${yearSuffix}${String(i + 1).padStart(3, '0')}`;
               console.log(`Waiting for next edit button for dataId: ${nextDataId}`);
 
-              await waitForElement(`button[data-id='${nextDataId}'][data-type='editip']`, 15000);
+              await waitForElement(`button.btn.btn-warning.btn-xs.btn-flat[data-id='${nextDataId}'][data-type='editip']`, 15000);
               console.log(`Edit button for next dataId ${nextDataId} found. Continuing to next iteration.`);
 
               elementCounter++;
@@ -88,16 +100,18 @@
           if (elementCounter === 100) {
               try {
                   const pageButtons = document.querySelectorAll("a[href^='javascript:goPage']");
-                  if (!pageButtons.length) throw new Error('No page navigation buttons found');
+                  if (!pageButtons.length) throw new Error('Tidak ada tombol navigasi halaman');
 
                   const nextPageButton = pageButtons[pageButtons.length - 1];
                   nextPageButton.click();
+                  console.log('Navigasi ke halaman berikutnya');
+
+                  await new Promise(resolve => setTimeout(resolve, 10000)); // Tunggu 10 detik sebelum lanjut
               } catch (error) {
-                  console.error('Error navigating to next page:', error);
+                  console.error('Error navigasi ke halaman berikutnya:', error);
               }
 
               elementCounter = 0;
-              await new Promise(resolve => setTimeout(resolve, 5000));
           }
       }
   }
