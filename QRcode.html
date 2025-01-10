@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code dengan Logo</title>
+    <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+    <style>
+        /* Body styles */
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f7fc;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        /* Main container styles */
+        .container {
+            text-align: center;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            padding: 30px;
+            width: 90%;
+            max-width: 400px;
+        }
+
+        /* Title styles */
+        h1 {
+            color: #4e73df;
+            margin-bottom: 20px;
+            font-size: 24px;
+            font-weight: bold;
+        }
+
+        /* Form styling */
+        form {
+            margin-bottom: 20px;
+        }
+
+        /* Textarea styling */
+        textarea {
+            padding: 15px;
+            width: 80%;
+            margin-bottom: 20px;
+            border: 1px solid #ddd;
+            border-radius: 10px;
+            /* Increased border radius for a softer look */
+            font-size: 16px;
+            font-family: 'Arial', sans-serif;
+            background-color: #f9f9f9;
+            /* Light background color */
+            color: #333;
+            /* Dark text for readability */
+            transition: all 0.3s ease;
+            /* Smooth transition effect */
+            resize: vertical;
+            /* Restrict resizing to only vertical (height) */
+        }
+
+        /* Textarea focus effect */
+        textarea:focus {
+            border-color: #4e73df;
+            /* Blue border on focus */
+            box-shadow: 0 0 8px rgba(78, 115, 223, 0.3);
+            /* Soft blue shadow */
+            outline: none;
+            /* Remove default outline */
+        }
+
+        /* Textarea placeholder style */
+        textarea::placeholder {
+            color: #aaa;
+            /* Light grey placeholder */
+            font-style: italic;
+            /* Make placeholder text italic */
+        }
+
+        button {
+            padding: 10px 20px;
+            width: 80%;
+            border: none;
+            background-color: #4e73df;
+            color: white;
+            font-size: 16px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #2e59d9;
+        }
+
+        /* QR container */
+        #qr-container {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin-top: 5px;
+            display: inline-block;
+        }
+
+        canvas {
+            display: block;
+            margin: auto;
+        }
+
+        /* Logo styling */
+        #logo {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 70%;
+            /* Adjusted to provide padding */
+            height: auto;
+        }
+
+        /* Responsive design */
+        @media (max-width: 500px) {
+            .container {
+                padding: 20px;
+                width: 100%;
+            }
+
+            input[type="text"],
+            button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>QR Code dengan Logo</h1>
+        <form>
+            <textarea name="inputText" placeholder="Masukkan Teks" required></textarea>
+            <button type="submit">Generate QR Code</button>
+        </form>
+        <div id="qr-container">
+            <canvas id="qr-code"></canvas>
+            <img id="logo" src="logoKeb.png" alt="Logo">
+        </div>
+    </div>
+
+    <script>
+        document.querySelector('form').addEventListener('submit', function (event) {
+            event.preventDefault();
+            const inputText = document.querySelector('textarea[name="inputText"]').value; // Changed to textarea
+            const canvas = document.getElementById('qr-code');
+            const ctx = canvas.getContext('2d');
+            const qrWidth = 200;
+
+            // Set canvas size
+            canvas.width = qrWidth;
+            canvas.height = qrWidth;
+
+            // Generate QR Code
+            const qrCode = new QRCode(document.createElement('div'), {
+                text: inputText,
+                width: qrWidth,
+                height: qrWidth,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+
+            qrCode._oDrawing._elImage.onload = function () {
+                ctx.drawImage(qrCode._oDrawing._elImage, 0, 0, qrWidth, qrWidth);
+
+                // Calculate logo size with padding
+                const logoWidth = qrWidth * 0.68; // 60% width with padding
+                const logoHeight = (logoWidth / document.getElementById('logo').naturalWidth) * document.getElementById('logo').naturalHeight;
+                const logoX = (qrWidth - logoWidth) / 2;
+                const logoY = (qrWidth - logoHeight) / 2;
+
+                // Add white padding around the logo
+                ctx.fillStyle = "#ffffff";
+                ctx.fillRect(logoX - 5, logoY - 5, logoWidth + 10, logoHeight + 10); // Added padding
+
+                // Update logo size
+                const logo = document.getElementById('logo');
+                logo.style.width = `${logoWidth}px`;
+                logo.style.height = `${logoHeight}px`;
+            };
+        });
+    </script>
+</body>
+
+</html>
