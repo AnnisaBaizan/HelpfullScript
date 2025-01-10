@@ -147,6 +147,11 @@
             <canvas id="qr-code"></canvas>
             <img id="logo" src="logoKeb.png" alt="Logo">
         </div>
+        <div>
+            <a id="download-link" style="display:none; margin-top: 20px; display: inline-block;">
+                <button>Download QR Code</button>
+            </a>
+        </div>
     </div>
 
     <script>
@@ -184,10 +189,21 @@
                 ctx.fillStyle = "#ffffff";
                 ctx.fillRect(logoX - 5, logoY - 5, logoWidth + 10, logoHeight + 10); // Added padding
 
-                // Update logo size
+                // Draw logo on QR Code
                 const logo = document.getElementById('logo');
                 logo.style.width = `${logoWidth}px`;
                 logo.style.height = `${logoHeight}px`;
+
+                // Draw logo on canvas
+                ctx.drawImage(logo, logoX, logoY, logoWidth, logoHeight);
+
+                // Create the download link
+                const downloadLink = document.getElementById('download-link');
+                downloadLink.style.display = 'inline-block';
+
+                // Create the image download
+                downloadLink.href = canvas.toDataURL('image/png');
+                downloadLink.download = 'QRCode.png';
             };
         });
     </script>
