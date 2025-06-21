@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!DOCTYPE html> 
 <html lang="en">
 
 <head>
@@ -43,42 +43,13 @@
             margin-bottom: 20px;
         }
 
-        /* Textarea styling */
-        textarea {
-            padding: 15px;
+        input[type="text"] {
+            padding: 10px;
             width: 80%;
-            margin-bottom: 20px;
+            margin-bottom: 10px;
             border: 1px solid #ddd;
-            border-radius: 10px;
-            /* Increased border radius for a softer look */
+            border-radius: 5px;
             font-size: 16px;
-            font-family: 'Arial', sans-serif;
-            background-color: #f9f9f9;
-            /* Light background color */
-            color: #333;
-            /* Dark text for readability */
-            transition: all 0.3s ease;
-            /* Smooth transition effect */
-            resize: vertical;
-            /* Restrict resizing to only vertical (height) */
-        }
-
-        /* Textarea focus effect */
-        textarea:focus {
-            border-color: #4e73df;
-            /* Blue border on focus */
-            box-shadow: 0 0 8px rgba(78, 115, 223, 0.3);
-            /* Soft blue shadow */
-            outline: none;
-            /* Remove default outline */
-        }
-
-        /* Textarea placeholder style */
-        textarea::placeholder {
-            color: #aaa;
-            /* Light grey placeholder */
-            font-style: italic;
-            /* Make placeholder text italic */
         }
 
         button {
@@ -101,8 +72,7 @@
             position: relative;
             width: 200px;
             height: 200px;
-            margin-top: 5px;
-            margin-bottom: 20px;
+            margin-top: 20px;
             display: inline-block;
         }
 
@@ -117,8 +87,7 @@
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 70%;
-            /* Adjusted to provide padding */
+            width: 80%;
             height: auto;
         }
 
@@ -129,8 +98,7 @@
                 width: 100%;
             }
 
-            input[type="text"],
-            button {
+            input[type="text"], button {
                 width: 100%;
             }
         }
@@ -141,26 +109,19 @@
     <div class="container">
         <h1>QR Code dengan Logo</h1>
         <form>
-            <input type="text" name="fileName" placeholder="Masukkan Judul File (tanpa .png)" required>
-            <textarea name="inputText" placeholder="Masukkan Teks" required></textarea>
+            <input type="text" name="inputText" placeholder="Masukkan Teks" required>
             <button type="submit">Generate QR Code</button>
         </form>
         <div id="qr-container">
             <canvas id="qr-code"></canvas>
-            <img id="logo" src="logoKeb.png" alt="Logo">
-        </div>
-        <div>
-            <a id="download-link">
-                <button>Download QR Code</button>
-            </a>
+            <img id="logo" src="GoogleLogo.png" alt="Logo">
         </div>
     </div>
 
     <script>
         document.querySelector('form').addEventListener('submit', function (event) {
             event.preventDefault();
-            const inputText = document.querySelector('textarea[name="inputText"]').value; // Changed to textarea
-            const fileName = document.querySelector('input[name="fileName"]').value || 'QRCode';
+            const inputText = document.querySelector('input[name="inputText"]').value;
             const canvas = document.getElementById('qr-code');
             const ctx = canvas.getContext('2d');
             const qrWidth = 200;
@@ -182,36 +143,17 @@
             qrCode._oDrawing._elImage.onload = function () {
                 ctx.drawImage(qrCode._oDrawing._elImage, 0, 0, qrWidth, qrWidth);
 
-                // Calculate logo size with padding
-                const logoWidth = qrWidth * 0.68; // 60% width with padding
+                const logoWidth = qrWidth * 0.3; // 30% of QR Code width
                 const logoHeight = (logoWidth / document.getElementById('logo').naturalWidth) * document.getElementById('logo').naturalHeight;
                 const logoX = (qrWidth - logoWidth) / 2;
                 const logoY = (qrWidth - logoHeight) / 2;
-
-                // Add white padding around the logo
                 ctx.fillStyle = "#ffffff";
-                ctx.fillRect(logoX - 5, logoY - 5, logoWidth + 10, logoHeight + 10); // Added padding
+                ctx.fillRect(logoX, logoY, logoWidth, logoHeight);
 
-                // Draw logo on QR Code
+                // Update logo size
                 const logo = document.getElementById('logo');
                 logo.style.width = `${logoWidth}px`;
                 logo.style.height = `${logoHeight}px`;
-
-                // Draw logo on canvas
-                ctx.drawImage(logo, logoX, logoY, logoWidth, logoHeight);
-
-                ctx.font = "16px Arial";
-                ctx.textAlign = "center";
-                ctx.fillStyle = "#333";
-                ctx.fillText(fileName, qrWidth / 2, qrWidth + 15); 
-
-                // Create the download link
-                const downloadLink = document.getElementById('download-link');
-                // downloadLink.style.display = 'inline-block';
-
-                // Create the image download
-                downloadLink.href = canvas.toDataURL('image/png');
-                downloadLink.download = `${fileName}.png`; // Dyn
             };
         });
     </script>
