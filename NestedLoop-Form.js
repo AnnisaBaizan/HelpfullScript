@@ -99,15 +99,6 @@
           await sleep(1000);
         }
 
-        const btnLokasi = [...document.querySelectorAll("button")].find((btn) =>
-          btn.textContent.includes("PALEMBANG")
-        );
-        if (btnLokasi) {
-          btnLokasi.click();
-          console.log('✅ Pilih lokasi "PALEMBANG"');
-          await sleep(1000);
-        }
-
         const labelNilai = [...document.querySelectorAll("label")].find(
           (el) => el.textContent.trim() === "Nilai COA Detail"
         );
@@ -117,31 +108,57 @@
             ?.querySelector("label")
             ?.textContent?.trim() ?? "";
 
-        const cleanNumber = nilaiText.replace(/[^\d]/g, "");
-        const nilaiFormatted = cleanNumber
-          ? parseInt(cleanNumber).toLocaleString("id-ID") + ",00"
+        const nilaiRaw = nilaiText
+          .replace(/[^\u0000-\u007F]/g, "")
+          .replace(/\./g, "")
+          .replace(",", ".");
+
+        const nilaiFormatted = nilaiRaw
+          ? parseFloat(nilaiRaw).toLocaleString("id-ID", {
+              minimumFractionDigits: 2,
+            })
           : "";
 
         const inputNilai = document.querySelector(
           'input[formcontrolname="txtNilai"]'
         );
         if (inputNilai && nilaiFormatted) {
+          inputNilai.focus();
+          inputNilai.value = "";
+          inputNilai.dispatchEvent(new Event("input", { bubbles: true }));
+          await sleep(100);
+
           inputNilai.value = nilaiFormatted;
           inputNilai.dispatchEvent(new Event("input", { bubbles: true }));
+          inputNilai.dispatchEvent(new Event("change", { bubbles: true }));
+          inputNilai.dispatchEvent(new Event("blur", { bubbles: true }));
+
           console.log(`✅ Isi nilai: ${nilaiFormatted}`);
-          await sleep(500);
+          await sleep(1500);
         }
 
-        // const btnSimpan2 = [...document.querySelectorAll("button")].find(
-        //   (btn) => btn.textContent.trim() === "Simpan"
-        // );
-        // if (btnSimpan2) {
-        //   btnSimpan2.click();
-        //   console.log("✅ Klik tombol Simpan (Detail)");
-        //   await sleep(1000);
-        // }F
+        const btnLokasi = [...document.querySelectorAll("button")].find((btn) =>
+          btn.textContent.includes("PALEMBANG")
+        );
+        if (btnLokasi) {
+          btnLokasi.click();
+          console.log('✅ Pilih lokasi "PALEMBANG"');
+          await sleep(1000);
+        }
 
-        const btnBatal = [...document.querySelectorAll("button")].find(
+        const simpanButton = [
+          ...document.querySelectorAll("p-button button"),
+        ].find((btn) => btn.textContent.trim() === "Simpan");
+
+        if (simpanButton) {
+          simpanButton.click();
+          console.log("✅ Klik tombol Simpan dari <p-button>");
+          await sleep(2000);
+        } else {
+          console.warn("❌ Tombol Simpan dari <p-button> tidak ditemukan");
+        }
+
+        /* const btnBatal = [...document.querySelectorAll("button")].find(
           (btn) => btn.textContent.trim() === "Batal"
         );
         if (btnBatal) {
@@ -150,7 +167,7 @@
           await sleep(1000);
         } else {
           console.warn("❌ Tombol Batal tidak ditemukan");
-        }
+        } */
 
         const btnKeluar = [
           ...document.querySelectorAll("p-button button"),
@@ -180,7 +197,7 @@
     await sleep(3000);
 
     let i = 0;
-    while (totalRowProcessed < 100) {
+    while (totalRowProcessed < 3) {
       const rows = [
         ...document.querySelectorAll("tr.ui-selectable-row.ng-star-inserted"),
       ];
@@ -197,15 +214,13 @@
     const nextBtn = document.querySelector(
       "a.ui-paginator-next:not(.ui-state-disabled)"
     );
-    if (nextBtn && totalRowProcessed < 100) {
+    if (nextBtn && totalRowProcessed < 3) {
       console.log("➡️ Klik halaman berikutnya...");
       nextBtn.click();
       await sleep(3000);
       await runAutomationWithDelay();
     } else {
-      console.log(
-        "✅ Proses selesai (tidak ada halaman selanjutnya atau sudah 100 baris)."
-      );
+      console.log("✅ Proses selesai (tidak ada halaman selanjutnya).");
       alert(`✅ Selesai memproses ${totalRowProcessed} baris.`);
     }
   }
