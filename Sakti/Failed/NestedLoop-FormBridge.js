@@ -1,42 +1,21 @@
 // ==UserScript==
-// @name         Auto Input Kewilayahan Full Flow
+// @name         Auto Input Kewilayahan Full Flow + Paste Bridge
 // @namespace    http://tampermonkey.net/
-// @version      20-06-2025
-// @description  Otomatisasi Kewilayahan full flow per baris dan per detail
-// @author       Annisa Baizan
+// @version      21-06-2025
+// @description  Otomatisasi input kewilayahan per baris dan detail, nilai dikirim ke Python untuk Ctrl+V native
+// @author       Annisa
 // @match        https://sakti.kemenkeu.go.id/*
-// @icon         https://avatars.githubusercontent.com/u/117755758?s=48&v=4
 // @grant        none
 // ==/UserScript==
 
 (function () {
   "use strict";
 
+  const EXTENSION_ID = "mgdjbnogalhcmeeglgggmojpjplajifp";
   let totalRowProcessed = 0;
-
-  // 🔌 Dengarkan jika perlu debug native
-  window.addEventListener("message", function (event) {
-    if (event.source !== window) return;
-    if (event.data?.type === "paste") {
-      console.log("[Tampermonkey] Kirim request paste ke ekstensi:", event.data.text);
-    }
-  });
 
   function sleep(ms) {
     return new Promise((resolve) => setTimeout(resolve, ms));
-  }
-
-  async function waitForDetailRows(timeout = 10000, interval = 300) {
-    const start = Date.now();
-    while (Date.now() - start < timeout) {
-      const rows = document.querySelectorAll(
-        ".ui-table-scrollable-body-table tr.ui-selectable-row.ng-star-inserted"
-      );
-      if (rows.length > 0) return rows;
-      await sleep(interval);
-    }
-    console.warn("⚠️ Timeout: Tidak menemukan baris detail setelah klik radio button.");
-    return [];
   }
 
   async function processRow(row, index) {
@@ -57,22 +36,12 @@
         await sleep(4000);
       }
 
-      let retry = 0;
-      let detailRows = [];
-      while (retry < 3) {
-        detailRows = [
-          ...document.querySelectorAll(
-            ".ui-table-scrollable-body-table tr.ui-selectable-row.ng-star-inserted"
-          ),
-        ];
-        if (detailRows.length > 0) break;
-        console.log("🔄 Menunggu detail muncul...");
-        await sleep(2000);
-        retry++;
-      }
+      const detailRows = [...document.querySelectorAll(
+        ".ui-table-scrollable-body-table tr.ui-selectable-row.ng-star-inserted"
+      )];
 
       if (detailRows.length === 0) {
-        console.warn("⚠️ Tidak ada detail ditemukan, lanjut ke baris utama berikutnya");
+        console.warn("⚠️ Tidak ada detail ditemukan, lanjut ke baris berikutnya");
         return true;
       }
 
@@ -80,6 +49,7 @@
         console.group(`📦 Proses detail ke-${i + 1}`);
         const btnDetail = detailRows[i].querySelector("button");
         if (!btnDetail) continue;
+
         btnDetail.click();
         console.log("✅ Klik tombol Detail");
         await sleep(1000);
@@ -97,8 +67,8 @@
           (el) => el.textContent.trim() === "Nilai COA Detail"
         );
 
-        const nilaiText =
-          labelNilai?.parentElement?.nextElementSibling?.querySelector("label")?.textContent?.trim() ?? "";
+        const nilaiText = labelNilai?.parentElement?.nextElementSibling
+          ?.querySelector("label")?.textContent?.trim() ?? "";
 
         const nilaiRaw = nilaiText.replace(/[^\u0000-\u007F]/g, "").replace(/\./g, "").replace(",", ".");
         const nilaiFormatted = nilaiRaw
@@ -108,17 +78,28 @@
         const inputNilai = document.querySelector('input[formcontrolname="txtNilai"]');
         if (inputNilai && nilaiFormatted) {
           inputNilai.focus();
-          await sleep(200);
+          await sleep(200); // tunggu fokus
 
-          const nilaiUntukPaste = nilaiFormatted.split(",")[0].replace(/\./g, "");
-          window.postMessage({
-            direction: "to-native",
-            type: "paste",
-            text: nilaiUntukPaste
-          }, "*");
+          try {
+            chrome.runtime.sendMessage(
+              EXTENSION_ID,
+              {
+                type: "PASTE_REQUEST",
+                value: nilaiFormatted
+              },
+              (response) => {
+                if (chrome.runtime.lastError) {
+                  console.error("❌ Gagal kirim ke ekstensi:", chrome.runtime.lastError.message);
+                } else {
+                  console.log("📤 Nilai dikirim ke ekstensi:", response);
+                }
+              }
+            );
+          } catch (e) {
+            console.error("❌ Error kirim ke ekstensi:", e);
+          }
 
-          console.log("📤 Kirim ke ekstensi untuk Ctrl+V:", nilaiUntukPaste);
-          await sleep(2000);
+          await sleep(1500); // tunggu hasil paste dari Python
         }
 
         const btnLokasi = [...document.querySelectorAll("button")].find((btn) =>
@@ -130,13 +111,12 @@
           await sleep(1000);
         }
 
-        const simpanButton = [...document.querySelectorAll("p-button button")].find(
+        const btnSimpan = [...document.querySelectorAll("p-button button")].find(
           (btn) => btn.textContent.trim() === "Simpan"
         );
-
-        if (simpanButton) {
-          simpanButton.click();
-          console.log("✅ Klik tombol Simpan dari <p-button>");
+        if (btnSimpan) {
+          btnSimpan.click();
+          console.log("✅ Klik tombol Simpan");
           await sleep(2000);
         }
 
@@ -145,7 +125,7 @@
         );
         if (btnKeluar) {
           btnKeluar.click();
-          console.log("✅ Klik tombol Keluar (p-button)");
+          console.log("✅ Klik tombol Keluar");
           await sleep(1000);
         }
 
@@ -153,23 +133,20 @@
       }
 
       row.scrollIntoView({ behavior: "smooth" });
-      console.log("✅ Scroll ke baris");
     } catch (err) {
-      console.error(`❌ Error saat memproses baris ${index + 1}:`, err);
+      console.error(`❌ Error proses baris ke-${index + 1}:`, err);
     }
     console.groupEnd();
     return true;
   }
 
   async function runAutomationWithDelay() {
-    console.log("[Tampermonkey] Menunggu 3 detik untuk loading data baris...");
+    console.log("[Tampermonkey] ⏳ Menunggu load baris...");
     await sleep(3000);
 
     let i = 0;
     while (totalRowProcessed < 3) {
-      const rows = [
-        ...document.querySelectorAll("tr.ui-selectable-row.ng-star-inserted"),
-      ];
+      const rows = [...document.querySelectorAll("tr.ui-selectable-row.ng-star-inserted")];
       if (i >= rows.length) break;
 
       const ok = await processRow(rows[i], totalRowProcessed);
@@ -182,28 +159,25 @@
 
     const nextBtn = document.querySelector("a.ui-paginator-next:not(.ui-state-disabled)");
     if (nextBtn && totalRowProcessed < 3) {
-      console.log("➡️ Klik halaman berikutnya...");
       nextBtn.click();
       await sleep(3000);
       await runAutomationWithDelay();
     } else {
-      console.log("✅ Proses selesai (tidak ada halaman selanjutnya).");
+      console.log("✅ Selesai memproses semua baris.");
       alert(`✅ Selesai memproses ${totalRowProcessed} baris.`);
     }
   }
 
   const observer = new MutationObserver(() => {
-    const targetItems = document.querySelectorAll('li[aria-label="BAST Non Kontraktual Jasa"]');
+    const targetItems = document.querySelectorAll(
+      'li[aria-label="BAST Non Kontraktual Jasa"]'
+    );
     if (targetItems.length > 0) {
       targetItems.forEach((item) => {
-        item.addEventListener(
-          "click",
-          () => {
-            console.log('[Tampermonkey] Opsi "BAST Non Kontraktual Jasa" dipilih → mulai otomatisasi');
-            runAutomationWithDelay();
-          },
-          { once: true }
-        );
+        item.addEventListener("click", () => {
+          console.log("[Tampermonkey] ▶️ Mulai otomatisasi setelah klik menu BAST");
+          runAutomationWithDelay();
+        }, { once: true });
       });
       observer.disconnect();
     }
