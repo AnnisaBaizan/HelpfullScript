@@ -1,0 +1,7 @@
+{
+  "name": "com.paste.bridge",
+  "description": "Bridge Ctrl+V dari Chrome Extension",
+  "path": "D:\\Project\\HelpfullScript\\Sakti\\native-messaging\\paste_bridge.py",
+  "type": "stdio",
+  "allowed_origins": ["chrome-extension://mgdjbnogalhcmeeglgggmojpjplajifp/"]
+}

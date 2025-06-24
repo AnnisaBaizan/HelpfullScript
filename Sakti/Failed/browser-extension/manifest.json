@@ -1,0 +1,17 @@
+{
+  "name": "Paste Bridge",
+  "description": "Terima sinyal dari Tampermonkey lalu jalankan Ctrl+V",
+  "version": "1.0",
+  "manifest_version": 3,
+  "permissions": ["nativeMessaging", "scripting"],
+  "host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "externally_connectable": {
+    "matches": ["<all_urls>"]
+  },
+  "action": {
+    "default_title": "Bridge Ctrl+V"
+  }
+}
