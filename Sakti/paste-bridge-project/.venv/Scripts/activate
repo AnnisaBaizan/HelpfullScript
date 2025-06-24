@@ -35,7 +35,7 @@ deactivate () {
 # unset irrelevant variables
 deactivate nondestructive
 
-VIRTUAL_ENV="D:\Project\HelpfullScript\Sakti\native-messaging\.venv"
+VIRTUAL_ENV="D:\Project\HelpfullScript\Sakti\paste-bridge-project\.venv"
 export VIRTUAL_ENV
 
 _OLD_VIRTUAL_PATH="$PATH"
