@@ -25,6 +25,33 @@
       console.log("✅ Klik baris");
       await sleep(2000);
 
+      // Pastikan jumlah baris per halaman = 20
+      const dropdownJumlah = [
+        ...document.querySelectorAll("label.ui-dropdown-label"),
+      ].find(
+        (el) =>
+          el.textContent.trim() !== "" && el.textContent.trim() !== "Pilih"
+      );
+      if (dropdownJumlah && dropdownJumlah.textContent.trim() !== "20") {
+        dropdownJumlah.click();
+        console.log("🔽 Klik dropdown jumlah baris");
+
+        await sleep(500);
+
+        const opsi20 = [
+          ...document.querySelectorAll("li.ui-dropdown-item"),
+        ].find((li) => li.textContent.trim() === "20");
+        if (opsi20) {
+          opsi20.click();
+          console.log("✅ Pilih opsi jumlah baris: 20");
+          await sleep(1000); // biarkan halaman refresh dulu
+        } else {
+          console.warn("❌ Opsi '20' tidak ditemukan di dropdown");
+        }
+      } else {
+        console.log("ℹ️ Jumlah baris sudah 20");
+      }
+
       // Aktifkan "Pilih Semua per Halaman" sekali per baris
       const labelPilihSemua = [
         ...document.querySelectorAll("label.ui-chkbox-label"),
@@ -85,16 +112,16 @@
         }
       }
 
-    //   const btnBatal = [...document.querySelectorAll("button")].find(
-    //     (btn) => btn.textContent.trim() === "Batal"
-    //   );
-    //   if (btnBatal) {
-    //     btnBatal.click();
-    //     console.log("✅ Klik tombol Batal");
-    //     await sleep(500);
-    //   } else {
-    //     console.warn("❌ Tombol Batal tidak ditemukan");
-    //   }
+      //   const btnBatal = [...document.querySelectorAll("button")].find(
+      //     (btn) => btn.textContent.trim() === "Batal"
+      //   );
+      //   if (btnBatal) {
+      //     btnBatal.click();
+      //     console.log("✅ Klik tombol Batal");
+      //     await sleep(500);
+      //   } else {
+      //     console.warn("❌ Tombol Batal tidak ditemukan");
+      //   }
 
       const btnSimpan = [
         ...document.querySelectorAll("span.ui-button-text.ui-clickable"),
