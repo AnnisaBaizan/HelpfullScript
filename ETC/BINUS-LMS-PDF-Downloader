@@ -1,0 +1,100 @@
+// ==UserScript==
+// @name         BINUS LMS PDF Downloader
+// @namespace    http://tampermonkey.net/
+// @version      15-10-2025
+// @description  Menambahkan tombol download di halaman PDF viewer BINUS LMS
+// @author       Annisa Baizan
+// @match        https://lms.binus.ac.id/public/pdf-viewer*
+// @icon         https://avatars.githubusercontent.com/u/117755758?s=48&v=4
+// @grant        GM_addStyle
+// ==/UserScript==
+
+(function() {
+    'use strict';
+
+    // 1. Menambahkan style untuk tombol (mirip dengan script Anda)
+    // Saya ganti 'position: absolute' menjadi 'position: fixed'
+    // agar tombol tetap di layar saat di-scroll.
+    GM_addStyle(`
+        #custom-container-binus {
+            position: fixed; /* Tetap di layar */
+            top: 10px;
+            right: 50px;
+            opacity: 0.9;
+            z-index: 9999; /* Pastikan di paling atas */
+            padding: 5px 20px;
+        }
+        .btn-binus-dl {
+            background-color: DodgerBlue;
+            border: none;
+            color: white;
+            padding: 12px 30px;
+            cursor: pointer;
+            font-size: 15px;
+            border-radius: 5px;
+        }
+        .btn-binus-dl:hover {
+            background-color: RoyalBlue;
+        }
+    `);
+
+    // 2. Fungsi untuk mengambil link PDF dan mengunduhnya
+    function downloadOriginalPdf() {
+        try {
+            // Ambil URL halaman saat ini
+            const currentUrl = new URL(window.location.href);
+
+            // Ambil parameter 'src' dari URL
+            const pdfSrc = currentUrl.searchParams.get('src');
+
+            if (!pdfSrc) {
+                alert('Tidak bisa menemukan link PDF (parameter "src" tidak ada).');
+                return;
+            }
+
+            // 'pdfSrc' adalah link aslinya (URLSearchParams sudah otomatis decode)
+            // Contoh: https://stbm7resourcesprod.blob.core.windows.net/.../LN 8.pdf?sv=...
+
+            // Coba ambil nama file asli dari URL
+            let filename = 'download.pdf'; // Nama default
+            try {
+                const pdfUrlObject = new URL(pdfSrc);
+                let pathname = pdfUrlObject.pathname; // /.../20241102170827_LN 8.pdf
+                filename = decodeURIComponent(pathname.substring(pathname.lastIndexOf('/') + 1));
+            } catch (e) {
+                console.warn('Tidak bisa menebak nama file, menggunakan nama default.');
+            }
+
+            console.log('Mencoba mengunduh:', pdfSrc);
+            console.log('Dengan nama file:', filename);
+
+            // Buat link (tag <a>) palsu untuk memicu download
+            const a = document.createElement('a');
+            a.href = pdfSrc;
+            a.download = filename; // Atribut 'download' memberi tahu browser untuk mengunduh
+            document.body.appendChild(a);
+            a.click(); // Klik link tersebut secara otomatis
+            document.body.removeChild(a); // Hapus link setelah selesai
+
+        } catch (e) {
+            console.error('Gagal menjalankan script download:', e);
+            alert('Terjadi error saat mencoba mengunduh file.');
+        }
+    }
+
+    // 3. Buat dan tambahkan tombol ke halaman
+    const btnContainer = document.createElement("div");
+    btnContainer.id = "custom-container-binus";
+
+    const button = document.createElement("button");
+    button.className = "btn-binus-dl";
+    button.type = "button";
+    button.textContent = "Download PDF Asli";
+
+    btnContainer.appendChild(button);
+    document.body.appendChild(btnContainer);
+
+    // 4. Tambahkan fungsi ke tombol saat diklik
+    btnContainer.addEventListener('click', downloadOriginalPdf);
+
+})();
