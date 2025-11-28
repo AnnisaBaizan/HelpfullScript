@@ -4,7 +4,7 @@
 // @version      09-12-2024
 // @description  Otomatis ubah nama menjadi capitalize dan simpan di halaman edit, termasuk klik tombol konfirmasi "Ya, Yakin"
 // @author       Annisa Baizan
-// @match        https://.../*
+// @match        https://ams.poltekkespalembang.ac.id/siakad/data_mahasiswa/edit/*
 // @icon         https://avatars.githubusercontent.com/u/117755758?s=48&v=4
 // @grant        none
 // ==/UserScript==

@@ -4,7 +4,7 @@
 // @version      09-12-2024
 // @description  Klik otomatis tombol Edit di halaman detail Web
 // @author       Annisa Baizan
-// @match        https://.../*
+// @match        https://ams.poltekkespalembang.ac.id/siakad/data_mahasiswa/detail/*
 // @icon         https://avatars.githubusercontent.com/u/117755758?s=48&v=4
 // @grant        none
 // ==/UserScript==
