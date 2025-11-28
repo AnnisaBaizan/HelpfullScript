@@ -36,7 +36,7 @@
                 elapsedTime += 200;
                 if (elapsedTime >= timeout) {
                     clearInterval(checkElement);
-                    reject(❌ Element "${selector}" tidak ditemukan setelah ${timeout}ms.);
+                    reject(`❌ Element "${selector}" tidak ditemukan setelah ${timeout}ms.`);
                 }
             }, 200);
         });
@@ -51,7 +51,7 @@
 
             // Tandai bahwa halaman detail telah diproses
             localStorage.setItem('lastProcessedDetailId', currentId); // Menyimpan ID yang telah diproses
-            console.log(📢 ID halaman detail ${currentId} telah diproses dan disimpan.);
+            console.log(`📢 ID halaman detail ${currentId} telah diproses dan disimpan.`);
         } catch (error) {
             console.error('❌ Terjadi kesalahan:', error);
         }

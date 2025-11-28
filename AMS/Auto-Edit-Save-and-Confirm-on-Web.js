@@ -31,7 +31,7 @@
                 elapsedTime += 200;
                 if (elapsedTime >= timeout) {
                     clearInterval(checkElement);
-                    reject(❌ Element "${selector}" tidak ditemukan setelah ${timeout}ms.);
+                    reject(`❌ Element "${selector}" tidak ditemukan setelah ${timeout}ms.`);
                 }
             }, 200);
         });
@@ -63,7 +63,7 @@
                 namaInput.value = newValue;
                 namaInput.dispatchEvent(new Event('input', { bubbles: true }));
                 namaInput.dispatchEvent(new Event('change', { bubbles: true }));
-                console.log(✍ Nilai input nama telah diubah dari "${originalValue}" menjadi "${newValue}".);
+                console.log(`✍ Nilai input nama telah diubah dari "${originalValue}" menjadi "${newValue}".`);
             }
 
             // 2️⃣ Klik Tombol Simpan
