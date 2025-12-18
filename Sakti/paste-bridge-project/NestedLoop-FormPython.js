@@ -310,7 +310,7 @@
 
     function createControlButton() {
         controlBtn = document.createElement("button");
-        controlBtn.textContent = "▶️ Jalankan Auto";
+        controlBtn.textContent = "▶️ Kewilayahan";
         Object.assign(controlBtn.style, {
             position: "fixed",
             top: "10px",
