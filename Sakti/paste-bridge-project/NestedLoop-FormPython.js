@@ -300,11 +300,11 @@
     function updateButtonState() {
         if (!controlBtn) return;
         if (isRunning) {
-            controlBtn.textContent = "⏹️ Stop";
+            controlBtn.textContent = "⏹️ Stop Kewilayahan";
             controlBtn.style.backgroundColor = "#dc3545";
         } else {
             controlBtn.textContent = "▶️ Kewilayahan";
-            controlBtn.style.backgroundColor = "#007bff";
+            controlBtn.style.backgroundColor = "#28a745";
         }
     }
 
@@ -313,10 +313,10 @@
         controlBtn.textContent = "▶️ Kewilayahan";
         Object.assign(controlBtn.style, {
             position: "fixed",
-            top: "10px",
+            top: "70px",
             right: "10px",
             zIndex: "99999",
-            backgroundColor: "#007bff",
+            backgroundColor: "#28a745",
             color: "#fff",
             border: "none",
             padding: "10px 16px",
@@ -329,10 +329,10 @@
         });
 
         controlBtn.addEventListener("mouseenter", () => {
-            controlBtn.style.backgroundColor = isRunning ? "#a71d2a" : "#0056b3";
+            controlBtn.style.backgroundColor = isRunning ? "#a71d2a" : "#1e7e34";
         });
         controlBtn.addEventListener("mouseleave", () => {
-            controlBtn.style.backgroundColor = isRunning ? "#dc3545" : "#007bff";
+            controlBtn.style.backgroundColor = isRunning ? "#dc3545" : "#28a745";
         });
 
         controlBtn.addEventListener("click", async () => {
