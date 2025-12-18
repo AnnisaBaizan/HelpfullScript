@@ -1,8 +1,8 @@
 // ==UserScript==
-// @name         Auto Input Kewilayahan Full Flow + Paste Bridge
+// @name         Auto Input Kewilayahan Full Flow + Paste Bridge (Fixed Loop)
 // @namespace    http://tampermonkey.net/
-// @version      21-06-2025
-// @description  Otomatisasi input kewilayahan per baris dan detail, nilai dikirim ke Python untuk Ctrl+V native
+// @version      22-06-2025
+// @description  Otomatisasi input kewilayahan - baris & detail hilang setelah diproses
 // @author       Annisa
 // @match        https://sakti.kemenkeu.go.id/*
 // @grant        GM_xmlhttpRequest
@@ -14,6 +14,7 @@
     "use strict";
 
     let totalRowProcessed = 0;
+    let totalDetailProcessed = 0;
     let isRunning = false;
     let controlBtn = null;
 
@@ -21,7 +22,9 @@
         return new Promise((resolve) => setTimeout(resolve, ms));
     }
 
-    // Fungsi kirim ke PasteBridge (bypass CORS)
+    // ===================================================
+    // 📤 Kirim ke PasteBridge (bypass CORS)
+    // ===================================================
     function sendToPasteBridge(nilai) {
         return new Promise((resolve, reject) => {
             GM_xmlhttpRequest({
@@ -29,177 +32,270 @@
                 url: "http://localhost:3030/paste",
                 headers: { "Content-Type": "application/json" },
                 data: JSON.stringify({ nilai: nilai }),
-                onload: function(response) {
+                onload: function (response) {
                     console.log("📤 Terkirim ke PasteBridge:", nilai);
                     resolve(response);
                 },
-                onerror: function(error) {
+                onerror: function (error) {
                     console.error("❌ PasteBridge error:", error);
                     reject(error);
                 },
-                ontimeout: function() {
+                ontimeout: function () {
                     console.error("❌ PasteBridge timeout");
                     reject(new Error("Timeout"));
-                }
+                },
             });
         });
     }
 
-    async function processRow(row, index) {
-        console.group(`▶️ Mulai proses baris ke-${totalRowProcessed + 1}`);
-        try {
-            row.click();
-            console.log("✅ Klik baris");
-            await sleep(2000);
+    // ===================================================
+    // 📦 Proses SATU detail (Tambah → Isi → Simpan → Keluar)
+    // ===================================================
+    async function processOneDetail() {
+        // Cari baris yang PUNYA p-splitbutton (tombol Detail)
+        // Ini yang membedakan baris detail vs baris utama
+        const detailRow = document.querySelector("tr.ui-selectable-row:has(p-splitbutton)");
 
-            const radioLabel = [...document.querySelectorAll("label.ui-radiobutton-label")].find(
-                (el) => el.textContent.trim() === "Belanja Kewilayahan"
-            );
-            const radioBox = radioLabel?.previousElementSibling?.querySelector(".ui-radiobutton-box");
-
-            if (radioBox && !radioBox.classList.contains("ui-state-active")) {
-                radioBox.click();
-                console.log('✅ Klik radio "Belanja Kewilayahan"');
-                await sleep(4000);
+        if (!detailRow) {
+            // Fallback: cari langsung p-splitbutton
+            const directButton = document.querySelector("p-splitbutton[label='Detail'] button");
+            if (!directButton) {
+                return false; // Tidak ada detail lagi
             }
 
-            const detailRows = [...document.querySelectorAll(
-                ".ui-table-scrollable-body-table tr.ui-selectable-row.ng-star-inserted"
-            )];
+            console.group(`📦 Proses detail ke-${totalDetailProcessed + 1}`);
+            directButton.click();
+            console.log("✅ Klik tombol Detail (direct)");
+            await sleep(1000);
+        } else {
+            console.group(`📦 Proses detail ke-${totalDetailProcessed + 1}`);
 
-            if (detailRows.length === 0) {
-                console.warn("⚠️ Tidak ada detail ditemukan, lanjut ke baris berikutnya");
+            // Klik tombol Detail di dalam row
+            const btnDetail = detailRow.querySelector("p-splitbutton button");
+            if (!btnDetail) {
+                console.warn("⚠️ Tombol Detail tidak ditemukan dalam row");
                 console.groupEnd();
-                return true;
+                return false;
             }
 
-            for (let i = 0; i < detailRows.length; i++) {
-                if (!isRunning) {
-                    console.log("⏹️ Dihentikan user");
-                    console.groupEnd();
-                    return false;
-                }
-
-                console.group(`📦 Proses detail ke-${i + 1}`);
-
-                const btnDetail = detailRows[i].querySelector("button");
-                if (!btnDetail) {
-                    console.groupEnd();
-                    continue;
-                }
-
-                btnDetail.click();
-                console.log("✅ Klik tombol Detail");
-                await sleep(1000);
-
-                const btnTambah = [...document.querySelectorAll("button")].find(
-                    (btn) => btn.textContent.trim() === "Tambah"
-                );
-                if (btnTambah) {
-                    btnTambah.click();
-                    console.log("✅ Klik tombol Tambah");
-                    await sleep(1000);
-                }
-
-                const labelNilai = [...document.querySelectorAll("label")].find(
-                    (el) => el.textContent.trim() === "Nilai COA Detail"
-                );
-
-                const nilaiText = labelNilai?.parentElement?.nextElementSibling
-                    ?.querySelector("label")?.textContent?.trim() ?? "";
-
-                const nilaiRaw = nilaiText.replace(/[^\d.,]/g, "").replace(/\./g, "").replace(",", ".");
-                const nilaiFormatted = nilaiRaw
-                    ? parseFloat(nilaiRaw).toLocaleString("id-ID", { minimumFractionDigits: 2 })
-                    : "";
-
-                // Kirim ke PasteBridge
-                const inputNilai = document.querySelector('input[formcontrolname="txtNilai"]');
-                if (inputNilai && nilaiFormatted) {
-                    inputNilai.click();
-                    inputNilai.focus();
-                    await sleep(500);
-
-                    try {
-                        await sendToPasteBridge(nilaiFormatted);
-                    } catch (err) {
-                        console.error("❌ Gagal kirim ke PasteBridge");
-                    }
-                    await sleep(2000);
-                }
-
-                const btnLokasi = [...document.querySelectorAll("button")].find((btn) =>
-                    btn.textContent.includes("PALEMBANG")
-                );
-                if (btnLokasi) {
-                    btnLokasi.click();
-                    console.log('✅ Pilih lokasi "PALEMBANG"');
-                    await sleep(1000);
-                }
-
-                // Simpan dulu
-                const btnSimpan = document.querySelector('p-button[label="Simpan"] button, p-button[icon="pi pi-save"] button');
-                if (btnSimpan) {
-                    btnSimpan.click();
-                    console.log("✅ Klik tombol Simpan");
-                    await sleep(3000);
-                }
-
-                // Baru Keluar
-                const btnKeluar = document.querySelector('p-button[label="Keluar"] button, p-button[icon="pi pi-sign-out"] button');
-                if (btnKeluar) {
-                    btnKeluar.click();
-                    console.log("✅ Klik tombol Keluar");
-                    await sleep(1500);
-                }
-
-                console.groupEnd();
-            }
-
-            row.scrollIntoView({ behavior: "smooth", block: "center" });
-        } catch (err) {
-            console.error(`❌ Error proses baris ke-${index + 1}:`, err);
+            btnDetail.click();
+            console.log("✅ Klik tombol Detail");
+            await sleep(1000);
         }
+
+        // 2. Klik tombol Tambah
+        const btnTambah = [...document.querySelectorAll("button")].find(
+            (btn) => btn.textContent.trim() === "Tambah"
+        );
+        if (btnTambah) {
+            btnTambah.click();
+            console.log("✅ Klik tombol Tambah");
+            await sleep(1000);
+        }
+
+        // 3. Ambil nilai dari "Nilai COA Detail"
+        const labelNilai = [...document.querySelectorAll("label")].find(
+            (el) => el.textContent.trim() === "Nilai COA Detail"
+        );
+
+        const nilaiText =
+            labelNilai?.parentElement?.nextElementSibling
+                ?.querySelector("label")
+                ?.textContent?.trim() ?? "";
+
+        const nilaiRaw = nilaiText
+            .replace(/[^\d.,]/g, "")
+            .replace(/\./g, "")
+            .replace(",", ".");
+
+        const nilaiFormatted = nilaiRaw
+            ? parseFloat(nilaiRaw).toLocaleString("id-ID", {
+                  minimumFractionDigits: 2,
+              })
+            : "";
+
+        console.log(`💰 Nilai: ${nilaiFormatted || "(kosong)"}`);
+
+        // 4. Focus ke input dan kirim ke PasteBridge
+        const inputNilai = document.querySelector(
+            'input[formcontrolname="txtNilai"]'
+        );
+        if (inputNilai && nilaiFormatted) {
+            inputNilai.click();
+            inputNilai.focus();
+            await sleep(500);
+
+            try {
+                await sendToPasteBridge(nilaiFormatted);
+                console.log("✅ Nilai dikirim ke PasteBridge");
+            } catch (err) {
+                console.error("❌ Gagal kirim ke PasteBridge:", err);
+            }
+            await sleep(2000);
+        }
+
+        // 5. Pilih lokasi PALEMBANG
+        const btnLokasi = [...document.querySelectorAll("button")].find((btn) =>
+            btn.textContent.includes("PALEMBANG")
+        );
+        if (btnLokasi) {
+            btnLokasi.click();
+            console.log('✅ Pilih lokasi "PALEMBANG"');
+            await sleep(1000);
+        }
+
+        // 6. Klik Simpan
+        const btnSimpan = document.querySelector(
+            'p-button[label="Simpan"] button, p-button[icon="pi pi-save"] button'
+        );
+        if (btnSimpan) {
+            btnSimpan.click();
+            console.log("✅ Klik tombol Simpan");
+            await sleep(3000);
+        }
+
+        // 7. Klik Keluar
+        const btnKeluar = document.querySelector(
+            'p-button[label="Keluar"] button, p-button[icon="pi pi-sign-out"] button'
+        );
+        if (btnKeluar) {
+            btnKeluar.click();
+            console.log("✅ Klik tombol Keluar");
+            await sleep(1500);
+        }
+
+        totalDetailProcessed++;
         console.groupEnd();
         return true;
     }
 
-    async function runAutomationWithDelay() {
-        console.log("[Tampermonkey] ⏳ Menunggu load baris...");
+    // ===================================================
+    // 📋 Proses SATU baris utama (semua detail di dalamnya)
+    // ===================================================
+    async function processOneRow() {
+        // Ambil baris PERTAMA (index 0) - karena yang selesai akan hilang
+        const row = document.querySelector(
+            "tr.ui-selectable-row.ng-star-inserted"
+        );
+
+        if (!row) {
+            return false; // Tidak ada baris lagi
+        }
+
+        console.group(`▶️ Proses baris utama ke-${totalRowProcessed + 1}`);
+
+        // 1. Klik baris
+        row.click();
+        console.log("✅ Klik baris");
+        await sleep(2000);
+
+        // 2. Klik radio "Belanja Kewilayahan"
+        const radioLabel = [...document.querySelectorAll("label.ui-radiobutton-label")].find(
+            (el) => el.textContent.trim() === "Belanja Kewilayahan"
+        );
+        const radioBox = radioLabel?.previousElementSibling?.querySelector(
+            ".ui-radiobutton-box"
+        );
+
+        if (radioBox && !radioBox.classList.contains("ui-state-active")) {
+            radioBox.click();
+            console.log('✅ Klik radio "Belanja Kewilayahan"');
+            await sleep(4000);
+        }
+
+        // 3. Cek apakah ada detail (row yang punya p-splitbutton)
+        const initialDetailCount = document.querySelectorAll(
+            "tr.ui-selectable-row:has(p-splitbutton)"
+        ).length;
+
+        // Fallback jika :has() tidak support
+        let detailCount = initialDetailCount;
+        if (detailCount === 0) {
+            detailCount = document.querySelectorAll("p-splitbutton[label='Detail']").length;
+        }
+
+        if (detailCount === 0) {
+            console.warn("⚠️ Tidak ada detail ditemukan, skip baris ini");
+            console.groupEnd();
+            totalRowProcessed++;
+            return true; // Lanjut ke baris berikutnya
+        }
+
+        console.log(`📊 Ditemukan ${detailCount} detail`);
+
+        // 4. Loop proses detail - WHILE karena detail hilang setelah diproses
+        let detailProcessedInThisRow = 0;
+        while (isRunning) {
+            const hasDetail = await processOneDetail();
+            if (!hasDetail) {
+                console.log("✅ Semua detail dalam baris ini selesai");
+                break;
+            }
+            detailProcessedInThisRow++;
+            await sleep(500);
+        }
+
+        console.log(`📊 Total detail diproses di baris ini: ${detailProcessedInThisRow}`);
+        console.groupEnd();
+
+        totalRowProcessed++;
+        return isRunning; // Return false jika user stop
+    }
+
+    // ===================================================
+    // 🚀 Main automation loop
+    // ===================================================
+    async function runAutomation() {
+        console.log("🚀 Memulai automasi...");
+        console.log("⏳ Menunggu halaman load...");
         await sleep(3000);
 
-        let i = 0;
-        while (totalRowProcessed < 100 && isRunning) {
-            const rows = [...document.querySelectorAll("tr.ui-selectable-row.ng-star-inserted")];
-            if (i >= rows.length) break;
+        // Loop baris utama - WHILE karena baris hilang setelah semua detailnya selesai
+        while (isRunning) {
+            const hasRow = await processOneRow();
+            if (!hasRow) {
+                // Cek apakah ada halaman berikutnya
+                const nextBtn = document.querySelector(
+                    "a.ui-paginator-next:not(.ui-state-disabled)"
+                );
 
-            const ok = await processRow(rows[i], totalRowProcessed);
-            if (ok && isRunning) {
-                totalRowProcessed++;
-                i++;
-                await sleep(1000);
+                if (nextBtn && isRunning) {
+                    console.log("📄 Pindah ke halaman berikutnya...");
+                    nextBtn.click();
+                    await sleep(3000);
+                    continue; // Lanjut proses halaman baru
+                } else {
+                    console.log("✅ Semua baris di semua halaman selesai!");
+                    break;
+                }
             }
+            await sleep(1000);
         }
 
-        if (!isRunning) {
-            console.log("⏹️ Automasi dihentikan oleh user");
-            alert(`⏹️ Dihentikan. Total diproses: ${totalRowProcessed} baris.`);
-            return;
-        }
+        // Summary
+        console.log("═══════════════════════════════════════");
+        console.log(`✅ SELESAI!`);
+        console.log(`📋 Total baris diproses: ${totalRowProcessed}`);
+        console.log(`📦 Total detail diproses: ${totalDetailProcessed}`);
+        console.log("═══════════════════════════════════════");
 
-        const nextBtn = document.querySelector("a.ui-paginator-next:not(.ui-state-disabled)");
-        if (nextBtn && totalRowProcessed < 7 && isRunning) {
-            nextBtn.click();
-            await sleep(3000);
-            await runAutomationWithDelay();
+        if (isRunning) {
+            alert(
+                `✅ Selesai!\n\n` +
+                `📋 Baris diproses: ${totalRowProcessed}\n` +
+                `📦 Detail diproses: ${totalDetailProcessed}`
+            );
         } else {
-            console.log("✅ Selesai memproses semua baris.");
-            alert(`✅ Selesai memproses ${totalRowProcessed} baris.`);
+            alert(
+                `⏹️ Dihentikan oleh user.\n\n` +
+                `📋 Baris diproses: ${totalRowProcessed}\n` +
+                `📦 Detail diproses: ${totalDetailProcessed}`
+            );
         }
     }
 
     // ===================================================
-    // 🟢 Tombol kontrol di kanan atas
+    // 🎮 UI Control Button
     // ===================================================
     function updateButtonState() {
         if (!controlBtn) return;
@@ -207,7 +303,7 @@
             controlBtn.textContent = "⏹️ Stop";
             controlBtn.style.backgroundColor = "#dc3545";
         } else {
-            controlBtn.textContent = "▶️ Jalankan Auto";
+            controlBtn.textContent = "▶️ Kewilayahan";
             controlBtn.style.backgroundColor = "#007bff";
         }
     }
@@ -247,9 +343,10 @@
             } else {
                 if (confirm("Mulai proses otomatisasi kewilayahan?")) {
                     totalRowProcessed = 0;
+                    totalDetailProcessed = 0;
                     isRunning = true;
                     updateButtonState();
-                    await runAutomationWithDelay();
+                    await runAutomation();
                     isRunning = false;
                     updateButtonState();
                 }
@@ -260,7 +357,9 @@
         console.log("[Tampermonkey] ✅ Tombol kontrol ditambahkan");
     }
 
-    // Inisialisasi tombol
+    // ===================================================
+    // 🏁 Inisialisasi
+    // ===================================================
     if (document.readyState === "complete") {
         setTimeout(createControlButton, 2000);
     } else {
