@@ -6,13 +6,9 @@ import sys
 import pyperclip
 import pyautogui
 from flask import Flask, request
-from flask_cors import CORS
 
 # =============== CONFIG ===============
-CHECK_INTERVAL = 0.5
 running = True
-last_value = ""
-new_value = None  # buffer untuk nilai baru
 
 # =============== HELPER RESOURCE (PyInstaller) ===============
 def resource_path(relative_path):
@@ -22,33 +18,62 @@ def resource_path(relative_path):
         base_path = os.path.abspath(".")
     return os.path.join(base_path, relative_path)
 
+# =============== GUI REFERENCE ===============
+value_label = None
+
+def update_label(text):
+    global value_label
+    if value_label:
+        try:
+            value_label.configure(text=f"Nilai terakhir: {text}")
+        except:
+            pass
+
 # =============== FLASK ===============
 app = Flask(__name__)
-CORS(app)
 
-@app.route("/paste", methods=["POST"])
+@app.after_request
+def add_cors_headers(response):
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type"
+    response.headers["Access-Control-Allow-Private-Network"] = "true"
+    return response
+
+@app.route("/paste", methods=["POST", "OPTIONS"])
 def paste():
-    global new_value
+    # Handle preflight request
+    if request.method == "OPTIONS":
+        return "", 200
+    
+    global running
     data = request.get_json()
     nilai = data.get("nilai", "")
-    if nilai:
-        new_value = nilai  # langsung simpan ke variabel global
-    return {"status": "ok", "received": nilai}, 200
+    
+    if nilai and running:
+        print(f"📥 Terima nilai: {nilai}")
+        
+        # Update label di GUI
+        update_label(nilai)
+        
+        # Langsung paste
+        pyperclip.copy(nilai)
+        time.sleep(0.3)
+        pyautogui.hotkey("ctrl", "v")
+        
+        print(f"✅ Paste berhasil: {nilai}")
+        return {"status": "ok", "pasted": nilai}, 200
+    
+    return {"status": "skipped", "reason": "empty or stopped"}, 200
 
-# =============== PASTE BRIDGE LOOP ===============
-def bridge_loop(update_callback):
-    global last_value, new_value, running
-    while True:
-        if running and new_value and new_value != last_value:
-            last_value = new_value
-            update_callback(new_value)
-            pyperclip.copy(new_value)
-            time.sleep(0.8)
-            pyautogui.hotkey("ctrl", "v")
-        time.sleep(CHECK_INTERVAL)
+@app.route("/", methods=["GET"])
+def index():
+    return "PasteBridge aktif! ✅", 200
 
 # =============== GUI ===============
 def start_gui():
+    global value_label, running
+    
     ctk.set_appearance_mode("light")
     ctk.set_default_color_theme("green")
 
@@ -70,8 +95,8 @@ def start_gui():
     value_label = ctk.CTkLabel(app_gui, text="Nilai terakhir: -", font=("Arial", 12), wraplength=300)
     value_label.pack(pady=5)
 
-    def update_value(new_val):
-        value_label.configure(text=f"Nilai terakhir: {new_val}")
+    port_label = ctk.CTkLabel(app_gui, text="Server: http://localhost:3030", font=("Arial", 10), text_color="gray")
+    port_label.pack(pady=5)
 
     def toggle_running():
         global running
@@ -89,8 +114,12 @@ def start_gui():
     btn_quit = ctk.CTkButton(app_gui, text="Keluar", command=app_gui.quit, fg_color="gray")
     btn_quit.pack(pady=10)
 
-    threading.Thread(target=bridge_loop, args=(update_value,), daemon=True).start()
-    threading.Thread(target=lambda: app.run(port=3030), daemon=True).start()
+    # Jalankan Flask di thread terpisah
+    def run_flask():
+        app.run(host="0.0.0.0", port=3030, debug=False, use_reloader=False, threaded=True)
+    
+    threading.Thread(target=run_flask, daemon=True).start()
+    print("🚀 PasteBridge aktif di http://localhost:3030")
 
     app_gui.mainloop()
 
