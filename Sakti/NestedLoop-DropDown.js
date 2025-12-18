@@ -1,9 +1,9 @@
 // ==UserScript==
-// @name         Auto Input PDN Full Flow (Manual Button)
+// @name         Auto Input PDN Full Flow (Manual Button + Stop)
 // @namespace    http://tampermonkey.net/
-// @version      29-10-2025
-// @description  Otomatisasi PDN full flow dijalankan manual via tombol di kanan atas layar
-// @author       Annisa
+// @version      22-06-2025
+// @description  Otomatisasi PDN full flow dengan tombol Start/Stop
+// @author       Annisa Baizan
 // @match        https://sakti.kemenkeu.go.id/*
 // @icon         https://avatars.githubusercontent.com/u/117755758?s=48&v=4
 // @grant        none
@@ -13,6 +13,8 @@
     "use strict";
 
     let totalRowProcessed = 0;
+    let isRunning = false;
+    let controlBtn = null;
 
     function sleep(ms) {
         return new Promise((resolve) => setTimeout(resolve, ms));
@@ -27,6 +29,8 @@
             row.click();
             console.log("✅ Klik baris");
             await sleep(2000);
+
+            if (!isRunning) return false;
 
             // Dropdown jumlah baris = 20
             async function setDropdownJumlah() {
@@ -59,6 +63,8 @@
 
             await setDropdownJumlah();
 
+            if (!isRunning) return false;
+
             // Klik "Pilih Semua per Halaman"
             const labelPilihSemua = [...document.querySelectorAll("label.ui-chkbox-label")]
                 .find((el) => el.textContent.trim() === "Pilih Semua per Halaman");
@@ -74,20 +80,27 @@
                 console.warn('❌ Tidak menemukan checkbox "Pilih Semua per Halaman"');
             }
 
+            if (!isRunning) return false;
+
             // Klik tombol Input/Ubah
             const btnInput = [...document.querySelectorAll("span.ui-button-text.ui-clickable")]
                 .find((el) => el.innerText.includes("Input/Ubah"));
             if (!btnInput) {
                 console.warn("❌ Tombol Input/Ubah tidak ditemukan");
-                return;
+                console.groupEnd();
+                return true; // Lanjut ke baris berikutnya
             }
             btnInput.click();
             console.log("✅ Klik tombol Input/Ubah");
             await sleep(2000);
 
+            if (!isRunning) return false;
+
             // Pilih "2 - PDN" untuk semua baris detail
             const detailRows = [...document.querySelectorAll(".ui-table-scrollable-body-table tr.ui-selectable-row.ng-star-inserted")];
             for (let i = 0; i < detailRows.length; i++) {
+                if (!isRunning) return false;
+
                 const dropdownLabel = detailRows[i].querySelector("label.ui-dropdown-label");
                 if (dropdownLabel) {
                     dropdownLabel.click();
@@ -106,6 +119,8 @@
                 }
             }
 
+            if (!isRunning) return false;
+
             // Klik Simpan
             const btnSimpan = [...document.querySelectorAll("span.ui-button-text.ui-clickable")]
                 .find((el) => el.innerText.includes("Simpan"));
@@ -116,6 +131,8 @@
             } else {
                 console.warn("❌ Tombol Simpan tidak ditemukan");
             }
+
+            if (!isRunning) return false;
 
             // Klik Oke
             const btnOke = [...document.querySelectorAll("button")]
@@ -132,37 +149,63 @@
             console.error(`❌ Error saat memproses baris ${index + 1}:`, err);
         }
         console.groupEnd();
+        return true;
     }
 
     // ===================================================
     // 🧠 Jalankan otomatisasi
     // ===================================================
     async function runAutomationWithDelay() {
-        console.log("[Tampermonkey] Menunggu 3 detik untuk loading data baris...");
+        console.log("[Tampermonkey] ⏳ Menunggu 3 detik untuk loading data baris...");
         await sleep(3000);
 
         let i = 0;
-        while (totalRowProcessed < 100) {
+        while (totalRowProcessed < 100 && isRunning) {
             const rows = [...document.querySelectorAll("tr.ui-selectable-row.ng-star-inserted")];
             if (i >= rows.length) break;
 
             console.log(`🔁 Memproses baris ke-${i + 1}`);
-            await processRow(rows[i], i);
+            const ok = await processRow(rows[i], i);
+
+            if (!ok || !isRunning) {
+                console.log("⏹️ Proses dihentikan");
+                break;
+            }
 
             totalRowProcessed++;
             i++;
             await sleep(1000);
         }
 
+        if (!isRunning) {
+            console.log("⏹️ Automasi dihentikan oleh user");
+            alert(`⏹️ Dihentikan.\n\n📊 Total baris diproses: ${totalRowProcessed}`);
+            return;
+        }
+
         const nextBtn = document.querySelector("a.ui-paginator-next:not(.ui-state-disabled)");
-        if (nextBtn && totalRowProcessed < 100) {
+        if (nextBtn && totalRowProcessed < 100 && isRunning) {
             console.log("➡️ Klik halaman berikutnya...");
             nextBtn.click();
             await sleep(3000);
             await runAutomationWithDelay();
         } else {
-            console.log("✅ Proses selesai (tidak ada halaman selanjutnya).");
-            alert(`✅ Selesai memproses ${totalRowProcessed} baris.`);
+            console.log("✅ Proses selesai.");
+            alert(`✅ Selesai!\n\n📊 Total baris diproses: ${totalRowProcessed}`);
+        }
+    }
+
+    // ===================================================
+    // 🎮 Update tampilan tombol
+    // ===================================================
+    function updateButtonState() {
+        if (!controlBtn) return;
+        if (isRunning) {
+            controlBtn.textContent = "⏹️ Stop PDN";
+            controlBtn.style.backgroundColor = "#dc3545";
+        } else {
+            controlBtn.textContent = "▶️ PDN";
+            controlBtn.style.backgroundColor = "#28a745";
         }
     }
 
@@ -170,13 +213,13 @@
     // 🟢 Tambahkan tombol di kanan atas layar
     // ===================================================
     function createControlButton() {
-        const btn = document.createElement("button");
-        btn.textContent = "▶️ Jalankan Auto PDN";
-        Object.assign(btn.style, {
+        controlBtn = document.createElement("button");
+        controlBtn.textContent = "▶️ PDN";
+        Object.assign(controlBtn.style, {
             position: "fixed",
-            top: "10px",
+            top: "120px",
             right: "10px",
-            zIndex: 999999,
+            zIndex: "999999",
             backgroundColor: "#28a745",
             color: "#fff",
             border: "none",
@@ -184,23 +227,49 @@
             borderRadius: "8px",
             cursor: "pointer",
             fontWeight: "bold",
+            fontSize: "14px",
             boxShadow: "0 2px 6px rgba(0,0,0,0.3)",
+            transition: "background-color 0.2s",
         });
 
-        btn.addEventListener("mouseenter", () => (btn.style.backgroundColor = "#218838"));
-        btn.addEventListener("mouseleave", () => (btn.style.backgroundColor = "#28a745"));
-        btn.addEventListener("click", async () => {
-            if (confirm("Mulai proses otomatisasi PDN?")) {
-                totalRowProcessed = 0;
-                await runAutomationWithDelay();
+        controlBtn.addEventListener("mouseenter", () => {
+            controlBtn.style.backgroundColor = isRunning ? "#a71d2a" : "#1e7e34";
+        });
+        controlBtn.addEventListener("mouseleave", () => {
+            controlBtn.style.backgroundColor = isRunning ? "#dc3545" : "#28a745";
+        });
+
+        controlBtn.addEventListener("click", async () => {
+            if (isRunning) {
+                // STOP
+                isRunning = false;
+                updateButtonState();
+                console.log("⏹️ Automasi PDN dihentikan");
+            } else {
+                // START
+                if (confirm("Mulai proses otomatisasi PDN?")) {
+                    totalRowProcessed = 0;
+                    isRunning = true;
+                    updateButtonState();
+                    await runAutomationWithDelay();
+                    isRunning = false;
+                    updateButtonState();
+                }
             }
         });
 
-        document.body.appendChild(btn);
+        document.body.appendChild(controlBtn);
+        console.log("[Tampermonkey] ✅ Tombol kontrol PDN ditambahkan");
     }
 
-    window.addEventListener("load", () => {
+    // ===================================================
+    // 🏁 Inisialisasi
+    // ===================================================
+    if (document.readyState === "complete") {
         setTimeout(createControlButton, 2000);
-    });
-
+    } else {
+        window.addEventListener("load", () => {
+            setTimeout(createControlButton, 2000);
+        });
+    }
 })();
