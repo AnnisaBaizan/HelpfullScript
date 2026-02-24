@@ -23,7 +23,14 @@
     // ===================================================
     // 🌟 Fungsi utama proses baris
     // ===================================================
-    async function processRow(row, index) {
+    async function processRow() {
+        // Selalu ambil baris paling atas (index 0)
+        const row = document.querySelector("tr.ui-selectable-row.ng-star-inserted");
+
+        if (!row) {
+            return false; // Tidak ada baris lagi
+        }
+
         console.group(`▶️ Mulai proses baris ke-${totalRowProcessed + 1}`);
         try {
             row.click();
@@ -86,8 +93,9 @@
             const btnInput = [...document.querySelectorAll("span.ui-button-text.ui-clickable")]
                 .find((el) => el.innerText.includes("Input/Ubah"));
             if (!btnInput) {
-                console.warn("❌ Tombol Input/Ubah tidak ditemukan");
+                console.warn("❌ Tombol Input/Ubah tidak ditemukan, skip baris ini");
                 console.groupEnd();
+                totalRowProcessed++;
                 return true; // Lanjut ke baris berikutnya
             }
             btnInput.click();
@@ -145,10 +153,13 @@
 
             row.scrollIntoView({ behavior: "smooth" });
             console.log("✅ Scroll ke baris");
+
         } catch (err) {
-            console.error(`❌ Error saat memproses baris ${index + 1}:`, err);
+            console.error(`❌ Error saat memproses baris:`, err);
         }
+
         console.groupEnd();
+        totalRowProcessed++;
         return true;
     }
 
@@ -159,22 +170,31 @@
         console.log("[Tampermonkey] ⏳ Menunggu 3 detik untuk loading data baris...");
         await sleep(3000);
 
-        let i = 0;
-        while (totalRowProcessed < 100 && isRunning) {
-            const rows = [...document.querySelectorAll("tr.ui-selectable-row.ng-star-inserted")];
-            if (i >= rows.length) break;
+        // Loop WHILE - selalu ambil baris pertama, tidak pakai index i
+        while (isRunning) {
+            const rowsBefore = document.querySelectorAll("tr.ui-selectable-row.ng-star-inserted").length;
 
-            console.log(`🔁 Memproses baris ke-${i + 1}`);
-            const ok = await processRow(rows[i], i);
+            if (rowsBefore === 0) {
+                console.log("📭 Tidak ada baris tersisa di halaman ini");
+                break;
+            }
+
+            console.log(`🔁 Memproses baris paling atas (sisa: ${rowsBefore} baris)`);
+            const ok = await processRow();
 
             if (!ok || !isRunning) {
                 console.log("⏹️ Proses dihentikan");
                 break;
             }
 
-            totalRowProcessed++;
-            i++;
             await sleep(1000);
+
+            // Safety check: kalau jumlah baris tidak berkurang, hentikan agar tidak infinite loop
+            const rowsAfter = document.querySelectorAll("tr.ui-selectable-row.ng-star-inserted").length;
+            if (rowsAfter >= rowsBefore) {
+                console.warn("⚠️ Baris tidak berkurang setelah diproses, automasi dihentikan untuk mencegah infinite loop");
+                break;
+            }
         }
 
         if (!isRunning) {
@@ -183,8 +203,9 @@
             return;
         }
 
+        // Cek halaman berikutnya
         const nextBtn = document.querySelector("a.ui-paginator-next:not(.ui-state-disabled)");
-        if (nextBtn && totalRowProcessed < 100 && isRunning) {
+        if (nextBtn && isRunning) {
             console.log("➡️ Klik halaman berikutnya...");
             nextBtn.click();
             await sleep(3000);
