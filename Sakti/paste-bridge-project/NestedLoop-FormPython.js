@@ -313,8 +313,8 @@
         controlBtn.textContent = "▶️ Kewilayahan";
         Object.assign(controlBtn.style, {
             position: "fixed",
-            top: "70px",
-            right: "10px",
+            top: "63px",
+            right: "15px",
             zIndex: "99999",
             backgroundColor: "#28a745",
             color: "#fff",

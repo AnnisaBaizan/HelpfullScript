@@ -238,8 +238,8 @@
         controlBtn.textContent = "▶️ PDN";
         Object.assign(controlBtn.style, {
             position: "fixed",
-            top: "120px",
-            right: "10px",
+            top: "63px",
+            right: "170px",
             zIndex: "999999",
             backgroundColor: "#28a745",
             color: "#fff",
