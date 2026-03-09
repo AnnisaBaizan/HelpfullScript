@@ -416,12 +416,12 @@
       <div class="ttd-row">
         <div class="ttd-col">
           <div class="ttd-label">Penerima,</div>
-          <div class="ttd-nama">&nbsp;</div>
-          <div class="ttd-nip">NIP.&nbsp;</div>
+          <div class="ttd-nama" style="padding-top:60px;font-weight:bold;">Rahmad Aswin Juliansyah, SST, M.Kes</div>
+          <div class="ttd-nip">NIP. 198607182008121001</div>
         </div>
         <div class="ttd-col">
           <div class="ttd-label">Pengirim,</div>
-          <div class="ttd-nama">&nbsp;</div>
+          <div class="ttd-nama" style="padding-top:60px;font-weight:bold;" id="pvNamaTtd">&nbsp;</div>
           <div class="ttd-nip">NIP. <span id="pvNipTtd">&nbsp;</span></div>
         </div>
       </div>
@@ -531,6 +531,7 @@ function updatePreview() {
   set('pvNama', g('nama'));
   set('pvNip', g('nip'));
   set('pvNipTtd', g('nip'));
+  set('pvNamaTtd', g('nama'));
   set('pvJabatan', g('jabatan'));
   set('pvBagian', g('bagian'));
   set('pvNamaBarang', g('namaBarang'));
