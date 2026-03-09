@@ -17,6 +17,7 @@ const CONFIG = {
   WA_TUJUAN       : '628123456789',                       // Nomor WA penerima, format 62xxx (bisa multiple: '628xxx,628yyy')
   WA_AKTIF        : true,                                 // Set false untuk nonaktifkan WA notif
 };
+
 // ================================================
 
 // -------- doGet --------
