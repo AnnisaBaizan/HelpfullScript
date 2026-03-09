@@ -473,7 +473,7 @@
 
 <script>
 // ===== CONFIG — GANTI URL DI BAWAH INI =====
-const GAS_URL = 'https://script.google.com/a/macros/poltekkespalembang.ac.id/s/AKfycbwoSLYPSEL6dAMf-loYFNUJ7FAdQawB60FTlYpheXxTtPWdVI1F7euPtc__MpbnGmNK/exec';
+const GAS_URL = 'https://script.google.com/a/macros/poltekkespalembang.ac.id/s/AKfycbysVc3OApD1AqXOK_AKa7fdmp6m9IbKXfH10FL5PyWtoJ9wxuh3WvfzP4upEiob2_1L/exec';
 // ============================================
 
 // ===== INIT =====
@@ -502,7 +502,7 @@ async function fetchNomor() {
   document.getElementById('nomorSurat').value = 'Mengambil nomor surat…';
   setStatus('loading', '⏳ Mengambil nomor surat dari server…');
   try {
-    const resp = await fetch(url + '?action=getNomor');
+    const resp = await fetch(url + '?action=getNomor', { redirect: 'follow' });
     const data = await resp.json();
     if (data.nomor) {
       nomorData = data;
@@ -522,7 +522,7 @@ async function fetchNomor() {
 let arsipData = [];
 async function fetchArsip() {
   try {
-    const resp = await fetch(GAS_URL + '?action=getArsip');
+    const resp = await fetch(GAS_URL + '?action=getArsip', { redirect: 'follow' });
     const data = await resp.json();
     if (data.status === 'ok' && data.arsip) {
       arsipData = data.arsip;
@@ -737,6 +737,7 @@ async function submitForm() {
   try {
     const resp = await fetch(url, {
       method: 'POST',
+      redirect: 'follow',
       body: JSON.stringify(payload)
     });
     const result = await resp.json();
