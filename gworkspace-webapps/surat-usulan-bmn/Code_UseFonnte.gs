@@ -5,17 +5,22 @@
 
 // ==================== CONFIG ====================
 const CONFIG = {
-  SPREADSHEET_ID  : 'GANTI_DENGAN_SPREADSHEET_ID',       // ID Google Sheets arsip
-  DRIVE_FOLDER_ID : 'GANTI_DENGAN_DRIVE_FOLDER_ID',      // ID folder Google Drive untuk foto
-  EMAIL_TUJUAN    : 'sarpras@instansi.go.id',             // Email notifikasi tim Sarpras
-  NAMA_INSTANSI   : 'Politeknik Kesehatan Palembang',     // Nama instansi di email notif
-  NOMOR_PREFIX    : 'KN.01.03/Sarpras',                   // Prefix nomor surat (sebelum /urut/tahun)
-  SHEET_NAME      : 'Arsip Surat',                        // Nama sheet arsip
+  SPREADSHEET_ID: 'GANTI_DENGAN_SPREADSHEET_ID',       // ID Google Sheets arsip
+  DRIVE_FOLDER_ID: 'GANTI_DENGAN_SPREADSHEET_ID',       // ID Google Sheets arsip
+  EMAIL_TUJUAN: 'sarpras@instansi.go.id',             // Email notifikasi tim Sarpras
+  EMAIL_AKTIF: false,
+  NAMA_INSTANSI: 'Politeknik Kesehatan Palembang',     // Nama instansi di email notif
+  NOMOR_PREFIX: 'KN.01.03/Sarpras',                   // Prefix nomor surat (sebelum /urut/tahun)
+  SHEET_NAME: 'Arsip Surat',                        // Nama sheet arsip
+
+  // --- Database Aset BMN (spreadsheet terpisah) ---
+  ASET_SPREADSHEET_ID: 'GANTI_DENGAN_aset_SPREADSHEET_ID',
+  ASET_SHEET_NAME: 'ASET2026',                       // Tab nama sheet aset
 
   // --- WhatsApp via Fonnte (https://fonnte.com) ---
-  WA_TOKEN        : 'GANTI_DENGAN_TOKEN_FONNTE',          // Token dari dashboard Fonnte
-  WA_TUJUAN       : '628123456789',                       // Nomor WA penerima, format 62xxx (bisa multiple: '628xxx,628yyy')
-  WA_AKTIF        : true,                                 // Set false untuk nonaktifkan WA notif
+  WA_TOKEN: 'GANTI_DENGAN_TOKEN_FONNTE',          // Token dari dashboard Fonnte
+  WA_TUJUAN: '628123456789',                       // Nomor WA penerima, format 62xxx (bisa multiple: '628xxx,628yyy')
+  WA_AKTIF: false,                                 // Set false untuk nonaktifkan WA notif
 };
 
 // ================================================
@@ -27,8 +32,10 @@ function doGet(e) {
 
   if (action === 'getNomor') {
     result = getNomorSurat();
+  } else if (action === 'getAset') {
+    result = getDataAset();
   } else {
-    result = { error: 'Action tidak dikenal. Gunakan ?action=getNomor' };
+    result = { error: 'Action tidak dikenal. Gunakan ?action=getNomor atau ?action=getAset' };
   }
 
   return ContentService.createTextOutput(JSON.stringify(result))
@@ -42,7 +49,7 @@ function doPost(e) {
     payload = JSON.parse(e.postData.contents);
   } catch (err) {
     return ContentService.createTextOutput(JSON.stringify({ status: 'error', error: 'JSON tidak valid: ' + err.message }))
-        .setMimeType(ContentService.MimeType.JSON);
+      .setMimeType(ContentService.MimeType.JSON);
   }
 
   const action = payload.action || '';
@@ -90,7 +97,50 @@ function getNomorSurat() {
 }
 
 // ============================================================
-//  HANDLE SUBMIT
+//  GET DATA ASET dari Spreadsheet Database BMN
+//  Kolom: NUP, Nama Barang, Merk, Tipe  (tab ASET2026)
+// ============================================================
+function getDataAset() {
+  try {
+    const ss = SpreadsheetApp.openById(CONFIG.ASET_SPREADSHEET_ID);
+    const sheet = ss.getSheetByName(CONFIG.ASET_SHEET_NAME);
+    if (!sheet) throw new Error('Sheet "' + CONFIG.ASET_SHEET_NAME + '" tidak ditemukan.');
+
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) return { status: 'ok', data: [] };
+
+    // Baca header row 1 untuk mapping kolom
+    const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0]
+      .map(h => String(h).trim().toLowerCase());
+
+    const colNUP = headers.indexOf('nup');
+    const colNama = headers.indexOf('nama barang');
+    const colMerk = headers.indexOf('merk');
+    const colTipe = headers.indexOf('tipe');
+
+    if ([colNUP, colNama, colMerk, colTipe].includes(-1)) {
+      throw new Error('Kolom tidak ditemukan. Pastikan header: NUP, Nama Barang, Merk, Tipe');
+    }
+
+    const maxCol = Math.max(colNUP, colNama, colMerk, colTipe) + 1;
+    const rawData = sheet.getRange(2, 1, lastRow - 1, maxCol).getValues();
+
+    const data = rawData
+      .filter(row => row[colNUP] || row[colNama]) // skip baris kosong
+      .map(row => ({
+        nup: String(row[colNUP] || '').trim(),
+        nama: String(row[colNama] || '').trim(),
+        merk: String(row[colMerk] || '').trim(),
+        tipe: String(row[colTipe] || '').trim(),
+      }));
+
+    return { status: 'ok', count: data.length, data: data };
+  } catch (err) {
+    return { status: 'error', error: err.message };
+  }
+}
+
+
 //  1. Buat subfolder Drive  → upload 4 foto
 //  2. Append baris ke Sheets
 //  3. Kirim email notifikasi HTML
@@ -99,26 +149,26 @@ function handleSubmit(d) {
   try {
     const tahun = new Date().getFullYear();
     const namaFolder = d.nomor + ' - ' + d.nama;
-    const timestamp  = new Date();
+    const timestamp = new Date();
 
     // --- 1. Upload foto ke Google Drive ---
     const parentFolder = DriveApp.getFolderById(CONFIG.DRIVE_FOLDER_ID);
-    const subFolder    = parentFolder.createFolder(namaFolder);
+    const subFolder = parentFolder.createFolder(namaFolder);
 
     const fotoLinks = {
-      nup         : uploadFoto(subFolder, d.fotoNup,         'Foto_NUP_'         + d.nup),
-      merek       : uploadFoto(subFolder, d.fotoMerek,       'Foto_Merek_'       + d.nup),
-      kerusakan   : uploadFoto(subFolder, d.fotoKerusakan,   'Foto_Kerusakan_'   + d.nup),
-      keseluruhan : uploadFoto(subFolder, d.fotoKeseluruhan, 'Foto_Keseluruhan_' + d.nup),
+      nup: uploadFoto(subFolder, d.fotoNup, 'Foto_NUP_' + d.nup),
+      merek: uploadFoto(subFolder, d.fotoMerek, 'Foto_Merek_' + d.nup),
+      kerusakan: uploadFoto(subFolder, d.fotoKerusakan, 'Foto_Kerusakan_' + d.nup),
+      keseluruhan: uploadFoto(subFolder, d.fotoKeseluruhan, 'Foto_Keseluruhan_' + d.nup),
     };
 
     // --- 2. Append ke Spreadsheet ---
-    const ss    = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+    const ss = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
     const sheet = ss.getSheetByName(CONFIG.SHEET_NAME);
     if (!sheet) throw new Error('Sheet "' + CONFIG.SHEET_NAME + '" tidak ditemukan.');
 
     const lastRow = sheet.getLastRow();
-    const noUrut  = lastRow; // header di row 1, data mulai row 2
+    const noUrut = lastRow; // header di row 1, data mulai row 2
 
     sheet.appendRow([
       noUrut,                          // A: No
@@ -149,7 +199,9 @@ function handleSubmit(d) {
     sheet.getRange(newRow, 4).setNumberFormat('dd/mm/yyyy');
 
     // --- 3. Kirim email notifikasi ---
-    kirimEmailNotifikasi(d, fotoLinks, timestamp);
+    if (CONFIG.EMAIL_AKTIF) {
+      kirimEmailNotifikasi(d, fotoLinks, timestamp);
+    }
 
     // --- 4. Kirim WhatsApp notifikasi ---
     if (CONFIG.WA_AKTIF) {
@@ -157,9 +209,9 @@ function handleSubmit(d) {
     }
 
     return {
-      status  : 'ok',
-      message : 'Data berhasil disimpan. Folder: ' + namaFolder,
-      folder  : subFolder.getUrl(),
+      status: 'ok',
+      message: 'Data berhasil disimpan. Folder: ' + namaFolder,
+      folder: subFolder.getUrl(),
     };
   } catch (err) {
     return { status: 'error', error: err.message };
@@ -172,17 +224,17 @@ function uploadFoto(folder, base64String, fileName) {
   try {
     // base64 bisa berformat "data:image/jpeg;base64,..."
     let mimeType = 'image/jpeg';
-    let b64data  = base64String;
+    let b64data = base64String;
 
     const match = base64String.match(/^data:([^;]+);base64,(.+)$/);
     if (match) {
       mimeType = match[1];
-      b64data  = match[2];
+      b64data = match[2];
     }
 
-    const ext   = mimeType.split('/')[1] || 'jpg';
-    const blob  = Utilities.newBlob(Utilities.base64Decode(b64data), mimeType, fileName + '.' + ext);
-    const file  = folder.createFile(blob);
+    const ext = mimeType.split('/')[1] || 'jpg';
+    const blob = Utilities.newBlob(Utilities.base64Decode(b64data), mimeType, fileName + '.' + ext);
+    const file = folder.createFile(blob);
     file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
     return file.getUrl();
   } catch (e) {
@@ -249,7 +301,7 @@ function kirimEmailNotifikasi(d, fotoLinks, timestamp) {
         </tr>
         <tr>
           <td style="padding:8px 12px;font-weight:bold;vertical-align:top;">Keluhan</td>
-          <td style="padding:8px 12px;">${d.keluhan.replace(/\n/g,'<br>')}</td>
+          <td style="padding:8px 12px;">${d.keluhan.replace(/\n/g, '<br>')}</td>
         </tr>
       </table>
 
@@ -272,8 +324,8 @@ function kirimEmailNotifikasi(d, fotoLinks, timestamp) {
   `;
 
   MailApp.sendEmail({
-    to      : CONFIG.EMAIL_TUJUAN,
-    subject : '[BMN] Usulan Perbaikan Baru — ' + d.nomor + ' — ' + d.nama,
+    to: CONFIG.EMAIL_TUJUAN,
+    subject: '[BMN] Usulan Perbaikan Baru — ' + d.nomor + ' — ' + d.nama,
     htmlBody: body,
   });
 }
@@ -287,7 +339,7 @@ function kirimWhatsApp(d, fotoLinks) {
     const kondisiEmoji = d.kondisi === 'Rusak Berat' ? '🔴' : '🟡';
 
     const pesan =
-`📋 *SURAT USULAN PERBAIKAN BMN*
+      `📋 *SURAT USULAN PERBAIKAN BMN*
 ${CONFIG.NAMA_INSTANSI}
 ━━━━━━━━━━━━━━━━━━━━
 📄 *Nomor:* ${d.nomor}
@@ -318,16 +370,16 @@ ${d.keluhan}
 _Pesan otomatis Sistem BMN_`;
 
     const options = {
-      method  : 'POST',
-      headers : { 'Authorization': CONFIG.WA_TOKEN },
-      payload : {
-        target  : CONFIG.WA_TUJUAN,
-        message : pesan,
+      method: 'POST',
+      headers: { 'Authorization': CONFIG.WA_TOKEN },
+      payload: {
+        target: CONFIG.WA_TUJUAN,
+        message: pesan,
       },
       muteHttpExceptions: true,
     };
 
-    const resp   = UrlFetchApp.fetch('https://api.fonnte.com/send', options);
+    const resp = UrlFetchApp.fetch('https://api.fonnte.com/send', options);
     const result = JSON.parse(resp.getContentText());
 
     if (!result.status) {

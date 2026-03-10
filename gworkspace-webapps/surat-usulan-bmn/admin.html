@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin — Regenerate PDF Surat BMN</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, sans-serif; font-size: 13px; background: #f0f2f5; color: #222; }
+
+  .app-header {
+    background: #1a3a5c; color: #fff; padding: 12px 24px;
+    display: flex; align-items: center; gap: 12px;
+    box-shadow: 0 2px 6px rgba(0,0,0,.3);
+  }
+  .app-header h1 { font-size: 16px; font-weight: 700; }
+  .app-header small { font-size: 11px; opacity: .75; }
+  .btn-back {
+    margin-left: auto; color: rgba(255,255,255,.8); text-decoration: none;
+    font-size: 12px; padding: 5px 12px; border: 1px solid rgba(255,255,255,.3);
+    border-radius: 4px;
+  }
+
+  /* LOGIN */
+  .login-wrap {
+    display: flex; align-items: center; justify-content: center;
+    min-height: calc(100vh - 50px);
+  }
+  .login-box {
+    background: #fff; border-radius: 10px; padding: 36px 40px;
+    width: 360px; box-shadow: 0 4px 24px rgba(0,0,0,.1); text-align: center;
+  }
+  .login-box .lock-icon { font-size: 40px; margin-bottom: 12px; }
+  .login-box h2 { font-size: 16px; color: #1a3a5c; margin-bottom: 6px; }
+  .login-box p  { font-size: 12px; color: #888; margin-bottom: 20px; }
+  .login-box input[type=password] {
+    width: 100%; padding: 10px 14px; border: 1px solid #ccc; border-radius: 5px;
+    font-size: 14px; margin-bottom: 12px; text-align: center; letter-spacing: 3px;
+  }
+  .login-box input:focus { outline: none; border-color: #1a3a5c; }
+  .btn-login {
+    width: 100%; padding: 10px; background: #1a3a5c; color: #fff;
+    border: none; border-radius: 5px; font-size: 13px; font-weight: 700; cursor: pointer;
+  }
+  .login-error { margin-top: 10px; font-size: 12px; color: #c0392b; display: none; font-weight: 600; }
+
+  /* ADMIN PANEL */
+  .admin-wrap { display: none; max-width: 1000px; margin: 28px auto; padding: 0 16px 40px; }
+  .panel-card {
+    background: #fff; border-radius: 8px; padding: 24px 28px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.08); margin-bottom: 20px;
+  }
+  .panel-card h2 {
+    font-size: 14px; font-weight: 700; color: #1a3a5c;
+    margin-bottom: 16px; border-bottom: 2px solid #1a3a5c; padding-bottom: 8px;
+    display: flex; align-items: center; gap: 8px;
+  }
+
+  .filter-grid {
+    display: grid; grid-template-columns: 1fr 1fr 1fr auto;
+    gap: 10px; align-items: end; margin-bottom: 16px;
+  }
+  .filter-grid label { font-size: 11px; font-weight: 600; color: #555; display: block; margin-bottom: 3px; }
+  .filter-grid input {
+    width: 100%; padding: 7px 10px; border: 1px solid #ccc; border-radius: 4px; font-size: 12px;
+  }
+  .filter-grid input:focus { outline: none; border-color: #1a3a5c; }
+  .btn-reset-filter {
+    padding: 7px 14px; background: #95a5a6; color: #fff; border: none;
+    border-radius: 4px; font-size: 12px; cursor: pointer; white-space: nowrap; height: 32px;
+  }
+
+  .surat-table-wrap { overflow-x: auto; }
+  table.surat-list { width: 100%; border-collapse: collapse; font-size: 12px; }
+  table.surat-list th {
+    background: #1a3a5c; color: #fff; padding: 8px 10px;
+    text-align: left; font-weight: 600; white-space: nowrap;
+  }
+  table.surat-list td { padding: 7px 10px; border-bottom: 1px solid #eee; vertical-align: top; }
+  table.surat-list tr:hover { background: #f0f7ff; cursor: pointer; }
+  table.surat-list tr.selected { background: #d6eaf8; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 700; }
+  .badge-rr { background: #fef9e7; color: #d35400; }
+  .badge-rb { background: #fdecea; color: #c0392b; }
+  .empty-state { text-align: center; padding: 24px; color: #aaa; font-size: 12px; }
+
+  .detail-panel {
+    display: none; border: 1px solid #d6eaf8; border-radius: 6px;
+    background: #f8fafc; padding: 16px 20px; margin-top: 16px;
+  }
+  .detail-panel h3 { font-size: 13px; color: #1a3a5c; font-weight: 700; margin-bottom: 12px; }
+  .detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 20px; font-size: 12px; }
+  .detail-grid .dl { color: #666; font-weight: 600; }
+  .action-row { margin-top: 14px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+
+  .btn { padding: 9px 20px; border: none; border-radius: 5px; font-size: 12px; font-weight: 700; cursor: pointer; }
+  .btn-pdf { background: #27ae60; color: #fff; }
+  .btn-pdf:disabled { background: #aaa; cursor: not-allowed; }
+  .btn-logout { background: #e74c3c; color: #fff; }
+  .foto-status { font-size: 11px; color: #888; }
+
+  .status-bar {
+    margin-top: 12px; padding: 9px 14px; border-radius: 4px;
+    font-size: 12px; font-weight: 600; display: none;
+  }
+  .status-bar.loading { background: #fef9e7; color: #b7950b; display: block; }
+  .status-bar.success { background: #d5f5e3; color: #1e8449; display: block; }
+  .status-bar.error   { background: #fdecea; color: #c0392b; display: block; }
+
+  /* PRINT AREA */
+  .print-area { display: none; }
+  .surat-wrapper {
+    background: #fff; width: 794px; padding: 40px 56px;
+    font-family: 'Times New Roman', Times, serif; font-size: 12pt; color: #000; margin: 0 auto;
+  }
+  .kop-img { width: 100%; display: block; }
+  .kop-line { border-bottom: 3px solid #000; margin: 6px 0 16px; }
+  .surat-judul { text-align: center; font-weight: bold; font-size: 13pt; text-decoration: underline; text-transform: uppercase; margin: 16px 0 4px; }
+  .surat-nomor { text-align: center; font-size: 12pt; margin-bottom: 20px; }
+  .surat-tujuan { margin-bottom: 16px; line-height: 1.7; }
+  .surat-pembuka { margin-bottom: 14px; text-align: justify; }
+  .identitas-table, .detail-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
+  .identitas-table td, .detail-table td { padding: 2px 0; vertical-align: top; font-size: 12pt; line-height: 1.7; }
+  .identitas-table td:first-child { width: 34%; }
+  .detail-table td:first-child { width: 38%; }
+  .identitas-table td:nth-child(2), .detail-table td:nth-child(2) { width: 4%; text-align: center; }
+  .nilai { border-bottom: 1px solid #000; padding-left: 4px; }
+  .kondisi-option { display: inline-block; padding: 0 4px; }
+  .kondisi-option.aktif { text-decoration: underline; font-weight: bold; }
+  .surat-penutup { text-align: justify; margin-bottom: 20px; line-height: 1.8; }
+  .ttd-row { display: flex; justify-content: space-between; margin-top: 20px; }
+  .ttd-col { text-align: center; width: 45%; }
+  .ttd-col .ttd-nama { font-weight: bold; border-bottom: 1px solid #000; min-height: 80px; padding-bottom: 4px; margin-top: 4px; word-break: break-word; }
+  .ttd-col .ttd-nip { margin-top: 4px; }
+  .lampiran-title { font-weight: bold; text-align: center; font-size: 12pt; margin-bottom: 16px; text-decoration: underline; }
+  .foto-item { margin-bottom: 20px; page-break-inside: avoid; break-inside: avoid; }
+  .foto-item .foto-caption { font-weight: bold; font-size: 11pt; margin-bottom: 6px; border-bottom: 1px solid #999; padding-bottom: 4px; }
+  .foto-item img { width: 100%; height: auto; max-width: 100%; display: block; }
+  .foto-placeholder-print { width: 100%; min-height: 80px; background: #f5f5f5; border: 2px dashed #ccc; display: flex; align-items: center; justify-content: center; color: #aaa; font-size: 11pt; }
+
+  @media print {
+    @page { size: 215mm 330mm; margin: 18mm 25mm; }
+    body { background: #fff; }
+    .app-header, .admin-wrap { display: none !important; }
+    .print-area { display: block !important; }
+    .surat-wrapper { width: 100%; box-shadow: none; padding: 0; margin: 0; page-break-after: always; break-after: page; }
+    .surat-wrapper.lampiran { page-break-after: auto; break-after: auto; }
+    .foto-item { page-break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app-header">
+  <div>
+    <h1>🔐 Admin Panel — Surat Usulan Perbaikan BMN</h1>
+    <small>Regenerate PDF berdasarkan data arsip</small>
+  </div>
+  <a href="index.html" class="btn-back">← Kembali ke Form</a>
+</div>
+
+<!-- LOGIN -->
+<div class="login-wrap" id="loginWrap">
+  <div class="login-box">
+    <div class="lock-icon">🔒</div>
+    <h2>Area Admin</h2>
+    <p>Masukkan password untuk melanjutkan</p>
+    <input type="password" id="passwordInput" placeholder="••••••••"
+      onkeydown="if(event.key==='Enter') doLogin()" />
+    <button class="btn-login" onclick="doLogin()">Masuk</button>
+    <div class="login-error" id="loginError">❌ Password salah. Coba lagi.</div>
+  </div>
+</div>
+
+<!-- ADMIN PANEL -->
+<div class="admin-wrap" id="adminWrap">
+  <div class="panel-card">
+    <h2>🔍 Cari &amp; Pilih Surat
+      <span style="margin-left:auto">
+        <button class="btn btn-logout" onclick="doLogout()">Keluar</button>
+      </span>
+    </h2>
+
+    <div class="filter-grid">
+      <div>
+        <label>Cari Nama Pengaju</label>
+        <input type="text" id="filterNama" placeholder="Ketik nama…" oninput="renderTable()" />
+      </div>
+      <div>
+        <label>Cari Nomor / Barang / NUP</label>
+        <input type="text" id="filterQ" placeholder="Ketik kata kunci…" oninput="renderTable()" />
+      </div>
+      <div>
+        <label>Filter Bulan Surat</label>
+        <input type="month" id="filterBulan" onchange="renderTable()" />
+      </div>
+      <div>
+        <button class="btn-reset-filter" onclick="resetFilter()">Reset Filter</button>
+      </div>
+    </div>
+
+    <div class="surat-table-wrap">
+      <table class="surat-list">
+        <thead>
+          <tr>
+            <th>Tanggal Surat</th>
+            <th>Nomor Surat</th>
+            <th>Nama Pengaju</th>
+            <th>Bagian/Unit</th>
+            <th>Nama Barang</th>
+            <th>NUP</th>
+            <th>Kondisi</th>
+          </tr>
+        </thead>
+        <tbody id="suratTableBody">
+          <tr><td colspan="7" class="empty-state">⏳ Memuat data arsip…</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="detail-panel" id="detailPanel">
+      <h3>📄 Detail Surat Terpilih</h3>
+      <div class="detail-grid" id="detailGrid"></div>
+      <div class="action-row">
+        <button class="btn btn-pdf" id="btnRegen" onclick="startRegenPDF()">🖨️ Cetak / Simpan PDF</button>
+        <span class="foto-status" id="fotoStatus"></span>
+      </div>
+      <div class="status-bar" id="statusBar"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PRINT AREA -->
+<div class="print-area" id="printArea">
+  <div class="surat-wrapper">
+    <img class="kop-img" src="KOP.png" onerror="this.style.display='none'" />
+    <div class="kop-line"></div>
+    <div class="surat-judul">Surat Usulan Perbaikan Barang Milik Negara</div>
+    <div class="surat-nomor">NOMOR: <span id="prNomor"></span></div>
+    <div class="surat-tujuan">
+      <p>Yth. Kepala Instalasi Sarana Prasarana</p><p>di Palembang</p>
+    </div>
+    <div class="surat-pembuka">Dengan hormat, yang bertanda tangan di bawah ini:</div>
+    <table class="identitas-table">
+      <tr><td>Nama</td><td>:</td><td class="nilai" id="prNama"></td></tr>
+      <tr><td>NIP</td><td>:</td><td class="nilai" id="prNip"></td></tr>
+      <tr><td>Jabatan</td><td>:</td><td class="nilai" id="prJabatan"></td></tr>
+      <tr><td>Bagian</td><td>:</td><td class="nilai" id="prBagian"></td></tr>
+    </table>
+    <div style="margin-bottom:8px">Dengan ini mengajukan usulan perbaikan/pemeliharaan Barang Milik Negara (BMN) sebagai berikut:</div>
+    <table class="detail-table">
+      <tr><td>Nama Barang</td><td>:</td><td class="nilai" id="prNamaBarang"></td></tr>
+      <tr><td>Tipe</td><td>:</td><td class="nilai" id="prTipe"></td></tr>
+      <tr><td>Merek</td><td>:</td><td class="nilai" id="prMerek"></td></tr>
+      <tr><td>Ruangan (Sesuai DBR)</td><td>:</td><td class="nilai" id="prRuangan"></td></tr>
+      <tr><td>NUP</td><td>:</td><td class="nilai" id="prNup"></td></tr>
+      <tr>
+        <td>Kondisi (Sesuai Status BMN)</td><td>:</td>
+        <td class="nilai">
+          <span id="prKondisiRR" class="kondisi-option">Rusak Ringan</span> &nbsp;/&nbsp;
+          <span id="prKondisiRB" class="kondisi-option">Rusak Berat</span>
+        </td>
+      </tr>
+      <tr><td>Keluhan</td><td>:</td><td class="nilai" id="prKeluhan" style="white-space:pre-wrap"></td></tr>
+      <tr><td>Foto (NUP, Merek/Tipe)</td><td>:</td><td class="nilai">(Terlampir)</td></tr>
+    </table>
+    <div class="surat-penutup">
+      Demikian usulan perbaikan Barang Milik Negara ini disampaikan untuk dapat dipertimbangkan dan ditindaklanjuti sebagaimana mestinya. Atas perhatian dan perkenan Bapak/Ibu, kami mengucapkan terima kasih.
+    </div>
+    <div style="text-align:right;margin-bottom:8px">
+      <span id="prKota">Palembang</span>, <span id="prTanggal"></span>
+    </div>
+    <div class="ttd-row">
+      <div class="ttd-col">
+        <div style="margin-bottom:4px">Penerima,</div>
+        <div class="ttd-nama" style="padding-top:60px"></div>
+        <div class="ttd-nip"></div>
+      </div>
+      <div class="ttd-col">
+        <div style="margin-bottom:4px">Pengirim,</div>
+        <div class="ttd-nama" style="padding-top:60px" id="prNamaTtd"></div>
+        <div class="ttd-nip">NIP. <span id="prNipTtd"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Lembar 2 Foto -->
+  <div class="surat-wrapper lampiran">
+    <div class="lampiran-title">LAMPIRAN FOTO<br>
+      <span style="font-size:10pt;font-weight:normal">Nomor: <span id="prNomorLampiran"></span></span>
+    </div>
+    <div class="foto-item">
+      <div class="foto-caption">1. Foto NUP Barang</div>
+      <img id="imgNup" src="" style="display:none;width:100%;height:auto" />
+      <div class="foto-placeholder-print" id="phNup">[ Foto tidak tersedia ]</div>
+    </div>
+    <div class="foto-item">
+      <div class="foto-caption">2. Foto Merek / Tipe</div>
+      <img id="imgMerek" src="" style="display:none;width:100%;height:auto" />
+      <div class="foto-placeholder-print" id="phMerek">[ Foto tidak tersedia ]</div>
+    </div>
+    <div class="foto-item">
+      <div class="foto-caption">3. Foto Kerusakan</div>
+      <img id="imgKerusakan" src="" style="display:none;width:100%;height:auto" />
+      <div class="foto-placeholder-print" id="phKerusakan">[ Foto tidak tersedia ]</div>
+    </div>
+    <div class="foto-item">
+      <div class="foto-caption">4. Foto Keseluruhan Barang</div>
+      <img id="imgKeseluruhan" src="" style="display:none;width:100%;height:auto" />
+      <div class="foto-placeholder-print" id="phKeseluruhan">[ Foto tidak tersedia ]</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const GAS_URL     = 'https://script.google.com/macros/s/AKfycbz4pZjl1teUvu0WlEBsdy6_HIESNGCWKZOnSRKPjZQOxMchTj0MGpLsqnHD5DK00zVjug/exec';
+const PASSWORD    = 'sarpras2026'; // ← GANTI PASSWORD DI SINI
+const SESSION_KEY = 'bmn_admin_auth';
+
+// SESSION
+window.addEventListener('load', () => {
+  if (sessionStorage.getItem(SESSION_KEY) === 'ok') showPanel();
+});
+
+function doLogin() {
+  const val = document.getElementById('passwordInput').value;
+  if (val === PASSWORD) {
+    sessionStorage.setItem(SESSION_KEY, 'ok');
+    document.getElementById('loginError').style.display = 'none';
+    showPanel();
+  } else {
+    document.getElementById('loginError').style.display = 'block';
+    document.getElementById('passwordInput').value = '';
+    document.getElementById('passwordInput').focus();
+  }
+}
+
+function doLogout() { sessionStorage.removeItem(SESSION_KEY); location.reload(); }
+
+function showPanel() {
+  document.getElementById('loginWrap').style.display  = 'none';
+  document.getElementById('adminWrap').style.display  = 'block';
+  loadSuratList();
+}
+
+// DATA
+let allSurat = [];
+let selectedRow = null;
+
+async function loadSuratList() {
+  try {
+    const resp = await fetch(GAS_URL + '?action=getSuratList');
+    const data = await resp.json();
+    if (data.status !== 'ok') throw new Error(data.error);
+    allSurat = data.data;
+    renderTable();
+  } catch(e) {
+    document.getElementById('suratTableBody').innerHTML =
+      `<tr><td colspan="7" class="empty-state">❌ Gagal memuat: ${e.message}</td></tr>`;
+  }
+}
+
+// FILTER
+function renderTable() {
+  const qNama  = document.getElementById('filterNama').value.toLowerCase();
+  const qQ     = document.getElementById('filterQ').value.toLowerCase();
+  const qBulan = document.getElementById('filterBulan').value;
+
+  const filtered = allSurat.filter(r => {
+    if (qNama  && !r.nama.toLowerCase().includes(qNama)) return false;
+    if (qQ && ![r.nomor, r.namaBarang, r.nup, r.bagian, r.keluhan]
+               .some(v => v.toLowerCase().includes(qQ))) return false;
+    if (qBulan && !r.tanggalSurat.startsWith(qBulan)) return false;
+    return true;
+  });
+
+  const tbody = document.getElementById('suratTableBody');
+  if (filtered.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty-state">Tidak ada data yang cocok</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(r => {
+    const idx = allSurat.indexOf(r);
+    const bc  = r.kondisi === 'Rusak Berat' ? 'badge-rb' : 'badge-rr';
+    return `<tr onclick="selectRow(${idx})" id="row_${idx}">
+      <td>${formatTanggal(r.tanggalSurat)}</td>
+      <td style="font-family:monospace;font-size:11px">${r.nomor}</td>
+      <td><strong>${r.nama}</strong></td>
+      <td>${r.bagian}</td>
+      <td>${r.namaBarang}</td>
+      <td>${r.nup}</td>
+      <td><span class="badge ${bc}">${r.kondisi}</span></td>
+    </tr>`;
+  }).join('');
+}
+
+function resetFilter() {
+  ['filterNama','filterQ','filterBulan'].forEach(id => document.getElementById(id).value = '');
+  renderTable();
+}
+
+// SELECT ROW
+function selectRow(idx) {
+  document.querySelectorAll('table.surat-list tr.selected').forEach(el => el.classList.remove('selected'));
+  const rowEl = document.getElementById('row_' + idx);
+  if (rowEl) rowEl.classList.add('selected');
+  selectedRow = allSurat[idx];
+  const d = selectedRow;
+
+  document.getElementById('detailGrid').innerHTML = `
+    <div class="dl">Nomor Surat</div>   <div class="dv">${d.nomor}</div>
+    <div class="dl">Tanggal Surat</div> <div class="dv">${formatTanggal(d.tanggalSurat)}</div>
+    <div class="dl">Nama Pengaju</div>  <div class="dv">${d.nama}</div>
+    <div class="dl">NIP</div>           <div class="dv">${d.nip}</div>
+    <div class="dl">Jabatan</div>       <div class="dv">${d.jabatan}</div>
+    <div class="dl">Bagian/Unit</div>   <div class="dv">${d.bagian}</div>
+    <div class="dl">Nama Barang</div>   <div class="dv">${d.namaBarang}</div>
+    <div class="dl">Merek</div>         <div class="dv">${d.merekTipe || '-'}</div>
+    <div class="dl">Ruangan</div>       <div class="dv">${d.ruangan}</div>
+    <div class="dl">NUP BMN</div>       <div class="dv">${d.nup}</div>
+    <div class="dl">Kondisi</div>       <div class="dv">${d.kondisi}</div>
+    <div class="dl">Keluhan</div>       <div class="dv" style="white-space:pre-wrap">${d.keluhan}</div>
+  `;
+
+  const fotoAda = [d.fotoNup,d.fotoMerek,d.fotoKerusakan,d.fotoKeseluruhan].filter(f=>f&&f!=='-').length;
+  document.getElementById('fotoStatus').textContent = `📎 ${fotoAda} dari 4 foto tersedia di Drive`;
+  document.getElementById('statusBar').style.display = 'none';
+  document.getElementById('detailPanel').style.display = 'block';
+  document.getElementById('btnRegen').disabled = false;
+}
+
+// REGENERATE PDF
+async function startRegenPDF() {
+  if (!selectedRow) return;
+  const d = selectedRow;
+  const btn = document.getElementById('btnRegen');
+  btn.disabled = true;
+  setStatus('loading', '⏳ Mengambil foto dari Google Drive… (10–30 detik)');
+
+  const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val || ''; };
+  set('prNomor', d.nomor);       set('prNomorLampiran', d.nomor);
+  set('prNama', d.nama);         set('prNamaTtd', d.nama);
+  set('prNip',  d.nip);          set('prNipTtd',  d.nip);
+  set('prJabatan', d.jabatan);   set('prBagian', d.bagian);
+  set('prNamaBarang', d.namaBarang);
+  set('prTipe',  d.tipe    || '');
+  set('prMerek', d.merekTipe || '');
+  set('prRuangan', d.ruangan);
+  set('prNup', d.nup);
+  set('prKeluhan', d.keluhan);
+  set('prKota', 'Palembang');
+  set('prTanggal', formatTanggal(d.tanggalSurat));
+
+  document.getElementById('prKondisiRR').className = 'kondisi-option' + (d.kondisi === 'Rusak Ringan' ? ' aktif' : '');
+  document.getElementById('prKondisiRB').className = 'kondisi-option' + (d.kondisi === 'Rusak Berat'  ? ' aktif' : '');
+
+  // Reset foto
+  ['Nup','Merek','Kerusakan','Keseluruhan'].forEach(k => {
+    const img = document.getElementById('img' + k);
+    const ph  = document.getElementById('ph'  + k);
+    img.src = ''; img.style.display = 'none'; ph.style.display = 'flex';
+  });
+
+  // Fetch foto paralel via GAS
+  const fotoMap = {
+    Nup: d.fotoNup, Merek: d.fotoMerek,
+    Kerusakan: d.fotoKerusakan, Keseluruhan: d.fotoKeseluruhan
+  };
+
+  let fetched = 0;
+  await Promise.all(Object.entries(fotoMap).map(async ([key, url]) => {
+    if (!url || url === '-') return;
+    try {
+      const resp = await fetch(GAS_URL + '?action=getPhoto&url=' + encodeURIComponent(url));
+      const data = await resp.json();
+      if (data.status === 'ok' && data.base64) {
+        const img = document.getElementById('img' + key);
+        const ph  = document.getElementById('ph'  + key);
+        img.src = data.base64;
+        img.style.display = 'block';
+        ph.style.display  = 'none';
+        fetched++;
+      }
+    } catch(_) { /* biarkan placeholder */ }
+  }));
+
+  setStatus('success', `✅ ${fetched} foto dimuat. Membuka dialog cetak…`);
+  await sleep(600);
+
+  const origTitle = document.title;
+  document.title  = 'Surat_BMN_' + d.nomor.replace(/\//g,'-') + '_' + d.nama.substring(0,20);
+  window.print();
+  setTimeout(() => { document.title = origTitle; btn.disabled = false; }, 2000);
+}
+
+// HELPERS
+function formatTanggal(val) {
+  if (!val) return '';
+  const months = ['Januari','Februari','Maret','April','Mei','Juni','Juli','Agustus','September','Oktober','November','Desember'];
+  const d = new Date(val + (val.includes('T') ? '' : 'T00:00:00'));
+  if (isNaN(d)) return val;
+  return d.getDate() + ' ' + months[d.getMonth()] + ' ' + d.getFullYear();
+}
+
+function setStatus(type, msg) {
+  const bar = document.getElementById('statusBar');
+  bar.className = 'status-bar ' + type;
+  bar.textContent = msg;
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+</script>
+</body>
+</html>
