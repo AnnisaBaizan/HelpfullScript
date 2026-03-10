@@ -1,0 +1,47 @@
+# Python
+.venv/
+venv/
+env/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# PyInstaller
+build/
+dist/
+*.spec
+
+# Sensitive / Credentials
+auth.json
+.env
+*.env
+credentials.json
+token.json
+secrets.json
+
+# Data files with potential PII (keep locally, don't commit)
+# GoogleForm/data_pelatihan.xlsx
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/settings.json
+*.swp
+*.swo
+
+# Compiled binaries
+*.exe
+*.dll
+*.so
+*.dylib
+
+# Node
+node_modules/
+
+# Logs
+*.log
