@@ -138,6 +138,33 @@
   .foto-item img { width: 100%; height: auto; max-width: 100%; display: block; }
   .foto-placeholder-print { width: 100%; min-height: 80px; background: #f5f5f5; border: 2px dashed #ccc; display: flex; align-items: center; justify-content: center; color: #aaa; font-size: 11pt; }
 
+  /* LOADING MODAL */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 9999;
+    background: rgba(0,0,0,.55); align-items: center; justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    background: #fff; border-radius: 10px; padding: 32px 36px;
+    min-width: 320px; max-width: 400px; text-align: center;
+    box-shadow: 0 8px 32px rgba(0,0,0,.25);
+  }
+  .modal-spinner {
+    width: 48px; height: 48px; border: 5px solid #e0e8f0;
+    border-top-color: #1a3a5c; border-radius: 50%;
+    animation: spin .8s linear infinite; margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .modal-title { font-size: 15px; font-weight: 700; color: #1a3a5c; margin-bottom: 10px; }
+  .modal-steps { text-align: left; margin-top: 12px; }
+  .modal-step-item {
+    font-size: 12px; padding: 4px 0; color: #bbb;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .modal-step-item.active { color: #1a3a5c; font-weight: 600; }
+  .modal-step-item.done   { color: #27ae60; }
+  .modal-step-item .si    { width: 18px; text-align: center; }
+
   @media print {
     @page { size: 215mm 330mm; margin: 18mm 25mm; }
     body { background: #fff; }
@@ -312,8 +339,21 @@
   </div>
 </div>
 
+<!-- LOADING MODAL -->
+<div class="modal-overlay" id="loadingModal">
+  <div class="modal-box">
+    <div class="modal-spinner"></div>
+    <div class="modal-title">Menyiapkan PDF…</div>
+    <div class="modal-steps">
+      <div class="modal-step-item" id="ms1"><span class="si">⏳</span> Menyiapkan data surat</div>
+      <div class="modal-step-item" id="ms2"><span class="si">⏳</span> Mengambil foto dari Google Drive</div>
+      <div class="modal-step-item" id="ms3"><span class="si">⏳</span> Membuka dialog cetak / PDF</div>
+    </div>
+  </div>
+</div>
+
 <script>
-const GAS_URL     = 'https://script.google.com/macros/s/AKfycbz4pZjl1teUvu0WlEBsdy6_HIESNGCWKZOnSRKPjZQOxMchTj0MGpLsqnHD5DK00zVjug/exec';
+const GAS_URL     = 'GANTI_SAMA_DENGAN_GAS_URL_DI_INDEX_HTML';
 const PASSWORD    = 'sarpras2026'; // ← GANTI PASSWORD DI SINI
 const SESSION_KEY = 'bmn_admin_auth';
 
@@ -430,14 +470,29 @@ function selectRow(idx) {
   document.getElementById('btnRegen').disabled = false;
 }
 
+// MODAL HELPERS
+function showModal() { document.getElementById('loadingModal').classList.add('show'); }
+function hideModal() { document.getElementById('loadingModal').classList.remove('show'); }
+function setStep(id, status, icon) {
+  const el = document.getElementById(id); if (!el) return;
+  el.className = 'modal-step-item ' + status;
+  el.querySelector('.si').textContent = icon;
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
 // REGENERATE PDF
 async function startRegenPDF() {
   if (!selectedRow) return;
   const d = selectedRow;
   const btn = document.getElementById('btnRegen');
   btn.disabled = true;
-  setStatus('loading', '⏳ Mengambil foto dari Google Drive… (10–30 detik)');
 
+  // Reset & tampilkan modal
+  ['ms1','ms2','ms3'].forEach(id => setStep(id, '', '⏳'));
+  showModal();
+
+  // Step 1 — data surat
+  setStep('ms1', 'active', '🔄');
   const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val || ''; };
   set('prNomor', d.nomor);       set('prNomorLampiran', d.nomor);
   set('prNama', d.nama);         set('prNamaTtd', d.nama);
@@ -446,28 +501,26 @@ async function startRegenPDF() {
   set('prNamaBarang', d.namaBarang);
   set('prTipe',  d.tipe    || '');
   set('prMerek', d.merekTipe || '');
-  set('prRuangan', d.ruangan);
-  set('prNup', d.nup);
-  set('prKeluhan', d.keluhan);
-  set('prKota', 'Palembang');
+  set('prRuangan', d.ruangan);   set('prNup', d.nup);
+  set('prKeluhan', d.keluhan);   set('prKota', 'Palembang');
   set('prTanggal', formatTanggal(d.tanggalSurat));
-
   document.getElementById('prKondisiRR').className = 'kondisi-option' + (d.kondisi === 'Rusak Ringan' ? ' aktif' : '');
   document.getElementById('prKondisiRB').className = 'kondisi-option' + (d.kondisi === 'Rusak Berat'  ? ' aktif' : '');
+  await sleep(300);
+  setStep('ms1', 'done', '✅');
 
-  // Reset foto
+  // Step 2 — foto dari Drive
+  setStep('ms2', 'active', '🔄');
   ['Nup','Merek','Kerusakan','Keseluruhan'].forEach(k => {
     const img = document.getElementById('img' + k);
     const ph  = document.getElementById('ph'  + k);
     img.src = ''; img.style.display = 'none'; ph.style.display = 'flex';
   });
 
-  // Fetch foto paralel via GAS
   const fotoMap = {
     Nup: d.fotoNup, Merek: d.fotoMerek,
     Kerusakan: d.fotoKerusakan, Keseluruhan: d.fotoKeseluruhan
   };
-
   let fetched = 0;
   await Promise.all(Object.entries(fotoMap).map(async ([key, url]) => {
     if (!url || url === '-') return;
@@ -477,16 +530,20 @@ async function startRegenPDF() {
       if (data.status === 'ok' && data.base64) {
         const img = document.getElementById('img' + key);
         const ph  = document.getElementById('ph'  + key);
-        img.src = data.base64;
-        img.style.display = 'block';
-        ph.style.display  = 'none';
+        img.src = data.base64; img.style.display = 'block'; ph.style.display = 'none';
         fetched++;
       }
-    } catch(_) { /* biarkan placeholder */ }
+    } catch(_) {}
   }));
+  setStep('ms2', 'done', `✅ ${fetched} foto dimuat`);
+  await sleep(300);
 
-  setStatus('success', `✅ ${fetched} foto dimuat. Membuka dialog cetak…`);
-  await sleep(600);
+  // Step 3 — cetak
+  setStep('ms3', 'active', '🔄');
+  await sleep(400);
+  setStep('ms3', 'done', '✅');
+  await sleep(400);
+  hideModal();
 
   const origTitle = document.title;
   document.title  = 'Surat_BMN_' + d.nomor.replace(/\//g,'-') + '_' + d.nama.substring(0,20);
