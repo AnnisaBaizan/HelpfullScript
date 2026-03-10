@@ -92,8 +92,8 @@
   /* ===== SURAT (SCREEN) ===== */
   .surat-wrapper {
     background: #fff;
-    width: 794px; /* A4-like preview */
-    min-height: 1050px;
+    width: 794px;
+    min-height: auto;
     padding: 40px 56px 40px 56px;
     box-shadow: 0 4px 20px rgba(0,0,0,.3);
     font-family: 'Times New Roman', Times, serif;
@@ -208,6 +208,34 @@
   .dropdown-item:hover, .dropdown-item.focused { background: #eaf2fb; }
   .dropdown-item.selected { background: #d6eaf8; font-weight: 600; }
   .dropdown-item.no-result { color: #aaa; cursor: default; font-style: italic; }
+
+  /* ===== LOADING MODAL ===== */
+  .modal-overlay {
+    display: none; position: fixed; inset: 0; z-index: 9999;
+    background: rgba(0,0,0,.55); align-items: center; justify-content: center;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal-box {
+    background: #fff; border-radius: 10px; padding: 32px 36px;
+    min-width: 320px; max-width: 420px; text-align: center;
+    box-shadow: 0 8px 32px rgba(0,0,0,.25);
+  }
+  .modal-spinner {
+    width: 48px; height: 48px; border: 5px solid #e0e8f0;
+    border-top-color: #1a3a5c; border-radius: 50%;
+    animation: spin .8s linear infinite; margin: 0 auto 16px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .modal-title { font-size: 15px; font-weight: 700; color: #1a3a5c; margin-bottom: 8px; }
+  .modal-step  { font-size: 12px; color: #555; min-height: 20px; }
+  .modal-steps-list { margin-top: 14px; text-align: left; }
+  .modal-steps-list .step-item {
+    font-size: 12px; padding: 4px 0; color: #aaa;
+    display: flex; align-items: center; gap: 8px;
+  }
+  .modal-steps-list .step-item.done  { color: #27ae60; }
+  .modal-steps-list .step-item.active { color: #1a3a5c; font-weight: 600; }
+  .modal-steps-list .step-item .step-icon { width: 16px; text-align: center; }
 
   /* ===== PRINT STYLES ===== */
   @media print {
@@ -518,6 +546,22 @@
   </div><!-- /preview-panel -->
 </div><!-- /main-layout -->
 
+<!-- ===== LOADING MODAL ===== -->
+<div class="modal-overlay" id="loadingModal">
+  <div class="modal-box">
+    <div class="modal-spinner"></div>
+    <div class="modal-title">Memproses Surat BMN…</div>
+    <div class="modal-step" id="modalStep">Menyiapkan data…</div>
+    <div class="modal-steps-list" id="modalStepsList">
+      <div class="step-item" id="step1"><span class="step-icon">⏳</span> Validasi data form</div>
+      <div class="step-item" id="step2"><span class="step-icon">⏳</span> Mengirim ke Google Sheets</div>
+      <div class="step-item" id="step3"><span class="step-icon">⏳</span> Upload foto ke Google Drive</div>
+      <div class="step-item" id="step4"><span class="step-icon">⏳</span> Mengirim notifikasi email & WA</div>
+      <div class="step-item" id="step5"><span class="step-icon">⏳</span> Membuat PDF surat</div>
+    </div>
+  </div>
+</div>
+
 <script>
 // ===== CONFIG — GANTI URL DI BAWAH INI =====
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyKVBa9qN3Oz-4as_vTtYfavElFjO3L8YSRvh-Dk6beNW_j80FJzNTezJY9VvZ1BtZVEg/exec';
@@ -659,8 +703,14 @@ function buildTipeDropdown() {
 
 // Generic searchable dropdown builder
 function buildDropdown(searchId, listId, items, onSelect) {
+  const listEl = document.getElementById(listId);
+
+  // Remove old listeners cleanly
   const searchEl = document.getElementById(searchId);
-  const listEl   = document.getElementById(listId);
+  const newSearch = searchEl.cloneNode(true);
+  searchEl.parentNode.replaceChild(newSearch, searchEl);
+  const freshSearch = document.getElementById(searchId);
+  freshSearch.value = '';
 
   function render(filter) {
     const q = filter.toLowerCase();
@@ -675,7 +725,7 @@ function buildDropdown(searchId, listId, items, onSelect) {
         div.textContent = item;
         div.addEventListener('mousedown', (e) => {
           e.preventDefault();
-          searchEl.value = item;
+          freshSearch.value = item;   // ← tampilkan teks terpilih di input
           listEl.classList.remove('open');
           onSelect(item);
         });
@@ -684,25 +734,11 @@ function buildDropdown(searchId, listId, items, onSelect) {
     }
   }
 
-  // Reset old listeners by replacing element
-  const newSearch = searchEl.cloneNode(true);
-  searchEl.parentNode.replaceChild(newSearch, searchEl);
-  const freshSearch = document.getElementById(searchId);
-
-  freshSearch.value = '';
   render('');
 
-  freshSearch.addEventListener('focus', () => {
-    render(freshSearch.value);
-    listEl.classList.add('open');
-  });
-  freshSearch.addEventListener('input', () => {
-    render(freshSearch.value);
-    listEl.classList.add('open');
-  });
-  freshSearch.addEventListener('blur', () => {
-    setTimeout(() => listEl.classList.remove('open'), 150);
-  });
+  freshSearch.addEventListener('focus', () => { render(freshSearch.value); listEl.classList.add('open'); });
+  freshSearch.addEventListener('input', () => { render(freshSearch.value); listEl.classList.add('open'); });
+  freshSearch.addEventListener('blur',  () => { setTimeout(() => listEl.classList.remove('open'), 150); });
 }
 
 // ===== LIVE PREVIEW BINDING =====
@@ -770,6 +806,17 @@ function handlePhoto(input, thumbId, prevId) {
   reader.readAsDataURL(file);
 }
 
+// ===== MODAL HELPERS =====
+function showModal()  { document.getElementById('loadingModal').classList.add('show'); }
+function hideModal()  { document.getElementById('loadingModal').classList.remove('show'); }
+function setModalStep(stepId, status, icon) {
+  const el = document.getElementById(stepId);
+  if (!el) return;
+  el.className = 'step-item ' + status;
+  el.querySelector('.step-icon').textContent = icon;
+}
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
 // ===== SUBMIT → KIRIM DATA + DOWNLOAD PDF =====
 async function submitForm() {
   if (!nomorData) { setStatus('error', '❌ Nomor surat belum berhasil diambil.'); return; }
@@ -787,7 +834,20 @@ async function submitForm() {
 
   const btn = document.getElementById('btnSubmit');
   btn.disabled = true;
-  setStatus('loading', '⏳ Mengirim data & menyiapkan PDF…');
+
+  // Tampilkan modal, reset semua step
+  ['step1','step2','step3','step4','step5'].forEach(id => setModalStep(id, '', '⏳'));
+  showModal();
+
+  // Step 1 — Validasi
+  setModalStep('step1', 'active', '🔄');
+  await sleep(300);
+  setModalStep('step1', 'done', '✅');
+
+  // Step 2 — Kirim ke server (Sheets + Drive + Notif semua di GAS)
+  setModalStep('step2', 'active', '🔄');
+  setModalStep('step3', 'active', '🔄');
+  setModalStep('step4', 'active', '🔄');
 
   const payload = {
     action: 'submit',
@@ -795,7 +855,7 @@ async function submitForm() {
     tanggalSurat: g('tanggalSurat'), kota: g('kotaSurat'),
     nama: g('nama'), nip: g('nip'), jabatan: g('jabatan'), bagian: g('bagian'),
     namaBarang: g('namaBarang'), merekTipe: g('merekTipe'),
-    tipe: selTipe, nup: g('nup'),
+    tipe: selTipe, ruangan: g('ruangan'), nup: g('nup'),
     kondisi: document.querySelector('input[name=kondisi]:checked')?.value || '',
     keluhan: g('keluhan'),
     fotoNup: photoData.fotoNup || '', fotoMerek: photoData.fotoMerek || '',
@@ -805,13 +865,28 @@ async function submitForm() {
   try {
     const resp   = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
     const result = await resp.json();
+
     if (result.status === 'ok') {
-      setStatus('success', '✅ Data berhasil dikirim! Mengunduh PDF…');
+      setModalStep('step2', 'done', '✅');
+      setModalStep('step3', 'done', '✅');
+      setModalStep('step4', 'done', '✅');
+
+      // Step 5 — PDF
+      setModalStep('step5', 'active', '🔄');
+      await sleep(400);
+      setModalStep('step5', 'done', '✅');
+      await sleep(500);
+
+      hideModal();
+      setStatus('success', '✅ Berhasil! Membuka dialog simpan PDF…');
       downloadPDF();
       nomorData = null;
       fetchNomor();
-    } else throw new Error(result.error || 'Respons tidak valid');
+    } else {
+      throw new Error(result.error || 'Respons tidak valid');
+    }
   } catch (e) {
+    hideModal();
     setStatus('error', '❌ Gagal submit: ' + e.message);
   } finally {
     btn.disabled = false;
