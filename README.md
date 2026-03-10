@@ -10,7 +10,7 @@ All tools here were built to solve actual problems, not for practice.
 
 ## Projects
 
-### 1. SAKTI Automation — `Sakti/`
+### 1. SAKTI Automation — [`Sakti/`](https://github.com/AnnisaBaizan/HelpfullScript/tree/main/Sakti)
 
 Automation tools for **SAKTI** (Sistem Aplikasi Keuangan Tingkat Instansi), the Indonesian Ministry of Finance's web-based financial management system.
 
@@ -32,7 +32,7 @@ The core challenge: SAKTI uses Angular with PrimeNG masked input fields that rej
 
 ---
 
-### 2. SIAKAD Automation Scripts (AMS) — `AMS/`
+### 2. SIAKAD Automation Scripts (AMS) — [`AMS/`](https://github.com/AnnisaBaizan/HelpfullScript/tree/main/AMS)
 
 Tampermonkey UserScripts for automating batch data operations in **SIAKAD** (Student Information System) at Politeknik Kesehatan Palembang.
 
@@ -49,7 +49,7 @@ Built for operators managing hundreds of student records — tasks that previous
 
 ---
 
-### 3. Google Form Autofill — `GoogleForm/`
+### 3. Google Form Autofill — [`GoogleForm/`](https://github.com/AnnisaBaizan/HelpfullScript/tree/main/GoogleForm)
 
 Python script that reads employee training data from an Excel file and automatically fills and submits a Google Form for each row — using Playwright for browser automation with a saved session.
 
@@ -59,7 +59,7 @@ Eliminates manual re-entry of the same form for large batches of training record
 
 ---
 
-### 4. Google Sheets PDF Exporter — `GoogleSheet/google-sheets-pdf-exporter/`
+### 4. Google Sheets PDF Exporter — [`GoogleSheet/google-sheets-pdf-exporter/`](https://github.com/AnnisaBaizan/HelpfullScript/tree/main/GoogleSheet/google-sheets-pdf-exporter)
 
 Google Apps Script that adds a custom **"PRINT TOOLS"** menu to a Google Sheet. One click exports a specific column range (A–M) to a formatted PDF, with the filename auto-generated from a cell value.
 
@@ -72,7 +72,7 @@ Features:
 
 ---
 
-### 5. BMN Repair Request System — `gworkspace-webapps/surat-usulan-bmn/`
+### 5. BMN Repair Request System — [`gworkspace-webapps/surat-usulan-bmn/`](https://github.com/AnnisaBaizan/HelpfullScript/tree/main/gworkspace-webapps/surat-usulan-bmn)
 
 A zero-infrastructure web app for submitting asset repair requests (Surat Usulan Perbaikan BMN) at Politeknik Kesehatan Palembang's facilities department.
 
@@ -89,7 +89,7 @@ Runs entirely on free services: GitHub Pages + Google Apps Script + Google Drive
 
 ---
 
-### 6. QR Code Generator — `ETC/`
+### 6. QR Code Generator — [`ETC/`](https://github.com/AnnisaBaizan/HelpfullScript/tree/main/ETC)
 
 Two standalone HTML tools for generating QR codes with an embedded logo. No server, no install — open in browser and use.
 
