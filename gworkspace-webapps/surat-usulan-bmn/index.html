@@ -186,6 +186,29 @@
     color: #aaa; font-size: 11pt;
   }
 
+  /* ===== SEARCHABLE DROPDOWN ===== */
+  .searchable-wrap { position: relative; }
+  .search-input {
+    width: 100%; padding: 7px 10px; border: 1px solid #ccc; border-radius: 4px;
+    font-size: 12px; color: #222; background: #fff;
+  }
+  .search-input:focus { outline: none; border-color: #1a3a5c; box-shadow: 0 0 0 2px rgba(26,58,92,.1); }
+  .dropdown-list {
+    display: none; position: absolute; z-index: 100; width: 100%;
+    max-height: 200px; overflow-y: auto;
+    background: #fff; border: 1px solid #1a3a5c; border-top: none;
+    border-radius: 0 0 4px 4px; box-shadow: 0 4px 12px rgba(0,0,0,.12);
+  }
+  .dropdown-list.open { display: block; }
+  .dropdown-item {
+    padding: 7px 12px; font-size: 12px; cursor: pointer; color: #222;
+    border-bottom: 1px solid #f0f0f0;
+    transition: background .1s;
+  }
+  .dropdown-item:hover, .dropdown-item.focused { background: #eaf2fb; }
+  .dropdown-item.selected { background: #d6eaf8; font-weight: 600; }
+  .dropdown-item.no-result { color: #aaa; cursor: default; font-style: italic; }
+
   /* ===== PRINT STYLES ===== */
   @media print {
     @page { size: 215mm 330mm; margin: 18mm 25mm; }
@@ -280,21 +303,56 @@
     <!-- Detail Barang -->
     <div class="form-section">
       <h3>Detail Barang BMN</h3>
-      <div class="form-row">
+
+      <!-- Loading state -->
+      <div id="asetLoading" style="padding:10px;text-align:center;color:#888;font-size:12px;">
+        ⏳ Memuat data aset BMN…
+      </div>
+      <div id="asetError" style="display:none;padding:8px;background:#fdecea;border-radius:4px;color:#c0392b;font-size:12px;margin-bottom:10px;"></div>
+
+      <!-- Dropdown 1: NUP -->
+      <div class="form-row" id="rowNup" style="display:none">
+        <label>NUP BMN <span class="req">*</span></label>
+        <div class="searchable-wrap">
+          <input type="text" id="searchNup" class="search-input" placeholder="🔍 Cari NUP…" autocomplete="off" />
+          <div class="dropdown-list" id="listNup"></div>
+        </div>
+        <input type="hidden" id="nup" />
+      </div>
+
+      <!-- Dropdown 2: Nama Barang (filter by NUP) -->
+      <div class="form-row" id="rowNama" style="display:none">
         <label>Nama Barang <span class="req">*</span></label>
-        <input type="text" id="namaBarang" placeholder="Contoh: AC Split, Laptop, Printer" />
+        <div class="searchable-wrap">
+          <input type="text" id="searchNama" class="search-input" placeholder="🔍 Cari nama barang…" autocomplete="off" />
+          <div class="dropdown-list" id="listNama"></div>
+        </div>
+        <input type="hidden" id="namaBarang" />
       </div>
-      <div class="form-row">
-        <label>Merek / Tipe</label>
-        <input type="text" id="merekTipe" placeholder="Contoh: Samsung / AR12BGHQASI" />
+
+      <!-- Dropdown 3: Merk (filter by NUP+Nama) -->
+      <div class="form-row" id="rowMerk" style="display:none">
+        <label>Merek <span class="req">*</span></label>
+        <div class="searchable-wrap">
+          <input type="text" id="searchMerk" class="search-input" placeholder="🔍 Cari merek…" autocomplete="off" />
+          <div class="dropdown-list" id="listMerk"></div>
+        </div>
+        <input type="hidden" id="merekTipe" />
       </div>
+
+      <!-- Dropdown 4: Tipe (filter by NUP+Nama+Merk) -->
+      <div class="form-row" id="rowTipe" style="display:none">
+        <label>Tipe <span class="req">*</span></label>
+        <div class="searchable-wrap">
+          <input type="text" id="searchTipe" class="search-input" placeholder="🔍 Cari tipe…" autocomplete="off" />
+          <div class="dropdown-list" id="listTipe"></div>
+        </div>
+        <input type="hidden" id="selectedTipe" />
+      </div>
+
       <div class="form-row">
         <label>Ruangan (Sesuai DBR) <span class="req">*</span></label>
         <input type="text" id="ruangan" placeholder="Contoh: Ruang Kelas 3.01" />
-      </div>
-      <div class="form-row">
-        <label>NUP BMN <span class="req">*</span></label>
-        <input type="text" id="nup" placeholder="Contoh: 0012345" />
       </div>
       <div class="form-row">
         <label>Kondisi BMN <span class="req">*</span></label>
@@ -390,7 +448,8 @@
 
       <table class="detail-table">
         <tr><td>Nama Barang</td><td>:</td><td class="nilai" id="pvNamaBarang">&nbsp;</td></tr>
-        <tr><td>Merek dan Tipe</td><td>:</td><td class="nilai" id="pvMerekTipe">&nbsp;</td></tr>
+        <tr><td>Tipe</td><td>:</td><td class="nilai" id="pvTipe">&nbsp;</td></tr>
+        <tr><td>Merek</td><td>:</td><td class="nilai" id="pvMerekTipe">&nbsp;</td></tr>
         <tr><td>Ruangan (Sesuai DBR)</td><td>:</td><td class="nilai" id="pvRuangan">&nbsp;</td></tr>
         <tr><td>NUP</td><td>:</td><td class="nilai" id="pvNup">&nbsp;</td></tr>
         <tr>
@@ -464,15 +523,19 @@
 const GAS_URL = 'https://script.google.com/macros/s/AKfycbyKVBa9qN3Oz-4as_vTtYfavElFjO3L8YSRvh-Dk6beNW_j80FJzNTezJY9VvZ1BtZVEg/exec';
 // ============================================
 
+// ===== STATE =====
+let nomorData   = null;
+let asetData    = [];   // [{nup, nama, merk, tipe}]
+let selNup      = '';
+let selNama     = '';
+let selMerk     = '';
+let selTipe     = '';
+
 // ===== INIT =====
 document.addEventListener('DOMContentLoaded', () => {
-  // Set default date
   document.getElementById('tanggalSurat').valueAsDate = new Date();
-
-  // Fetch nomor surat
   fetchNomor();
-
-  // Bind live preview
+  fetchAset();
   bindPreview();
 });
 
@@ -483,71 +546,199 @@ function showKopFallback() {
 }
 
 // ===== FETCH NOMOR SURAT =====
-let nomorData = null;
 async function fetchNomor() {
-  const url = GAS_URL;
-  if (!url || url.includes('GANTI_DENGAN')) {
-    document.getElementById('nomorSurat').value = 'GAS_URL belum diisi di kode';
-    setStatus('error', '❌ GAS_URL belum diisi. Edit baris GAS_URL di index.html.');
-    return;
-  }
   document.getElementById('nomorSurat').value = 'Mengambil nomor surat…';
   setStatus('loading', '⏳ Mengambil nomor surat dari server…');
   try {
-    const resp = await fetch(url + '?action=getNomor');
+    const resp = await fetch(GAS_URL + '?action=getNomor');
     const data = await resp.json();
     if (data.nomor) {
       nomorData = data;
       document.getElementById('nomorSurat').value = data.nomor;
       updatePreview();
-      setStatus('success', '✅ Nomor surat berhasil diambil: ' + data.nomor);
-    } else {
-      throw new Error(data.error || 'Respons tidak valid');
-    }
+      setStatus('success', '✅ Nomor surat: ' + data.nomor);
+    } else throw new Error(data.error || 'Respons tidak valid');
   } catch (e) {
     document.getElementById('nomorSurat').value = 'Gagal mengambil nomor';
-    setStatus('error', '❌ Gagal mengambil nomor surat: ' + e.message);
+    setStatus('error', '❌ Gagal: ' + e.message);
   }
+}
+
+// ===== FETCH DATA ASET =====
+async function fetchAset() {
+  const elLoad  = document.getElementById('asetLoading');
+  const elError = document.getElementById('asetError');
+  elLoad.style.display = 'block';
+  elError.style.display = 'none';
+
+  try {
+    const resp = await fetch(GAS_URL + '?action=getAset');
+    const data = await resp.json();
+    if (data.status !== 'ok') throw new Error(data.error || 'Endpoint getAset belum ada — pastikan Code.gs sudah di-deploy ulang (New Version)');
+
+    asetData = data.data;
+    elLoad.style.display = 'none';
+    elLoad.textContent   = `✅ ${asetData.length} aset BMN dimuat.`;
+
+    // Tampilkan dropdown Tipe pertama
+    document.getElementById('rowNup').style.display = 'block';
+    buildNupDropdown();
+
+  } catch (e) {
+    elLoad.style.display = 'none';
+    elError.style.display = 'block';
+    elError.textContent = '❌ Gagal memuat data aset: ' + e.message;
+  }
+}
+
+// ===== DROPDOWN HELPERS =====
+// NUP → Nama → Merk → Tipe
+function buildNupDropdown() {
+  const nups = [...new Set(asetData.map(r => r.nup).filter(Boolean))].sort();
+  buildDropdown('searchNup', 'listNup', nups, (val) => {
+    selNup  = val;
+    selNama = ''; selMerk = ''; selTipe = '';
+    document.getElementById('nup').value = val;
+    document.getElementById('namaBarang').value = '';
+    document.getElementById('merekTipe').value = '';
+    document.getElementById('selectedTipe').value = '';
+    ['searchNama','searchMerk','searchTipe'].forEach(id => {
+      const el = document.getElementById(id); if(el) el.value = '';
+    });
+    document.getElementById('rowNama').style.display = 'block';
+    document.getElementById('rowMerk').style.display = 'none';
+    document.getElementById('rowTipe').style.display = 'none';
+    buildNamaDropdown();
+    updatePreview();
+  });
+}
+
+function buildNamaDropdown() {
+  const filtered = asetData.filter(r => r.nup === selNup);
+  const names = [...new Set(filtered.map(r => r.nama).filter(Boolean))].sort();
+  buildDropdown('searchNama', 'listNama', names, (val) => {
+    selNama = val;
+    selMerk = ''; selTipe = '';
+    document.getElementById('namaBarang').value = val;
+    document.getElementById('merekTipe').value = '';
+    document.getElementById('selectedTipe').value = '';
+    ['searchMerk','searchTipe'].forEach(id => {
+      const el = document.getElementById(id); if(el) el.value = '';
+    });
+    document.getElementById('rowMerk').style.display = 'block';
+    document.getElementById('rowTipe').style.display = 'none';
+    buildMerkDropdown();
+    updatePreview();
+  });
+}
+
+function buildMerkDropdown() {
+  const filtered = asetData.filter(r => r.nup === selNup && r.nama === selNama);
+  const merks = [...new Set(filtered.map(r => r.merk).filter(Boolean))].sort();
+  buildDropdown('searchMerk', 'listMerk', merks, (val) => {
+    selMerk = val;
+    selTipe = '';
+    document.getElementById('merekTipe').value = val;
+    document.getElementById('selectedTipe').value = '';
+    const el = document.getElementById('searchTipe'); if(el) el.value = '';
+    document.getElementById('rowTipe').style.display = 'block';
+    buildTipeDropdown();
+    updatePreview();
+  });
+}
+
+function buildTipeDropdown() {
+  const filtered = asetData.filter(r => r.nup === selNup && r.nama === selNama && r.merk === selMerk);
+  const types = [...new Set(filtered.map(r => r.tipe).filter(Boolean))].sort();
+  buildDropdown('searchTipe', 'listTipe', types, (val) => {
+    selTipe = val;
+    document.getElementById('selectedTipe').value = val;
+    updatePreview();
+  });
+}
+
+// Generic searchable dropdown builder
+function buildDropdown(searchId, listId, items, onSelect) {
+  const searchEl = document.getElementById(searchId);
+  const listEl   = document.getElementById(listId);
+
+  function render(filter) {
+    const q = filter.toLowerCase();
+    const matched = items.filter(i => i.toLowerCase().includes(q));
+    listEl.innerHTML = '';
+    if (matched.length === 0) {
+      listEl.innerHTML = '<div class="dropdown-item no-result">— Tidak ditemukan —</div>';
+    } else {
+      matched.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'dropdown-item';
+        div.textContent = item;
+        div.addEventListener('mousedown', (e) => {
+          e.preventDefault();
+          searchEl.value = item;
+          listEl.classList.remove('open');
+          onSelect(item);
+        });
+        listEl.appendChild(div);
+      });
+    }
+  }
+
+  // Reset old listeners by replacing element
+  const newSearch = searchEl.cloneNode(true);
+  searchEl.parentNode.replaceChild(newSearch, searchEl);
+  const freshSearch = document.getElementById(searchId);
+
+  freshSearch.value = '';
+  render('');
+
+  freshSearch.addEventListener('focus', () => {
+    render(freshSearch.value);
+    listEl.classList.add('open');
+  });
+  freshSearch.addEventListener('input', () => {
+    render(freshSearch.value);
+    listEl.classList.add('open');
+  });
+  freshSearch.addEventListener('blur', () => {
+    setTimeout(() => listEl.classList.remove('open'), 150);
+  });
 }
 
 // ===== LIVE PREVIEW BINDING =====
 function bindPreview() {
-  const fields = ['nama','nip','jabatan','bagian','namaBarang','merekTipe','ruangan','nup','keluhan','tanggalSurat','kotaSurat'];
-  fields.forEach(id => {
+  ['nama','nip','jabatan','bagian','ruangan','keluhan','tanggalSurat','kotaSurat'].forEach(id => {
     const el = document.getElementById(id);
-    if (el) el.addEventListener('input', updatePreview);
-    if (el) el.addEventListener('change', updatePreview);
+    if (el) { el.addEventListener('input', updatePreview); el.addEventListener('change', updatePreview); }
   });
   document.querySelectorAll('input[name=kondisi]').forEach(r => r.addEventListener('change', updatePreview));
 }
 
 function updatePreview() {
-  const g = id => document.getElementById(id)?.value || '';
-  const set = (id, val) => { const el=document.getElementById(id); if(el) el.textContent = val || '\u00a0'; };
+  const g   = id => document.getElementById(id)?.value || '';
+  const set = (id, val) => { const el=document.getElementById(id); if(el) el.textContent = val||'\u00a0'; };
 
   const nomor = g('nomorSurat').replace('Mengambil…','') || '…………………………………';
   set('pvNomor', nomor);
   set('pvNomorLampiran', nomor);
   set('pvNama', g('nama'));
-  set('pvNip', g('nip'));
+  set('pvNip',  g('nip'));
   set('pvNipTtd', g('nip'));
   set('pvNamaTtd', g('nama'));
   set('pvJabatan', g('jabatan'));
-  set('pvBagian', g('bagian'));
+  set('pvBagian',  g('bagian'));
   set('pvNamaBarang', g('namaBarang'));
-  set('pvMerekTipe', g('merekTipe'));
+  set('pvTipe',       selTipe || '\u00a0');
+  set('pvMerekTipe',  g('merekTipe'));
   set('pvRuangan', g('ruangan'));
-  set('pvNup', g('nup'));
+  set('pvNup',     g('nup'));
 
-  const keluhan = g('keluhan');
-  document.getElementById('pvKeluhan').textContent = keluhan || '\u00a0';
+  document.getElementById('pvKeluhan').textContent = g('keluhan') || '\u00a0';
 
-  // Kondisi
   const kondisi = document.querySelector('input[name=kondisi]:checked')?.value || 'Rusak Ringan';
-  document.getElementById('pvKondisiRR').className = 'kondisi-option' + (kondisi === 'Rusak Ringan' ? ' aktif' : '');
-  document.getElementById('pvKondisiRB').className = 'kondisi-option' + (kondisi === 'Rusak Berat' ? ' aktif' : '');
+  document.getElementById('pvKondisiRR').className = 'kondisi-option' + (kondisi==='Rusak Ringan' ? ' aktif' : '');
+  document.getElementById('pvKondisiRB').className = 'kondisi-option' + (kondisi==='Rusak Berat'  ? ' aktif' : '');
 
-  // Tanggal
   const tgl = g('tanggalSurat');
   if (tgl) {
     const d = new Date(tgl + 'T00:00:00');
@@ -566,76 +757,60 @@ function handlePhoto(input, thumbId, prevId) {
   const reader = new FileReader();
   reader.onload = e => {
     const b64 = e.target.result;
-    // Store
     photoData[input.id] = b64;
-    // Thumb in form
     const thumb = document.getElementById(thumbId);
     thumb.src = b64; thumb.style.display = 'block';
-    // Preview in surat
     const prev = document.getElementById(prevId);
     if (prev) {
-      prev.src = b64;
-      prev.style.display = 'block';
-      // Hide placeholder
-      const phId = prevId.replace('prev', 'ph');
-      const ph = document.getElementById(phId);
+      prev.src = b64; prev.style.display = 'block';
+      const ph = document.getElementById(prevId.replace('prev','ph'));
       if (ph) ph.style.display = 'none';
     }
   };
   reader.readAsDataURL(file);
 }
 
-// ===== SUBMIT =====
+// ===== SUBMIT → KIRIM DATA + DOWNLOAD PDF =====
 async function submitForm() {
-  const url = GAS_URL;
-  if (!url || url.includes('GANTI_DENGAN')) { setStatus('error', '❌ GAS_URL belum diisi di kode index.html.'); return; }
   if (!nomorData) { setStatus('error', '❌ Nomor surat belum berhasil diambil.'); return; }
 
   const g = id => document.getElementById(id)?.value?.trim() || '';
-  const required = { 'Nama': g('nama'), 'NIP': g('nip'), 'Jabatan': g('jabatan'), 'Bagian': g('bagian'), 'Nama Barang': g('namaBarang'), 'Ruangan': g('ruangan'), 'NUP': g('nup'), 'Keluhan': g('keluhan'), 'Tanggal': g('tanggalSurat') };
+  const required = {
+    'Nama': g('nama'), 'NIP': g('nip'), 'Jabatan': g('jabatan'), 'Bagian': g('bagian'),
+    'NUP': g('nup'), 'Nama Barang': g('namaBarang'),
+    'Merek': g('merekTipe'), 'Tipe': selTipe || '',
+    'Ruangan': g('ruangan'), 'Keluhan': g('keluhan'), 'Tanggal': g('tanggalSurat')
+  };
   for (const [k, v] of Object.entries(required)) {
     if (!v) { setStatus('error', `❌ Field "${k}" wajib diisi.`); return; }
   }
 
   const btn = document.getElementById('btnSubmit');
   btn.disabled = true;
-  setStatus('loading', '⏳ Mengirim data ke server…');
+  setStatus('loading', '⏳ Mengirim data & menyiapkan PDF…');
 
   const payload = {
     action: 'submit',
-    nomor: g('nomorSurat'),
-    urut: nomorData.urut,
-    tanggalSurat: g('tanggalSurat'),
-    kota: g('kotaSurat'),
-    nama: g('nama'),
-    nip: g('nip'),
-    jabatan: g('jabatan'),
-    bagian: g('bagian'),
-    namaBarang: g('namaBarang'),
-    merekTipe: g('merekTipe'),
-    ruangan: g('ruangan'),
-    nup: g('nup'),
+    nomor: g('nomorSurat'), urut: nomorData.urut,
+    tanggalSurat: g('tanggalSurat'), kota: g('kotaSurat'),
+    nama: g('nama'), nip: g('nip'), jabatan: g('jabatan'), bagian: g('bagian'),
+    namaBarang: g('namaBarang'), merekTipe: g('merekTipe'),
+    tipe: selTipe, nup: g('nup'),
     kondisi: document.querySelector('input[name=kondisi]:checked')?.value || '',
     keluhan: g('keluhan'),
-    fotoNup: photoData.fotoNup || '',
-    fotoMerek: photoData.fotoMerek || '',
-    fotoKerusakan: photoData.fotoKerusakan || '',
-    fotoKeseluruhan: photoData.fotoKeseluruhan || ''
+    fotoNup: photoData.fotoNup || '', fotoMerek: photoData.fotoMerek || '',
+    fotoKerusakan: photoData.fotoKerusakan || '', fotoKeseluruhan: photoData.fotoKeseluruhan || ''
   };
 
   try {
-    const resp = await fetch(url, {
-      method: 'POST',
-      body: JSON.stringify(payload)
-    });
+    const resp   = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(payload) });
     const result = await resp.json();
     if (result.status === 'ok') {
-      setStatus('success', '✅ Data berhasil dikirim! ' + (result.message || ''));
-      nomorData = null; // reset
-      fetchNomor(); // ambil nomor baru
-    } else {
-      throw new Error(result.error || 'Respons tidak valid');
-    }
+      setStatus('success', '✅ Data berhasil dikirim! Mengunduh PDF…');
+      downloadPDF();
+      nomorData = null;
+      fetchNomor();
+    } else throw new Error(result.error || 'Respons tidak valid');
   } catch (e) {
     setStatus('error', '❌ Gagal submit: ' + e.message);
   } finally {
@@ -643,16 +818,65 @@ async function submitForm() {
   }
 }
 
+// ===== DOWNLOAD PDF =====
+function downloadPDF() {
+  // Temporarily hide form panel and show only preview for print
+  const g = id => document.getElementById(id)?.value || '';
+  const nomor = g('nomorSurat').replace(/\//g, '-');
+  const nama  = g('nama').replace(/[^a-zA-Z0-9 ]/g, '').trim().substring(0, 30);
+  const filename = `Surat_BMN_${nomor}_${nama}.pdf`;
+
+  // Use print dialog with PDF save prompt
+  const style = document.createElement('style');
+  style.id = '_pdfmode';
+  style.textContent = `
+    @media print {
+      .app-header, .form-panel, .preview-label { display: none !important; }
+      .main-layout { display: block !important; height: auto !important; overflow: visible !important; }
+      .preview-panel { background: #fff !important; padding: 0 !important; display: block !important; }
+    }
+  `;
+  document.head.appendChild(style);
+
+  // Set document title so browser uses it as default PDF filename
+  const origTitle = document.title;
+  document.title  = filename;
+
+  window.print();
+
+  // Restore after print dialog closes
+  setTimeout(() => {
+    document.title = origTitle;
+    const el = document.getElementById('_pdfmode');
+    if (el) el.remove();
+  }, 2000);
+}
+
 // ===== RESET =====
 function resetForm() {
   if (!confirm('Reset form? Semua data yang belum dikirim akan hilang.')) return;
-  ['nama','nip','jabatan','namaBarang','merekTipe','ruangan','nup','keluhan'].forEach(id => {
+  ['nama','nip','jabatan','ruangan','keluhan'].forEach(id => {
     const el = document.getElementById(id); if(el) el.value = '';
   });
   document.getElementById('bagian').value = '';
   document.getElementById('tanggalSurat').valueAsDate = new Date();
   document.getElementById('kotaSurat').value = 'Palembang';
   document.querySelector('input[name=kondisi][value="Rusak Ringan"]').checked = true;
+
+  // Reset aset selections
+  selNup = ''; selNama = ''; selMerk = ''; selTipe = '';
+  document.getElementById('namaBarang').value = '';
+  document.getElementById('nup').value = '';
+  document.getElementById('merekTipe').value = '';
+  document.getElementById('selectedTipe').value = '';
+  ['searchNup','searchNama','searchMerk','searchTipe'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.value = '';
+  });
+  ['rowNama','rowMerk','rowTipe'].forEach(id => {
+    const el = document.getElementById(id); if(el) el.style.display = 'none';
+  });
+  buildNupDropdown();
+
   // Reset photos
   ['fotoNup','fotoMerek','fotoKerusakan','fotoKeseluruhan'].forEach(id => {
     const el = document.getElementById(id); if(el) el.value = '';
@@ -676,10 +900,9 @@ function setStatus(type, msg) {
   const bar = document.getElementById('statusBar');
   bar.className = 'status-bar ' + type;
   bar.textContent = msg;
-  if (type === 'success') setTimeout(() => { bar.style.display='none'; }, 8000);
+  if (type === 'success') setTimeout(() => { bar.style.display='none'; }, 10000);
 }
 
-// Initial preview render
 updatePreview();
 </script>
 </body>
