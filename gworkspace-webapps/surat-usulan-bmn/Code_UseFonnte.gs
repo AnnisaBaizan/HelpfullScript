@@ -34,8 +34,13 @@ function doGet(e) {
     result = getNomorSurat();
   } else if (action === 'getAset') {
     result = getDataAset();
-  } else {
-    result = { error: 'Action tidak dikenal. Gunakan ?action=getNomor atau ?action=getAset' };
+  } else if (action === 'getSuratList'){
+    result = getSuratList();
+  } else if (action === 'getPhoto'){
+    result = getPhotoBase64(e.parameter.url)
+    }
+  else {
+    result = { error: 'Action tidak dikenal. Gunakan ?action=getNomor / ?action=getAset / ?action=getSuratList / ?action=getPhoto' };
   }
 
   return ContentService.createTextOutput(JSON.stringify(result))
@@ -140,6 +145,69 @@ function getDataAset() {
   }
 }
 
+// ============================================================
+//  GET DAFTAR SURAT dari Spreadsheet Arsip (untuk Admin)
+//  Kolom: A=No, B=Nomor, C=TglSubmit, D=TglSurat, E=Nama,
+//         F=NIP, G=Jabatan, H=Bagian, I=NamaBarang, J=Merek,
+//         K=Ruangan, L=NUP, M=Kondisi, N=Keluhan,
+//         O=FotoNUP, P=FotoMerek, Q=FotoKerusakan, R=FotoKeseluruhan
+// ============================================================
+function getSuratList() {
+  try {
+    const ss    = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+    const sheet = ss.getSheetByName(CONFIG.SHEET_NAME);
+    if (!sheet) throw new Error('Sheet "' + CONFIG.SHEET_NAME + '" tidak ditemukan.');
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) return { status: 'ok', data: [] };
+
+    const raw = sheet.getRange(2, 1, lastRow - 1, 18).getValues();
+    const data = raw
+      .filter(r => r[1]) // skip baris tanpa nomor surat
+      .map(r => ({
+        nomor       : String(r[1]  || ''),
+        tanggalSurat: r[3] ? Utilities.formatDate(new Date(r[3]), Session.getScriptTimeZone(), 'yyyy-MM-dd') : '',
+        nama        : String(r[4]  || ''),
+        nip         : String(r[5]  || ''),
+        jabatan     : String(r[6]  || ''),
+        bagian      : String(r[7]  || ''),
+        namaBarang  : String(r[8]  || ''),
+        merekTipe   : String(r[9]  || ''),
+        ruangan     : String(r[10] || ''),
+        nup         : String(r[11] || ''),
+        kondisi     : String(r[12] || ''),
+        keluhan     : String(r[13] || ''),
+        fotoNup         : String(r[14] || '-'),
+        fotoMerek       : String(r[15] || '-'),
+        fotoKerusakan   : String(r[16] || '-'),
+        fotoKeseluruhan : String(r[17] || '-'),
+      }))
+      .reverse(); // terbaru di atas
+    return { status: 'ok', count: data.length, data: data };
+  } catch (err) {
+    return { status: 'error', error: err.message };
+  }
+}
+
+// ============================================================
+//  GET PHOTO — ambil file Drive by URL, return base64
+//  URL format Google Drive: https://drive.google.com/file/d/FILE_ID/...
+// ============================================================
+function getPhotoBase64(driveUrl) {
+  try {
+    if (!driveUrl || driveUrl === '-') return { status: 'ok', base64: null };
+    // Extract file ID dari berbagai format URL Drive
+    const match = driveUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+    if (!match) return { status: 'error', error: 'URL tidak valid' };
+    const fileId = match[1];
+    const file   = DriveApp.getFileById(fileId);
+    const blob   = file.getBlob();
+    const b64    = Utilities.base64Encode(blob.getBytes());
+    const mime   = blob.getContentType() || 'image/jpeg';
+    return { status: 'ok', base64: 'data:' + mime + ';base64,' + b64 };
+  } catch (err) {
+    return { status: 'error', error: err.message };
+  }
+}
 
 //  1. Buat subfolder Drive  → upload 4 foto
 //  2. Append baris ke Sheets
