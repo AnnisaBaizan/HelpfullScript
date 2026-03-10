@@ -20,7 +20,7 @@ The core challenge: SAKTI uses Angular with PrimeNG masked input fields that rej
 
 **`NestedLoop-DropDown.js`** — Tampermonkey UserScript that automates PDN (Pilihan Data Nontunai) dropdown selection across hundreds of rows and pages automatically.
 
-**[PasteBridge](Sakti/paste-bridge-project/)** — A two-component system: a Tampermonkey script detects values and sends them to a local Python server via HTTP, and the Python server pastes them using real `Ctrl+V` simulation (pyautogui), which Angular treats as trusted keyboard input.
+**[PasteBridge](https://github.com/AnnisaBaizan/HelpfullScript/tree/main/Sakti/paste-bridge-project)** — A two-component system: a Tampermonkey script detects values and sends them to a local Python server via HTTP, and the Python server pastes them using real `Ctrl+V` simulation (pyautogui), which Angular treats as trusted keyboard input.
 
 - Cross-platform: Windows, macOS, Linux
 - Ships as a standalone `.exe` (no Python install needed)
