@@ -358,23 +358,27 @@
         <input type="hidden" id="namaBarang" />
       </div>
 
-      <!-- Dropdown 3: Merk (filter by NUP+Nama) -->
+      <!-- Dropdown/Input 3: Merk (filter by NUP+Nama, atau ketik manual jika kosong) -->
       <div class="form-row" id="rowMerk" style="display:none">
         <label>Merek <span class="req">*</span></label>
-        <div class="searchable-wrap">
+        <!-- Mode dropdown (ada data) -->
+        <div class="searchable-wrap" id="merkDropdownWrap">
           <input type="text" id="searchMerk" class="search-input" placeholder="🔍 Cari merek…" autocomplete="off" />
           <div class="dropdown-list" id="listMerk"></div>
         </div>
+        <!-- Mode input bebas (tidak ada data) -->
+        <input type="text" id="merkManual" style="display:none" placeholder="Ketik merek secara manual…" oninput="document.getElementById('merekTipe').value=this.value;updatePreview()" />
         <input type="hidden" id="merekTipe" />
       </div>
 
-      <!-- Dropdown 4: Tipe (filter by NUP+Nama+Merk) -->
+      <!-- Dropdown/Input 4: Tipe (filter by NUP+Nama+Merk, atau ketik manual jika kosong) -->
       <div class="form-row" id="rowTipe" style="display:none">
-        <label>Tipe <span class="req">*</span></label>
-        <div class="searchable-wrap">
+        <label>Tipe <small style="font-weight:normal;color:#888">(opsional)</small></label>
+        <div class="searchable-wrap" id="tipeDropdownWrap">
           <input type="text" id="searchTipe" class="search-input" placeholder="🔍 Cari tipe…" autocomplete="off" />
           <div class="dropdown-list" id="listTipe"></div>
         </div>
+        <input type="text" id="tipeManual" style="display:none" placeholder="Ketik tipe secara manual… (opsional)" oninput="selTipe=this.value;document.getElementById('selectedTipe').value=this.value;updatePreview()" />
         <input type="hidden" id="selectedTipe" />
       </div>
 
@@ -638,7 +642,15 @@ async function fetchAset() {
 // ===== DROPDOWN HELPERS =====
 // NUP → Nama → Merk → Tipe
 function buildNupDropdown() {
-  const nups = [...new Set(asetData.map(r => r.nup).filter(Boolean))].sort();
+  // Sort NUP numerik: angka dulu (1,2,3...), sisanya alfabet
+  const nups = [...new Set(asetData.map(r => r.nup).filter(Boolean))]
+    .sort((a, b) => {
+      const na = parseFloat(a), nb = parseFloat(b);
+      if (!isNaN(na) && !isNaN(nb)) return na - nb;
+      if (!isNaN(na)) return -1;
+      if (!isNaN(nb)) return 1;
+      return a.localeCompare(b);
+    });
   buildDropdown('searchNup', 'listNup', nups, (val) => {
     selNup  = val;
     selNama = ''; selMerk = ''; selTipe = '';
@@ -649,6 +661,9 @@ function buildNupDropdown() {
     ['searchNama','searchMerk','searchTipe'].forEach(id => {
       const el = document.getElementById(id); if(el) el.value = '';
     });
+    const manualMerk = document.getElementById('merkManual');
+    if (manualMerk) { manualMerk.value = ''; manualMerk.style.display = 'none'; }
+    document.getElementById('merkDropdownWrap').style.display = 'block';
     document.getElementById('rowNama').style.display = 'block';
     document.getElementById('rowMerk').style.display = 'none';
     document.getElementById('rowTipe').style.display = 'none';
@@ -679,26 +694,72 @@ function buildNamaDropdown() {
 function buildMerkDropdown() {
   const filtered = asetData.filter(r => r.nup === selNup && r.nama === selNama);
   const merks = [...new Set(filtered.map(r => r.merk).filter(Boolean))].sort();
-  buildDropdown('searchMerk', 'listMerk', merks, (val) => {
-    selMerk = val;
-    selTipe = '';
-    document.getElementById('merekTipe').value = val;
-    document.getElementById('selectedTipe').value = '';
-    const el = document.getElementById('searchTipe'); if(el) el.value = '';
-    document.getElementById('rowTipe').style.display = 'block';
-    buildTipeDropdown();
-    updatePreview();
-  });
+
+  const wrapEl   = document.getElementById('merkDropdownWrap');
+  const manualEl = document.getElementById('merkManual');
+  document.getElementById('merekTipe').value = '';
+
+  if (merks.length === 0) {
+    // Tidak ada data Merek → input manual
+    wrapEl.style.display   = 'none';
+    manualEl.style.display = 'block';
+    manualEl.value         = '';
+    // Saat manual diisi, langsung lanjut ke Tipe
+    manualEl.oninput = () => {
+      const val = manualEl.value.trim();
+      document.getElementById('merekTipe').value = val;
+      selMerk = val;
+      updatePreview();
+      // Trigger Tipe setelah ada isian
+      if (val.length > 0) {
+        document.getElementById('rowTipe').style.display = 'none';
+        buildTipeDropdown();
+      }
+    };
+    setTimeout(() => manualEl.focus(), 50);
+  } else {
+    // Ada data → dropdown
+    wrapEl.style.display   = 'block';
+    manualEl.style.display = 'none';
+    buildDropdown('searchMerk', 'listMerk', merks, (val) => {
+      selMerk = val;
+      selTipe = '';
+      document.getElementById('merekTipe').value = val;
+      document.getElementById('selectedTipe').value = '';
+      const el = document.getElementById('searchTipe'); if(el) el.value = '';
+      document.getElementById('rowTipe').style.display = 'block';
+      buildTipeDropdown();
+      updatePreview();
+    });
+  }
 }
 
 function buildTipeDropdown() {
   const filtered = asetData.filter(r => r.nup === selNup && r.nama === selNama && r.merk === selMerk);
   const types = [...new Set(filtered.map(r => r.tipe).filter(Boolean))].sort();
-  buildDropdown('searchTipe', 'listTipe', types, (val) => {
-    selTipe = val;
-    document.getElementById('selectedTipe').value = val;
+
+  const wrapEl   = document.getElementById('tipeDropdownWrap');
+  const manualEl = document.getElementById('tipeManual');
+  document.getElementById('rowTipe').style.display = 'block';
+
+  if (types.length === 0) {
+    // Tidak ada data → input manual opsional
+    wrapEl.style.display   = 'none';
+    manualEl.style.display = 'block';
+    manualEl.value         = '';
+    selTipe = '';
+    document.getElementById('selectedTipe').value = '';
     updatePreview();
-  });
+  } else {
+    // Ada data → dropdown
+    wrapEl.style.display   = 'block';
+    manualEl.style.display = 'none';
+    buildDropdown('searchTipe', 'listTipe', types, (val) => {
+      selTipe = val;
+      document.getElementById('selectedTipe').value = val;
+      updatePreview();
+    });
+  }
 }
 
 // Generic searchable dropdown builder
@@ -819,17 +880,29 @@ function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
 // ===== SUBMIT → KIRIM DATA + DOWNLOAD PDF =====
 async function submitForm() {
-  if (!nomorData) { setStatus('error', '❌ Nomor surat belum berhasil diambil.'); return; }
+  console.log('[BMN] submitForm called, nomorData:', nomorData);
+
+  if (!nomorData) {
+    setStatus('error', '❌ Nomor surat belum berhasil diambil. Coba refresh halaman.');
+    document.getElementById('statusBar').scrollIntoView({ behavior: 'smooth' });
+    alert('❌ Nomor surat belum berhasil diambil.\nPastikan GAS sudah di-deploy dan coba refresh halaman.');
+    return;
+  }
 
   const g = id => document.getElementById(id)?.value?.trim() || '';
   const required = {
     'Nama': g('nama'), 'NIP': g('nip'), 'Jabatan': g('jabatan'), 'Bagian': g('bagian'),
-    'NUP': g('nup'), 'Nama Barang': g('namaBarang'),
-    'Merek': g('merekTipe'), 'Tipe': selTipe || '',
+    'NUP': g('nup'), 'Nama Barang': g('namaBarang'), 'Merek': g('merekTipe'),
     'Ruangan': g('ruangan'), 'Keluhan': g('keluhan'), 'Tanggal': g('tanggalSurat')
   };
   for (const [k, v] of Object.entries(required)) {
-    if (!v) { setStatus('error', `❌ Field "${k}" wajib diisi.`); return; }
+    if (!v) {
+      const msg = `❌ Field "${k}" wajib diisi.`;
+      setStatus('error', msg);
+      document.getElementById('statusBar').scrollIntoView({ behavior: 'smooth' });
+      console.warn('[BMN] Validasi gagal:', msg);
+      return;
+    }
   }
 
   const btn = document.getElementById('btnSubmit');
@@ -947,6 +1020,13 @@ function resetForm() {
   ['searchNup','searchNama','searchMerk','searchTipe'].forEach(id => {
     const el = document.getElementById(id); if(el) el.value = '';
   });
+  const manualEl = document.getElementById('merkManual');
+  if (manualEl) { manualEl.value = ''; manualEl.style.display = 'none'; }
+  document.getElementById('merkDropdownWrap').style.display = 'block';
+  const tipeManualEl = document.getElementById('tipeManual');
+  if (tipeManualEl) { tipeManualEl.value = ''; tipeManualEl.style.display = 'none'; }
+  const tipeWrapEl = document.getElementById('tipeDropdownWrap');
+  if (tipeWrapEl) tipeWrapEl.style.display = 'block';
   ['rowNama','rowMerk','rowTipe'].forEach(id => {
     const el = document.getElementById(id); if(el) el.style.display = 'none';
   });
