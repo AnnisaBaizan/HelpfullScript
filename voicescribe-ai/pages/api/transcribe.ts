@@ -182,7 +182,7 @@ async function transcribeAssemblyAI(
   const uploadRes = await fetch('https://api.assemblyai.com/v2/upload', {
     method: 'POST',
     headers,
-    body: buffer,
+    body: new Uint8Array(buffer),
   })
   if (!uploadRes.ok) throw new Error(`AssemblyAI upload gagal: ${uploadRes.status}`)
   const { upload_url } = await uploadRes.json()
