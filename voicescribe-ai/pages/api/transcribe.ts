@@ -140,7 +140,7 @@ async function transcribeGroq(
 ): Promise<TranscribeResult> {
   const groq = new Groq({ apiKey: process.env.GROQ_API_KEY })
 
-  const audioFile = new File([buffer], fileName, { type: mimeType })
+  const audioFile = new File([new Uint8Array(buffer)], fileName, { type: mimeType })
   const whisperLang = language === 'auto' ? undefined : language
 
   const transcription = await groq.audio.transcriptions.create({
