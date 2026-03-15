@@ -5,7 +5,7 @@
 ![VoiceScribe AI](https://img.shields.io/badge/VoiceScribe-AI-38bdf8?style=for-the-badge)
 ![Next.js](https://img.shields.io/badge/Next.js-14-black?style=for-the-badge&logo=next.js)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5-3178c6?style=for-the-badge&logo=typescript)
-![Deploy](https://img.shields.io/badge/Deploy-Vercel%20Free-black?style=for-the-badge&logo=vercel)
+![Deploy](https://img.shields.io/badge/Deploy-Render%20Free-46E3B7?style=for-the-badge&logo=render)
 
 ---
 
@@ -63,7 +63,12 @@ Klik tombol mana saja setelah transkripsi selesai. Bisa generate semua sekaligus
 
 ---
 
-## 🚀 Cara Deploy di Vercel (GRATIS)
+## 🚀 Cara Deploy di Render (GRATIS Selamanya)
+
+> **Kenapa Render, bukan Vercel?**
+> Vercel Hobby membatasi upload request maksimal **4.5MB**. Karena VoiceScribe AI mendukung file hingga 1GB (via AssemblyAI), Render adalah pilihan yang tepat — tidak ada batasan ukuran upload, dan gratis selamanya.
+>
+> ⚠️ Satu-satunya kekurangan Render Free: app **sleep otomatis** setelah 15 menit tidak ada traffic, sehingga request pertama butuh ~30 detik untuk "bangun".
 
 ### Langkah 1 — Daftar & Ambil API Key
 
@@ -91,11 +96,17 @@ Minimal isi **satu** dari masing-masing kategori:
 
 ---
 
-### Langkah 3 — Deploy ke Vercel
+### Langkah 3 — Deploy ke Render
 
-1. Buka **[vercel.com](https://vercel.com)** → Login dengan GitHub
-2. Klik **"Add New Project"** → pilih repository VoiceScribe AI
-3. Di bagian **"Environment Variables"**, tambahkan API key yang sudah disiapkan:
+1. Buka **[render.com](https://render.com)** → Login dengan GitHub
+2. Klik **"New +"** → pilih **"Web Service"**
+3. Connect repository VoiceScribe AI
+4. Isi pengaturan berikut:
+   - **Root Directory**: `voicescribe-ai`
+   - **Build Command**: `npm install && npm run build`
+   - **Start Command**: `npm start`
+   - **Instance Type**: Free
+5. Di bagian **"Environment Variables"**, tambahkan API key:
 
 ```
 GROQ_API_KEY          = gsk_xxxxxxxxxxxx
@@ -107,8 +118,10 @@ OPENROUTER_API_KEY    = sk-or-xxxxxxxxxxxx    (opsional)
 GOOGLE_AI_API_KEY     = AIzaxxxxxxxxxx        (opsional)
 ```
 
-4. Klik **"Deploy"** — tunggu 1–2 menit
-5. ✅ Aplikasi live! URL seperti `voicescribe-ai.vercel.app`
+6. Klik **"Deploy Web Service"** — tunggu 3–5 menit
+7. ✅ Aplikasi live! URL seperti `voicescribe-ai.onrender.com`
+
+> **Tips:** Render juga mendukung deploy otomatis via `render.yaml` — file ini sudah tersedia di root project.
 
 ---
 
@@ -158,6 +171,7 @@ voicescribe-ai/
 ├── next.config.js
 ├── package.json
 ├── tsconfig.json
+├── render.yaml
 ├── vercel.json
 └── README.md
 ```
@@ -174,14 +188,14 @@ voicescribe-ai/
 | AI Ringkasan | Groq LLaMA / OpenRouter / Google Gemini | 3 provider, fallback otomatis |
 | Deteksi Pembicara | AssemblyAI / Deepgram / Gladia | Diarization gratis |
 | File DOCX | docx.js | Generate Word document |
-| Deploy | Vercel | Hosting gratis |
+| Deploy | Render | Hosting gratis selamanya, tanpa batasan upload |
 
 ---
 
 ## ❓ FAQ
 
 **Q: Apakah benar-benar gratis?**
-A: Ya! Vercel gratis untuk project personal. Semua provider AI memiliki tier gratis. Minimal cukup daftar Groq (gratis) untuk bisa langsung pakai.
+A: Ya! Render gratis selamanya untuk project personal (dengan cold start ~30 detik setelah idle). Semua provider AI memiliki tier gratis. Minimal cukup daftar Groq (gratis) untuk bisa langsung pakai.
 
 **Q: Provider mana yang paling direkomendasikan?**
 A: Untuk mulai: **Groq** saja sudah cukup (transkripsi + ringkasan dari satu API key). Untuk file besar atau perlu deteksi pembicara, tambahkan **AssemblyAI**.

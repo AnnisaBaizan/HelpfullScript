@@ -97,6 +97,10 @@ export default function Home() {
     setSummaryError('')
 
     try {
+      if (file.size > 4.5 * 1024 * 1024) {
+        throw new Error('Ukuran file terlalu besar (maks 4.5MB). Kompres file audio terlebih dahulu atau gunakan format MP3.')
+      }
+
       setStatus('uploading')
       const formData = new FormData()
       formData.append('audio', file)
@@ -104,7 +108,9 @@ export default function Home() {
 
       setStatus('transcribing')
       const res = await fetch('/api/transcribe', { method: 'POST', body: formData })
-      const data = await res.json()
+      const text = await res.text()
+      let data: any
+      try { data = JSON.parse(text) } catch { throw new Error(`Server error ${res.status} — coba lagi atau gunakan file lebih kecil.`) }
       if (!res.ok || !data.success) throw new Error(data.error || 'Gagal melakukan transkripsi.')
 
       setTranscript(data.transcript)
