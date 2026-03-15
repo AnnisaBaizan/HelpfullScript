@@ -253,7 +253,7 @@ async function transcribeHuggingFace(
         authorization: `Bearer ${HF_TOKEN}`,
         'content-type': mimeType,
       },
-      body: buffer,
+      body: new Uint8Array(buffer),
     })
 
     if (res.status === 503) {
