@@ -1,0 +1,15 @@
+{
+  "version": 2,
+  "framework": "nextjs",
+  "functions": {
+    "pages/api/transcribe.ts": {
+      "maxDuration": 60
+    },
+    "pages/api/summarize.ts": {
+      "maxDuration": 30
+    },
+    "pages/api/download-docx.ts": {
+      "maxDuration": 10
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /c/Project/HelpfullScript -type f \\\\\\(-name *.pyc -o -name *.exe -o -name *.dll -o -name *.so \\\\\\) ! -path */.venv/*)",
+      "Bash(pip show:*)",
+      "Bash(git filter-repo:*)",
+      "Bash(git remote:*)",
+      "Bash(git push:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git tag:*)",
+      "Bash(gh release:*)",
+      "Bash(winget install:*)",
+      "Bash(gh auth:*)",
+      "Bash(\"/c/Program Files/GitHub CLI/gh.exe\" auth status)",
+      "Bash(\"/c/Program Files/GitHub CLI/gh.exe\" release create v1.0.0 \"Sakti/paste-bridge-project/dist/PasteBridge.exe\" --title \"PasteBridge v1.0.0\" --notes \"Windows desktop app for clipboard bridging between Sakti and target applications.\")",
+      "Bash(git mv:*)"
+    ]
+  }
+}

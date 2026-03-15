@@ -1,0 +1,3 @@
+{
+  "/api/summarize": "pages/api/summarize.js"
+}

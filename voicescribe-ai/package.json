@@ -1,0 +1,30 @@
+{
+  "name": "voicescribe-ai",
+  "version": "1.0.0",
+  "description": "VoiceScribe AI — Transkripsi & Ringkasan Otomatis",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@google/generative-ai": "^0.24.1",
+    "docx": "^8.5.0",
+    "file-saver": "^2.0.5",
+    "formidable": "^3.5.1",
+    "groq-sdk": "^0.5.0",
+    "next": "^16.1.6",
+    "openai": "^6.29.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0"
+  },
+  "devDependencies": {
+    "@types/file-saver": "^2.0.7",
+    "@types/formidable": "^3.5.0",
+    "@types/node": "^20.0.0",
+    "@types/react": "^18.0.0",
+    "typescript": "^5.0.0"
+  }
+}
