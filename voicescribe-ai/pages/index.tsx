@@ -360,7 +360,7 @@ export default function Home() {
               <div className="progress-bar"><div className="progress-fill" style={{ width: `${progress}%` }} /></div>
               <div className="progress-labels">
                 <span className={`progress-step ${status === 'uploading' ? 'active' : progress > 30 ? 'done' : ''}`}>Unggah File</span>
-                <span className={`progress-step ${status === 'transcribing' ? 'active' : status === 'done' ? 'done' : ''}`}>Transkripsi Whisper</span>
+                <span className={`progress-step ${status === 'transcribing' ? 'active' : ''}`}>Transkripsi Whisper</span>
               </div>
             </div>
           )}
