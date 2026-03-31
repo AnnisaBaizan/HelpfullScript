@@ -150,7 +150,7 @@ function getDataAset() {
 //  Kolom: A=No, B=Nomor, C=TglSubmit, D=TglSurat, E=Nama,
 //         F=NIP, G=Jabatan, H=Bagian, I=NamaBarang, J=Merek,
 //         K=Ruangan, L=NUP, M=Kondisi, N=Keluhan,
-//         O=FotoNUP, P=FotoMerek, Q=FotoKerusakan, R=FotoKeseluruhan
+//         O=FotoNUP, P=FotoMerek, Q=FotoKerusakan, R=FotoKeseluruhan, S=FotoLainLain
 // ============================================================
 function getSuratList() {
   try {
@@ -160,7 +160,7 @@ function getSuratList() {
     const lastRow = sheet.getLastRow();
     if (lastRow < 2) return { status: 'ok', data: [] };
 
-    const raw = sheet.getRange(2, 1, lastRow - 1, 18).getValues();
+    const raw = sheet.getRange(2, 1, lastRow - 1, 19).getValues();
     const data = raw
       .filter(r => r[1]) // skip baris tanpa nomor surat
       .map(r => ({
@@ -180,6 +180,7 @@ function getSuratList() {
         fotoMerek       : String(r[15] || '-'),
         fotoKerusakan   : String(r[16] || '-'),
         fotoKeseluruhan : String(r[17] || '-'),
+        fotoLainLain    : String(r[18] || '-'),
       }))
       .reverse(); // terbaru di atas
     return { status: 'ok', count: data.length, data: data };
@@ -228,6 +229,7 @@ function handleSubmit(d) {
       merek: uploadFoto(subFolder, d.fotoMerek, 'Foto_Merek_' + d.nup),
       kerusakan: uploadFoto(subFolder, d.fotoKerusakan, 'Foto_Kerusakan_' + d.nup),
       keseluruhan: uploadFoto(subFolder, d.fotoKeseluruhan, 'Foto_Keseluruhan_' + d.nup),
+      lainlain: uploadFoto(subFolder, d.fotoLainLain, 'Foto_LainLain_' + d.nup),
     };
 
     // --- 2. Append ke Spreadsheet ---
@@ -257,8 +259,9 @@ function handleSubmit(d) {
       fotoLinks.merek,                 // P: Link Foto Merek
       fotoLinks.kerusakan,             // Q: Link Foto Kerusakan
       fotoLinks.keseluruhan,           // R: Link Foto Keseluruhan
-      'Menunggu Tindak Lanjut',        // S: Status
-      '',                              // T: Keterangan
+      fotoLinks.lainlain,              // S: Link Foto Lain-lain
+      'Menunggu Tindak Lanjut',        // T: Status
+      '',                              // U: Keterangan
     ]);
 
     // Format kolom tanggal submit
@@ -380,6 +383,7 @@ function kirimEmailNotifikasi(d, fotoLinks, timestamp) {
           <li>Foto Merek/Tipe: <a href="${fotoLinks.merek}">${fotoLinks.merek !== '-' ? 'Lihat Foto' : 'Tidak ada'}</a></li>
           <li>Foto Kerusakan: <a href="${fotoLinks.kerusakan}">${fotoLinks.kerusakan !== '-' ? 'Lihat Foto' : 'Tidak ada'}</a></li>
           <li>Foto Keseluruhan: <a href="${fotoLinks.keseluruhan}">${fotoLinks.keseluruhan !== '-' ? 'Lihat Foto' : 'Tidak ada'}</a></li>
+          <li>Foto Lain-lain: <a href="${fotoLinks.lainlain}">${fotoLinks.lainlain !== '-' ? 'Lihat Foto' : 'Tidak ada'}</a></li>
         </ul>
       </div>
 
@@ -434,6 +438,7 @@ ${d.keluhan}
 • Merek/Tipe : ${fotoLinks.merek !== '-' ? fotoLinks.merek : 'Tidak ada'}
 • Kerusakan  : ${fotoLinks.kerusakan !== '-' ? fotoLinks.kerusakan : 'Tidak ada'}
 • Keseluruhan: ${fotoLinks.keseluruhan !== '-' ? fotoLinks.keseluruhan : 'Tidak ada'}
+• Lain-lain  : ${fotoLinks.lainlain !== '-' ? fotoLinks.lainlain : 'Tidak ada'}
 ━━━━━━━━━━━━━━━━━━━━
 _Pesan otomatis Sistem BMN_`;
 

@@ -903,7 +903,7 @@
 
       <!-- Lampiran Foto -->
       <div class="form-section">
-        <h3>Lampiran Foto (4 Foto)</h3>
+        <h3>Lampiran Foto (5 Foto)</h3>
         <div class="photo-grid">
           <div class="photo-item">
             <label>📸 Foto NUP Barang <span class="req">*</span></label>
@@ -927,6 +927,12 @@
             <input type="file" id="fotoKeseluruhan" accept="image/*"
               onchange="handlePhoto(this, 'thumbKeseluruhan', 'prevKeseluruhan')" />
             <img id="thumbKeseluruhan" class="photo-thumb" />
+          </div>
+          <div class="photo-item">
+            <label>📸 Foto Lain-lain</label>
+            <input type="file" id="fotoLainLain" accept="image/*"
+              onchange="handlePhoto(this, 'thumbLainLain', 'prevLainLain')" />
+            <img id="thumbLainLain" class="photo-thumb" />
           </div>
         </div>
       </div>
@@ -1097,6 +1103,12 @@
           <div class="foto-caption">4. Foto Keseluruhan Barang</div>
           <img id="prevKeseluruhan" src="" style="display:none;width:100%;height:auto;max-width:100%;" />
           <div class="foto-placeholder" id="phKeseluruhan">[ Belum ada foto Keseluruhan ]</div>
+        </div>
+
+        <div class="foto-item" id="itemLainLain">
+          <div class="foto-caption">5. Foto Lain-lain</div>
+          <img id="prevLainLain" src="" style="display:none;width:100%;height:auto;max-width:100%;" />
+          <div class="foto-placeholder" id="phLainLain">[ Belum ada foto Lain-lain ]</div>
         </div>
       </div>
 
@@ -1399,7 +1411,7 @@
     }
 
     // ===== PHOTO HANDLER =====
-    const photoData = { fotoNup: null, fotoMerek: null, fotoKerusakan: null, fotoKeseluruhan: null };
+    const photoData = { fotoNup: null, fotoMerek: null, fotoKerusakan: null, fotoKeseluruhan: null, fotoLainLain: null };
 
     function handlePhoto(input, thumbId, prevId) {
       const file = input.files[0];
@@ -1485,7 +1497,8 @@
         kondisi: document.querySelector('input[name=kondisi]:checked')?.value || '',
         keluhan: g('keluhan'),
         fotoNup: photoData.fotoNup || '', fotoMerek: photoData.fotoMerek || '',
-        fotoKerusakan: photoData.fotoKerusakan || '', fotoKeseluruhan: photoData.fotoKeseluruhan || ''
+        fotoKerusakan: photoData.fotoKerusakan || '', fotoKeseluruhan: photoData.fotoKeseluruhan || '',
+        fotoLainLain: photoData.fotoLainLain || ''
       };
 
       try {
@@ -1599,17 +1612,17 @@
       buildNupDropdown();
 
       // Reset photos
-      ['fotoNup', 'fotoMerek', 'fotoKerusakan', 'fotoKeseluruhan'].forEach(id => {
+      ['fotoNup', 'fotoMerek', 'fotoKerusakan', 'fotoKeseluruhan', 'fotoLainLain'].forEach(id => {
         const el = document.getElementById(id); if (el) el.value = '';
         photoData[id] = null;
       });
-      ['thumbNup', 'thumbMerek', 'thumbKerusakan', 'thumbKeseluruhan'].forEach(id => {
+      ['thumbNup', 'thumbMerek', 'thumbKerusakan', 'thumbKeseluruhan', 'thumbLainLain'].forEach(id => {
         const el = document.getElementById(id); if (el) el.style.display = 'none';
       });
-      ['prevNup', 'prevMerek', 'prevKerusakan', 'prevKeseluruhan'].forEach(id => {
+      ['prevNup', 'prevMerek', 'prevKerusakan', 'prevKeseluruhan', 'prevLainLain'].forEach(id => {
         const el = document.getElementById(id); if (el) { el.src = ''; el.style.display = 'none'; }
       });
-      ['phNup', 'phMerek', 'phKerusakan', 'phKeseluruhan'].forEach(id => {
+      ['phNup', 'phMerek', 'phKerusakan', 'phKeseluruhan', 'phLainLain'].forEach(id => {
         const el = document.getElementById(id); if (el) el.style.display = 'flex';
       });
       updatePreview();
