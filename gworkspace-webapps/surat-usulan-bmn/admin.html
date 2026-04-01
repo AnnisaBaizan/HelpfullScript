@@ -181,7 +181,9 @@
     @page { size: 215mm 330mm; margin: 18mm 25mm; }
     body { background: #fff; }
     .app-header, .admin-wrap { display: none !important; }
-    .print-area { display: block !important; }
+    .print-area { display: none !important; }
+    body.print-usulan #printArea   { display: block !important; }
+    body.print-ba     #printAreaBA { display: block !important; }
     .surat-wrapper { width: 100%; box-shadow: none; padding: 0; margin: 0; page-break-after: always; break-after: page; }
     .surat-wrapper.lampiran { page-break-after: auto; break-after: auto; }
     .foto-item { page-break-inside: avoid; }
@@ -427,7 +429,7 @@
         </td>
       </tr>
       <tr><td style="vertical-align:top">Rincian Pemeliharaan/Perbaikan</td><td style="vertical-align:top">:</td><td class="nilai" id="brRincian" style="white-space:pre-wrap"></td></tr>
-      <tr><td style="vertical-align:top">Foto-Foto Pemeliharaan/Perbaikan</td><td style="vertical-align:top">:</td>
+      <!-- <tr><td style="vertical-align:top">Foto-Foto Pemeliharaan/Perbaikan</td><td style="vertical-align:top">:</td>
         <td class="nilai">
           1. Foto NUP Barang/Ruangan/Gedung (sebelum perbaikan)<br>
           2. Foto Merek/Tipe Barang/Ruangan/Gedung (sebelum perbaikan)<br>
@@ -436,7 +438,7 @@
           5. Foto Barang setelah di perbaiki/di pasang 2<br>
           6. Foto Lain-lain
         </td>
-      </tr>
+      </tr> -->
     </table>
     <div class="surat-penutup">
       Demikianlah berita acara serah terima pemeliharaan/perbaikan barang milik negara ini dibuat, untuk dipergunakan sebagaimana mestinya. Atas perhatiaannya diucapkan terimakasih.
@@ -505,7 +507,7 @@
 </div>
 
 <script>
-const GAS_URL     = 'https://script.google.com/macros/s/AKfycbxxaKYMKYkkKFuDrceOnxMSgrwGUMtJ-4gcsVa4w9ad1At7h2eTXjtclxghe_Ma-n-n9w/exec';
+const GAS_URL     = 'https://script.google.com/macros/s/AKfycbxfnVRBiL1jGoe8iYJDNzuCKW0nH1LYD-c96e69XFZDmSV2V0bCAeQV68Dq49yDkvcwng/exec';
 const PASSWORD    = 'sarpras2026'; // ← GANTI PASSWORD DI SINI
 const SESSION_KEY = 'bmn_admin_auth';
 
@@ -665,7 +667,7 @@ async function startRegenPDF() {
   set('prJabatan', d.jabatan);   set('prBagian', d.bagian);
   set('prNamaBarang', d.namaBarang);
   set('prTipe',  d.tipe    || '');
-  set('prMerek', d.merekTipe || '');
+  set('prMerek', d.merek || '');
   set('prRuangan', d.ruangan);   set('prNup', d.nup);
   set('prKeluhan', d.keluhan);   set('prKota', 'Palembang');
   set('prTanggal', formatTanggal(d.tanggalSurat));
@@ -721,8 +723,9 @@ async function startRegenPDF() {
 
   const origTitle = document.title;
   document.title  = 'Surat_BMN_' + d.nomor.replace(/\//g,'-') + '_' + d.nama.substring(0,20);
+  document.body.classList.add('print-usulan');
   window.print();
-  setTimeout(() => { document.title = origTitle; btn.disabled = false; }, 2000);
+  setTimeout(() => { document.title = origTitle; document.body.classList.remove('print-usulan'); btn.disabled = false; }, 2000);
 }
 
 // HELPERS
@@ -926,8 +929,6 @@ async function startRegenBAPDF() {
 
   // Step 3 — cetak
   setStep('ms3','active','🔄');
-  document.getElementById('printArea').style.display   = 'none';
-  document.getElementById('printAreaBA').style.display = 'block';
   await sleep(400);
   setStep('ms3','done','✅');
   await sleep(400);
@@ -935,11 +936,11 @@ async function startRegenBAPDF() {
 
   const origTitle = document.title;
   document.title  = 'BA-PP_' + d.nomor.replace(/\//g,'-');
+  document.body.classList.add('print-ba');
   window.print();
   setTimeout(() => {
     document.title = origTitle;
-    document.getElementById('printAreaBA').style.display = 'none';
-    document.getElementById('printArea').style.display   = 'block';
+    document.body.classList.remove('print-ba');
     btn.disabled = false;
   }, 2000);
 }
