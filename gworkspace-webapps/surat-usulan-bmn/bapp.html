@@ -264,9 +264,11 @@
     }
 
     @media screen and (max-width: 900px) {
+      body { overflow-x: hidden; }
       .main-layout { grid-template-columns: 1fr; height: auto; overflow: visible; }
-      .preview-panel { display: none; }
-      .form-panel { padding-bottom: 100px; }
+      .preview-panel { display: block; height: auto; overflow: hidden; padding: 12px 0; }
+      .surat-wrapper { transform-origin: top left; }
+      .form-panel { padding-bottom: 40px; }
     }
   </style>
 </head>
@@ -1014,7 +1016,26 @@
         if (ttdData[t]) { img.src = ttdData[t]; img.style.display = 'block'; }
         else             { img.style.display = 'none'; }
       });
+      scalePreviews();
     }
+
+    // ===== SCALE PREVIEW MOBILE =====
+    function scalePreviews() {
+      if (window.innerWidth >= 900) {
+        document.querySelectorAll('.surat-wrapper').forEach(el => {
+          el.style.transform = ''; el.style.marginBottom = '';
+        });
+        return;
+      }
+      const scale = window.innerWidth / 794;
+      document.querySelectorAll('.surat-wrapper').forEach(el => {
+        el.style.transform = ''; el.style.marginBottom = '';
+        const h = el.offsetHeight;
+        el.style.transform = `scale(${scale})`;
+        el.style.marginBottom = `${h * scale - h}px`;
+      });
+    }
+    window.addEventListener('resize', scalePreviews);
 
     // ===== TTD CANVAS MODAL =====
     function openTTD(target) {
