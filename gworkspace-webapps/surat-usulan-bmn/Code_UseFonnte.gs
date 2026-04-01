@@ -143,9 +143,9 @@ function getDataAset() {
     const rawData = sheet.getRange(2, 1, lastRow - 1, maxCol).getValues();
 
     const data = rawData
-      .filter(row => row[colNUP] || row[colNama]) // skip baris kosong
+      .filter(row => row[colNUP] || row[colNama])
       .map(row => ({
-        nup: String(row[colNUP] || '').trim(),
+        nup : String(row[colNUP]  || '').trim(),
         nama: String(row[colNama] || '').trim(),
         merk: String(row[colMerk] || '').trim(),
         tipe: String(row[colTipe] || '').trim(),
@@ -160,9 +160,10 @@ function getDataAset() {
 // ============================================================
 //  GET DAFTAR SURAT dari Spreadsheet Arsip (untuk Admin)
 //  Kolom: A=No, B=Nomor, C=TglSubmit, D=TglSurat, E=Nama,
-//         F=NIP, G=Jabatan, H=Bagian, I=NamaBarang, J=Merek,
-//         K=Ruangan, L=NUP, M=Kondisi, N=Keluhan,
-//         O=FotoNUP, P=FotoMerek, Q=FotoKerusakan, R=FotoKeseluruhan, S=FotoLainLain
+//         F=NIP, G=Jabatan, H=Bagian, I=NamaBarang,
+//         J=Merek, K=Tipe, L=Ruangan, M=NUP, N=Kondisi, O=Keluhan,
+//         P=FotoNUP, Q=FotoMerek, R=FotoKerusakan, S=FotoKeseluruhan, T=FotoLainLain,
+//         U=Status, V=Keterangan
 // ============================================================
 function getSuratList() {
   try {
@@ -172,9 +173,9 @@ function getSuratList() {
     const lastRow = sheet.getLastRow();
     if (lastRow < 2) return { status: 'ok', data: [] };
 
-    const raw = sheet.getRange(2, 1, lastRow - 1, 19).getValues();
+    const raw = sheet.getRange(2, 1, lastRow - 1, 22).getValues();
     const data = raw
-      .filter(r => r[1]) // skip baris tanpa nomor surat
+      .filter(r => r[1])
       .map(r => ({
         nomor       : String(r[1]  || ''),
         tanggalSurat: r[3] ? Utilities.formatDate(new Date(r[3]), Session.getScriptTimeZone(), 'yyyy-MM-dd') : '',
@@ -183,18 +184,19 @@ function getSuratList() {
         jabatan     : String(r[6]  || ''),
         bagian      : String(r[7]  || ''),
         namaBarang  : String(r[8]  || ''),
-        merekTipe   : String(r[9]  || ''),
-        ruangan     : String(r[10] || ''),
-        nup         : String(r[11] || ''),
-        kondisi     : String(r[12] || ''),
-        keluhan     : String(r[13] || ''),
-        fotoNup         : String(r[14] || '-'),
-        fotoMerek       : String(r[15] || '-'),
-        fotoKerusakan   : String(r[16] || '-'),
-        fotoKeseluruhan : String(r[17] || '-'),
-        fotoLainLain    : String(r[18] || '-'),
+        merek       : String(r[9]  || ''),
+        tipe        : String(r[10] || ''),
+        ruangan     : String(r[11] || ''),
+        nup         : String(r[12] || ''),
+        kondisi     : String(r[13] || ''),
+        keluhan     : String(r[14] || ''),
+        fotoNup         : String(r[15] || '-'),
+        fotoMerek       : String(r[16] || '-'),
+        fotoKerusakan   : String(r[17] || '-'),
+        fotoKeseluruhan : String(r[18] || '-'),
+        fotoLainLain    : String(r[19] || '-'),
       }))
-      .reverse(); // terbaru di atas
+      .reverse();
     return { status: 'ok', count: data.length, data: data };
   } catch (err) {
     return { status: 'error', error: err.message };
@@ -262,18 +264,19 @@ function handleSubmit(d) {
       d.jabatan,                       // G: Jabatan
       d.bagian,                        // H: Unit/Bagian
       d.namaBarang,                    // I: Nama Barang
-      d.merekTipe,                     // J: Merek/Tipe
-      d.ruangan,                       // K: Ruangan (DBR)
-      d.nup,                           // L: NUP BMN
-      d.kondisi,                       // M: Kondisi
-      d.keluhan,                       // N: Keluhan
-      fotoLinks.nup,                   // O: Link Foto NUP
-      fotoLinks.merek,                 // P: Link Foto Merek
-      fotoLinks.kerusakan,             // Q: Link Foto Kerusakan
-      fotoLinks.keseluruhan,           // R: Link Foto Keseluruhan
-      fotoLinks.lainlain,              // S: Link Foto Lain-lain
-      'Menunggu Tindak Lanjut',        // T: Status
-      '',                              // U: Keterangan
+      d.merek,                         // J: Merek
+      d.tipe,                          // K: Tipe
+      d.ruangan,                       // L: Ruangan (DBR)
+      d.nup,                           // M: NUP BMN
+      d.kondisi,                       // N: Kondisi
+      d.keluhan,                       // O: Keluhan
+      fotoLinks.nup,                   // P: Link Foto NUP
+      fotoLinks.merek,                 // Q: Link Foto Merek
+      fotoLinks.kerusakan,             // R: Link Foto Kerusakan
+      fotoLinks.keseluruhan,           // S: Link Foto Keseluruhan
+      fotoLinks.lainlain,              // T: Link Foto Lain-lain
+      'Menunggu Tindak Lanjut',        // U: Status
+      '',                              // V: Keterangan
     ]);
 
     // Format kolom tanggal submit
@@ -367,8 +370,12 @@ function kirimEmailNotifikasi(d, fotoLinks, timestamp) {
           <td style="padding:8px 12px;">${d.namaBarang}</td>
         </tr>
         <tr>
-          <td style="padding:8px 12px;font-weight:bold;">Merek / Tipe</td>
-          <td style="padding:8px 12px;">${d.merekTipe || '-'}</td>
+          <td style="padding:8px 12px;font-weight:bold;">Merek</td>
+          <td style="padding:8px 12px;">${d.merek || '-'}</td>
+        </tr>
+        <tr style="background:#f5f7fa;">
+          <td style="padding:8px 12px;font-weight:bold;">Tipe</td>
+          <td style="padding:8px 12px;">${d.tipe || '-'}</td>
         </tr>
         <tr style="background:#f5f7fa;">
           <td style="padding:8px 12px;font-weight:bold;">Ruangan (DBR)</td>
@@ -437,7 +444,8 @@ ${CONFIG.NAMA_INSTANSI}
 
 🖥️ *Detail Barang*
 • Nama Barang : ${d.namaBarang}
-• Merek/Tipe  : ${d.merekTipe || '-'}
+• Merek       : ${d.merek || '-'}
+• Tipe        : ${d.tipe  || '-'}
 • Ruangan     : ${d.ruangan}
 • NUP BMN     : ${d.nup}
 • Kondisi     : ${kondisiEmoji} ${d.kondisi}
@@ -520,13 +528,12 @@ function getSuratUsulanList() {
       .map(r => ({
         nomor      : String(r[1]  || ''),
         namaBarang : String(r[8]  || ''),
-        tipe       : String(r[9]  || '').split('/')[1] ? String(r[9]).split('/')[1].trim() : '',
-        merek      : String(r[9]  || '').split('/')[0] ? String(r[9]).split('/')[0].trim() : '',
-        merekTipe  : String(r[9]  || ''),
-        ruangan    : String(r[10] || ''),
-        nup        : String(r[11] || ''),
-        fotoNup    : String(r[14] || '-'),
-        fotoMerek  : String(r[15] || '-'),
+        merek      : String(r[9]  || ''),
+        tipe       : String(r[10] || ''),
+        ruangan    : String(r[11] || ''),
+        nup        : String(r[12] || ''),
+        fotoNup    : String(r[15] || '-'),
+        fotoMerek  : String(r[16] || '-'),
       }))
       .reverse();
     return { status: 'ok', count: data.length, data: data };
