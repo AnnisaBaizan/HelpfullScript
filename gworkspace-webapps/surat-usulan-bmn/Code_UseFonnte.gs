@@ -1,26 +1,31 @@
 // ============================================================
-//  SURAT USULAN PERBAIKAN BMN — Google Apps Script Backend
+//  SURAT USULAN & BERITA ACARA PERBAIKAN BMN — GAS Backend
 //  Deploy: Web App | Execute as: Me | Access: Anyone
 // ============================================================
 
 // ==================== CONFIG ====================
 const CONFIG = {
   SPREADSHEET_ID: 'GANTI_DENGAN_SPREADSHEET_ID',       // ID Google Sheets arsip
-  DRIVE_FOLDER_ID: 'GANTI_DENGAN_SPREADSHEET_ID',       // ID Google Sheets arsip
-  EMAIL_TUJUAN: 'sarpras@instansi.go.id',             // Email notifikasi tim Sarpras
+  DRIVE_FOLDER_ID: 'GANTI_DENGAN_FOLDER_ID',            // ID folder Drive untuk foto
+  EMAIL_TUJUAN: 'sarpras@instansi.go.id',              // Email notifikasi tim Sarpras
   EMAIL_AKTIF: false,
-  NAMA_INSTANSI: 'Politeknik Kesehatan Palembang',     // Nama instansi di email notif
-  NOMOR_PREFIX: 'KN.01.03/Sarpras',                   // Prefix nomor surat (sebelum /urut/tahun)
-  SHEET_NAME: 'Arsip Surat',                        // Nama sheet arsip
+  NAMA_INSTANSI: 'Politeknik Kesehatan Palembang',      // Nama instansi di email notif
+  NOMOR_PREFIX: 'KN.01.03/Sarpras/PP',                  // Prefix nomor surat usulan
+  SHEET_NAME: 'Usulan-PP',                              // Sheet arsip surat usulan
+
+  // --- Berita Acara PP ---
+  BA_SHEET_NAME: 'BA-PP',                               // Sheet arsip berita acara
+  BA_NOMOR_PREFIX: 'KN.01.03/Sarpras/BA-PP',            // Prefix nomor berita acara
+  BA_DRIVE_FOLDER_ID: 'GANTI_DENGAN_FOLDER_ID_BA',      // ID folder Drive untuk foto & TTD BA
 
   // --- Database Aset BMN (spreadsheet terpisah) ---
   ASET_SPREADSHEET_ID: 'GANTI_DENGAN_aset_SPREADSHEET_ID',
-  ASET_SHEET_NAME: 'ASET2026',                       // Tab nama sheet aset
+  ASET_SHEET_NAME: 'ASET2026',                          // Tab nama sheet aset
 
   // --- WhatsApp via Fonnte (https://fonnte.com) ---
-  WA_TOKEN: 'GANTI_DENGAN_TOKEN_FONNTE',          // Token dari dashboard Fonnte
-  WA_TUJUAN: '628123456789',                       // Nomor WA penerima, format 62xxx (bisa multiple: '628xxx,628yyy')
-  WA_AKTIF: false,                                 // Set false untuk nonaktifkan WA notif
+  WA_TOKEN: 'GANTI_DENGAN_TOKEN_FONNTE',
+  WA_TUJUAN: '628123456789',
+  WA_AKTIF: false,
 };
 
 // ================================================
@@ -32,15 +37,20 @@ function doGet(e) {
 
   if (action === 'getNomor') {
     result = getNomorSurat();
+  } else if (action === 'getNomorBA') {
+    result = getNomorBA();
   } else if (action === 'getAset') {
     result = getDataAset();
-  } else if (action === 'getSuratList'){
+  } else if (action === 'getSuratList') {
     result = getSuratList();
-  } else if (action === 'getPhoto'){
-    result = getPhotoBase64(e.parameter.url)
-    }
-  else {
-    result = { error: 'Action tidak dikenal. Gunakan ?action=getNomor / ?action=getAset / ?action=getSuratList / ?action=getPhoto' };
+  } else if (action === 'getSuratUsulanList') {
+    result = getSuratUsulanList();
+  } else if (action === 'getBASuratList') {
+    result = getBASuratList();
+  } else if (action === 'getPhoto') {
+    result = getPhotoBase64(e.parameter.url);
+  } else {
+    result = { error: 'Action tidak dikenal.' };
   }
 
   return ContentService.createTextOutput(JSON.stringify(result))
@@ -62,6 +72,8 @@ function doPost(e) {
 
   if (action === 'submit') {
     result = handleSubmit(payload);
+  } else if (action === 'submitBA') {
+    result = handleSubmitBA(payload);
   } else {
     result = { status: 'error', error: 'Action tidak dikenal.' };
   }
@@ -461,7 +473,200 @@ _Pesan otomatis Sistem BMN_`;
       Logger.log('WhatsApp terkirim ke: ' + CONFIG.WA_TUJUAN);
     }
   } catch (e) {
-    // WA error tidak menghentikan proses submit
     Logger.log('WhatsApp error (non-fatal): ' + e.message);
+  }
+}
+
+// ============================================================
+//  GET NOMOR BERITA ACARA
+// ============================================================
+function getNomorBA() {
+  const tahun = new Date().getFullYear();
+  try {
+    const ss    = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+    const sheet = ss.getSheetByName(CONFIG.BA_SHEET_NAME);
+    if (!sheet) throw new Error('Sheet "' + CONFIG.BA_SHEET_NAME + '" tidak ditemukan.');
+
+    const lastRow = sheet.getLastRow();
+    let urut = 1;
+    if (lastRow > 1) {
+      const nomorList = sheet.getRange(2, 2, lastRow - 1, 1).getValues().flat();
+      const count = nomorList.filter(n => n && String(n).includes('/' + tahun)).length;
+      urut = count + 1;
+    }
+    const urutStr = String(urut).padStart(3, '0');
+    const nomor   = CONFIG.BA_NOMOR_PREFIX + '/' + urutStr + '/' + tahun;
+    return { status: 'ok', urut: urut, nomor: nomor };
+  } catch (err) {
+    return { status: 'error', error: err.message };
+  }
+}
+
+// ============================================================
+//  GET DAFTAR SURAT USULAN (untuk dropdown BA-PP)
+//  Return: nomor, namaBarang, tipe, merek, ruangan, nup, fotoNup, fotoMerek
+// ============================================================
+function getSuratUsulanList() {
+  try {
+    const ss    = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+    const sheet = ss.getSheetByName(CONFIG.SHEET_NAME);
+    if (!sheet) throw new Error('Sheet "' + CONFIG.SHEET_NAME + '" tidak ditemukan.');
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) return { status: 'ok', data: [] };
+
+    const raw  = sheet.getRange(2, 1, lastRow - 1, 19).getValues();
+    const data = raw
+      .filter(r => r[1])
+      .map(r => ({
+        nomor      : String(r[1]  || ''),
+        namaBarang : String(r[8]  || ''),
+        tipe       : String(r[9]  || '').split('/')[1] ? String(r[9]).split('/')[1].trim() : '',
+        merek      : String(r[9]  || '').split('/')[0] ? String(r[9]).split('/')[0].trim() : '',
+        merekTipe  : String(r[9]  || ''),
+        ruangan    : String(r[10] || ''),
+        nup        : String(r[11] || ''),
+        fotoNup    : String(r[14] || '-'),
+        fotoMerek  : String(r[15] || '-'),
+      }))
+      .reverse();
+    return { status: 'ok', count: data.length, data: data };
+  } catch (err) {
+    return { status: 'error', error: err.message };
+  }
+}
+
+// ============================================================
+//  GET DAFTAR BERITA ACARA (untuk admin)
+//  Kolom: A=No, B=NomorBA, C=TglSubmit, D=TglBA, E=NoSuratUsulan,
+//         F=NamaBarang, G=Tipe, H=Merek, I=Ruangan, J=NUP,
+//         K=LainLain, L=Kondisi, M=Rincian,
+//         N=NamaPelaksana, O=JabPelaksana, P=NamaPengawas, Q=JabPengawas,
+//         R=NamaPenggunaBMN, S=JabPenggunaBMN,
+//         T=TTDPelaksana, U=TTDPengawas, V=TTDPenggunaBMN,
+//         W=Foto1, X=Foto2, Y=Foto3, Z=Foto4, AA=Foto5, AB=Foto6
+// ============================================================
+function getBASuratList() {
+  try {
+    const ss    = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+    const sheet = ss.getSheetByName(CONFIG.BA_SHEET_NAME);
+    if (!sheet) throw new Error('Sheet "' + CONFIG.BA_SHEET_NAME + '" tidak ditemukan.');
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 2) return { status: 'ok', data: [] };
+
+    const raw  = sheet.getRange(2, 1, lastRow - 1, 28).getValues();
+    const data = raw
+      .filter(r => r[1])
+      .map(r => ({
+        nomor          : String(r[1]  || ''),
+        tanggalBA      : r[3] ? Utilities.formatDate(new Date(r[3]), Session.getScriptTimeZone(), 'yyyy-MM-dd') : '',
+        noSuratUsulan  : String(r[4]  || ''),
+        namaBarang     : String(r[5]  || ''),
+        tipe           : String(r[6]  || ''),
+        merek          : String(r[7]  || ''),
+        ruangan        : String(r[8]  || ''),
+        nup            : String(r[9]  || ''),
+        lainLain       : String(r[10] || ''),
+        kondisi        : String(r[11] || ''),
+        rincian        : String(r[12] || ''),
+        namaPelaksana  : String(r[13] || ''),
+        jabPelaksana   : String(r[14] || ''),
+        namaPengawas   : String(r[15] || ''),
+        jabPengawas    : String(r[16] || ''),
+        namaPengguna   : String(r[17] || ''),
+        jabPengguna    : String(r[18] || ''),
+        ttdPelaksana   : String(r[19] || '-'),
+        ttdPengawas    : String(r[20] || '-'),
+        ttdPengguna    : String(r[21] || '-'),
+        foto1          : String(r[22] || '-'),
+        foto2          : String(r[23] || '-'),
+        foto3          : String(r[24] || '-'),
+        foto4          : String(r[25] || '-'),
+        foto5          : String(r[26] || '-'),
+        foto6          : String(r[27] || '-'),
+      }))
+      .reverse();
+    return { status: 'ok', count: data.length, data: data };
+  } catch (err) {
+    return { status: 'error', error: err.message };
+  }
+}
+
+// ============================================================
+//  HANDLE SUBMIT BERITA ACARA
+// ============================================================
+function handleSubmitBA(d) {
+  try {
+    const timestamp  = new Date();
+    const namaFolder = d.nomor + ' - ' + (d.namaPelaksana || 'BA');
+    const parentFolder = DriveApp.getFolderById(CONFIG.BA_DRIVE_FOLDER_ID);
+    const subFolder    = parentFolder.createFolder(namaFolder);
+
+    // Upload atau simpan URL foto 1 & 2 (bisa jadi sudah URL Drive jika auto-fill)
+    function resolveAtauUpload(nilaiInput, namaFile) {
+      if (!nilaiInput || nilaiInput === '-' || nilaiInput.length < 10) return '-';
+      if (nilaiInput.startsWith('https://')) return nilaiInput; // sudah URL Drive
+      return uploadFoto(subFolder, nilaiInput, namaFile);       // base64 → upload
+    }
+
+    const foto1 = resolveAtauUpload(d.foto1, 'Foto1_NUP');
+    const foto2 = resolveAtauUpload(d.foto2, 'Foto2_Merek');
+    const foto3 = resolveAtauUpload(d.foto3, 'Foto3_SparePart');
+    const foto4 = resolveAtauUpload(d.foto4, 'Foto4_Setelah1');
+    const foto5 = resolveAtauUpload(d.foto5, 'Foto5_Setelah2');
+    const foto6 = resolveAtauUpload(d.foto6, 'Foto6_LainLain');
+
+    // Upload TTD (base64 PNG dari canvas)
+    const ttdPelaksana = uploadFoto(subFolder, d.ttdPelaksana, 'TTD_Pelaksana');
+    const ttdPengawas  = uploadFoto(subFolder, d.ttdPengawas,  'TTD_Pengawas');
+    const ttdPengguna  = uploadFoto(subFolder, d.ttdPengguna,  'TTD_PenggunaBMN');
+
+    // Append ke sheet BA-PP
+    const ss    = SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID);
+    const sheet = ss.getSheetByName(CONFIG.BA_SHEET_NAME);
+    if (!sheet) throw new Error('Sheet "' + CONFIG.BA_SHEET_NAME + '" tidak ditemukan.');
+
+    const noUrut = sheet.getLastRow();
+    sheet.appendRow([
+      noUrut,               // A: No
+      d.nomor,              // B: Nomor BA
+      timestamp,            // C: Tanggal Submit
+      d.tanggalBA,          // D: Tanggal BA
+      d.noSuratUsulan || '',// E: No Surat Usulan
+      d.namaBarang,         // F: Nama Barang
+      d.tipe,               // G: Tipe
+      d.merek,              // H: Merek
+      d.ruangan,            // I: Ruangan
+      d.nup,                // J: NUP
+      d.lainLain || '',     // K: Lain-lain / No.Inv
+      d.kondisi,            // L: Kondisi
+      d.rincian || '',      // M: Rincian Pemeliharaan/Perbaikan
+      d.namaPelaksana,      // N: Nama Pelaksana
+      d.jabPelaksana,       // O: Jabatan Pelaksana
+      d.namaPengawas,       // P: Nama Pengawas
+      d.jabPengawas,        // Q: Jabatan Pengawas
+      d.namaPengguna,       // R: Nama Pengguna BMN
+      d.jabPengguna,        // S: Jabatan Pengguna BMN
+      ttdPelaksana,         // T: TTD Pelaksana (URL)
+      ttdPengawas,          // U: TTD Pengawas (URL)
+      ttdPengguna,          // V: TTD Pengguna BMN (URL)
+      foto1,                // W: Foto 1 NUP
+      foto2,                // X: Foto 2 Merek/Tipe
+      foto3,                // Y: Foto 3 Spare Part
+      foto4,                // Z: Foto 4 Setelah 1
+      foto5,                // AA: Foto 5 Setelah 2
+      foto6,                // AB: Foto 6 Lain-lain
+    ]);
+
+    const newRow = sheet.getLastRow();
+    sheet.getRange(newRow, 3).setNumberFormat('dd/mm/yyyy hh:mm:ss');
+    sheet.getRange(newRow, 4).setNumberFormat('dd/mm/yyyy');
+
+    return {
+      status: 'ok',
+      message: 'Berita Acara berhasil disimpan.',
+      folder: subFolder.getUrl(),
+    };
+  } catch (err) {
+    return { status: 'error', error: err.message };
   }
 }
