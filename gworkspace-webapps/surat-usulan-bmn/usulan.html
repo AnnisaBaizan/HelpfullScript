@@ -1163,9 +1163,9 @@
     }
 
     // ===== FETCH NOMOR SURAT =====
-    async function fetchNomor() {
+    async function fetchNomor(loadingMsg = '⏳ Mengambil nomor surat dari server…') {
       document.getElementById('nomorSurat').value = 'Mengambil nomor surat…';
-      setStatus('loading', '⏳ Mengambil nomor surat dari server…');
+      setStatus('loading', loadingMsg);
       try {
         const resp = await fetch(GAS_URL + '?action=getNomor');
         const data = await resp.json();
@@ -1628,8 +1628,7 @@
       });
       updatePreview();
       document.getElementById('btnSubmit').disabled = false;
-      setStatus('info', 'ℹ️ Form telah direset. Harap tunggu hingga form mengambil nomor baru.');
-      fetchNomor();
+      fetchNomor('ℹ️ Form direset — mengambil nomor surat baru dari server…');
     }
 
     // ===== STATUS BAR =====
@@ -1638,6 +1637,7 @@
       bar.style.display = '';
       bar.className = 'status-bar ' + type;
       bar.textContent = msg;
+      bar.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       if (type === 'success' && !persistent) setTimeout(() => { bar.style.display = 'none'; }, 10000);
     }
 
