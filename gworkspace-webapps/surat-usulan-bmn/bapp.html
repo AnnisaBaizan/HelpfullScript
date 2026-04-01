@@ -1214,6 +1214,10 @@
           await sleep(600);
           hideModal();
           setStatus('success', '✅ Berita Acara berhasil disimpan! Klik Reset untuk mengisi BA baru.', true);
+          const origTitle = document.title;
+          document.title = 'BA-PP_' + (payload.nomor || '').replace(/\//g, '-');
+          window.print();
+          setTimeout(() => { document.title = origTitle; }, 2000);
         } else {
           throw new Error(result.error || 'Unknown error');
         }
