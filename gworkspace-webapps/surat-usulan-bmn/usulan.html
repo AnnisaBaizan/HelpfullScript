@@ -709,7 +709,7 @@
       }
     }
 
-    @media (max-width: 900px) {
+    @media screen and (max-width: 900px) {
       .main-layout { grid-template-columns: 1fr; height: auto; overflow: visible; }
       .preview-panel { display: none; }
       .form-panel { padding-bottom: 100px; }
@@ -1635,6 +1635,7 @@
     // ===== STATUS BAR =====
     function setStatus(type, msg, persistent = false) {
       const bar = document.getElementById('statusBar');
+      bar.style.display = '';
       bar.className = 'status-bar ' + type;
       bar.textContent = msg;
       if (type === 'success' && !persistent) setTimeout(() => { bar.style.display = 'none'; }, 10000);
