@@ -65,7 +65,9 @@
 
     /* Foto grid */
     .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .photo-item { min-width: 0; overflow: hidden; }
     .photo-item label { margin-bottom: 4px; }
+    .photo-item input[type=file] { width: 100%; max-width: 100%; font-size: 11px; }
     .photo-thumb { width: 100%; max-height: 80px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; display: none; margin-top: 4px; }
     .photo-auto-preview { width: 100%; max-height: 80px; object-fit: cover; border-radius: 4px; border: 2px solid #27ae60; display: none; margin-top: 4px; }
     .photo-auto-label { font-size: 10px; color: #27ae60; font-weight: 600; display: none; margin-top: 2px; }
@@ -106,7 +108,7 @@
 
     /* Status bar */
     .status-bar {
-      display: none; padding: 9px 12px; border-radius: 4px; font-size: 12px; margin-bottom: 12px;
+      display: none; padding: 9px 12px; border-radius: 4px; font-size: 12px; font-weight: 600; margin-bottom: 12px;
     }
     .status-bar.info    { display: block; background: #d6eaf8; color: #1a3a5c; }
     .status-bar.success { display: block; background: #d5f5e3; color: #1e8449; }
@@ -243,10 +245,11 @@
     /* ===== PRINT ===== */
     @media print {
       @page { size: 215mm 330mm; margin: 18mm 20mm; }
-      .app-header, .form-panel, .preview-label, .preview-panel > *:not(.surat-wrapper) { display: none !important; }
-      .main-layout { display: block; height: auto; overflow: visible; }
-      .preview-panel { background: none; padding: 0; }
-      .surat-wrapper { width: 100%; box-shadow: none; padding: 0; page-break-after: always; }
+      body { overflow: visible !important; }
+      .app-header, .form-panel, .preview-label { display: none !important; }
+      .main-layout { display: block !important; height: auto !important; overflow: visible !important; }
+      .preview-panel { background: none !important; padding: 0 !important; overflow: visible !important; height: auto !important; display: block !important; }
+      .surat-wrapper { width: 100% !important; box-shadow: none !important; padding: 0 !important; page-break-after: always; overflow: visible !important; }
       .foto-item { page-break-inside: avoid; }
       .ttd-modal-overlay, .modal-overlay { display: none !important; }
     }
@@ -339,7 +342,7 @@
             <input type="text" id="merek" placeholder="Contoh: Dell" oninput="syncPreview()" />
           </div>
           <div>
-            <label>Tipe <span class="req">*</span></label>
+            <label>Tipe</label>
             <input type="text" id="tipe" placeholder="Contoh: Latitude 5420" oninput="syncPreview()" />
           </div>
         </div>
@@ -723,11 +726,12 @@
 
   <script>
     // ===== CONFIG =====
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbxxaKYMKYkkKFuDrceOnxMSgrwGUMtJ-4gcsVa4w9ad1At7h2eTXjtclxghe_Ma-n-n9w/exec';
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbxfnVRBiL1jGoe8iYJDNzuCKW0nH1LYD-c96e69XFZDmSV2V0bCAeQV68Dq49yDkvcwng/exec';
 
     // ===== STATE =====
     let nomorData     = null;
     let suratUsulanDB = [];   // cache daftar surat usulan
+    let baNomorSet    = new Set(); // nomor surat usulan yang sudah punya BA
     let selectedUsulan = null; // data surat usulan yang dipilih
     let autoFotoUrls  = { foto1: null, foto2: null }; // URL Drive dari surat usulan
     const fotoData    = { foto1:null, foto2:null, foto3:null, foto4:null, foto5:null, foto6:null };
@@ -765,10 +769,17 @@
     // ===== FETCH DAFTAR SURAT USULAN =====
     async function fetchSuratUsulanList() {
       try {
-        const r = await fetch(GAS_URL + '?action=getSuratUsulanList');
-        const d = await r.json();
-        if (d.status === 'ok') {
-          suratUsulanDB = d.data || [];
+        const [rU, rBA] = await Promise.all([
+          fetch(GAS_URL + '?action=getSuratUsulanList'),
+          fetch(GAS_URL + '?action=getBASuratList')
+        ]);
+        const dU  = await rU.json();
+        const dBA = await rBA.json();
+        if (dBA.status === 'ok') {
+          baNomorSet = new Set((dBA.data || []).map(b => b.noSuratUsulan).filter(Boolean));
+        }
+        if (dU.status === 'ok') {
+          suratUsulanDB = dU.data || [];
           buildSelectUsulan();
         }
       } catch (e) { /* non-fatal */ }
@@ -780,7 +791,9 @@
       suratUsulanDB.forEach((s, i) => {
         const opt = document.createElement('option');
         opt.value = i;
-        opt.textContent = s.nomor + (s.namaBarang ? ' — ' + s.namaBarang : '');
+        const sudahAda = baNomorSet.has(s.nomor);
+        opt.textContent = s.nomor + (s.namaBarang ? ' — ' + s.namaBarang : '') + (sudahAda ? ' ✅ (sudah ada BA)' : '');
+        if (sudahAda) { opt.disabled = true; opt.style.color = '#aaa'; }
         sel.appendChild(opt);
       });
     }
@@ -826,19 +839,27 @@
       syncPreview();
     }
 
+    // Konversi Drive file URL → thumbnail URL yang bisa di-embed sebagai <img>
+    function driveToThumb(driveUrl) {
+      if (!driveUrl || driveUrl === '-') return null;
+      const m = driveUrl.match(/\/d\/([a-zA-Z0-9_-]+)/);
+      return m ? 'https://drive.google.com/thumbnail?id=' + m[1] + '&sz=w600' : null;
+    }
+
     function showAutoFoto(n, url) {
       const autoImg   = document.getElementById('autoFoto' + n);
       const autoLabel = document.getElementById('autoLabel' + n);
       const prevImg   = document.getElementById('prev' + n);
       const phEl      = document.getElementById('ph' + n);
       if (url) {
-        // Tampilkan thumbnail auto (Drive public image via proxy)
-        autoImg.src = url; autoImg.style.display = 'block';
-        autoLabel.style.display = 'block';
-        // Preview halaman 2
-        prevImg.src = url; prevImg.style.display = 'block';
+        const thumbUrl = driveToThumb(url);
+        // Thumbnail di form
+        if (autoImg && thumbUrl) { autoImg.src = thumbUrl; autoImg.style.display = 'block'; }
+        if (autoLabel) autoLabel.style.display = 'block';
+        // Preview halaman 2 (gunakan thumbnail juga)
+        if (prevImg && thumbUrl) { prevImg.src = thumbUrl; prevImg.style.display = 'block'; }
         if (phEl) phEl.style.display = 'none';
-        // Simpan URL (bukan base64)
+        // Simpan URL Drive asli untuk dikirim ke backend (bukan thumbnail)
         fotoData['foto' + n] = url;
       } else {
         hideAutoFoto(n);
@@ -1093,7 +1114,6 @@
         'Tanggal BA'        : g('tanggalBA'),
         'Nama Barang'       : g('namaBarang'),
         'Merek'             : g('merek'),
-        'Tipe'              : g('tipe'),
         'Ruangan'           : g('ruangan'),
         'NUP'               : g('nup'),
         'Rincian Perbaikan' : g('rincian'),
@@ -1182,7 +1202,7 @@
           setModalStep('step5', 'done', '✅');
           await sleep(600);
           hideModal();
-          setStatus('success', '✅ Berita Acara berhasil disimpan! Folder: ' + result.folder);
+          setStatus('success', '✅ Berita Acara berhasil disimpan! Klik Reset untuk mengisi BA baru.', true);
         } else {
           throw new Error(result.error || 'Unknown error');
         }
@@ -1224,7 +1244,7 @@
       nomorData = null;
       fetchNomorBA();
       syncPreview();
-      setStatus('info', 'Form telah direset.');
+      setStatus('info', 'ℹ️ Form telah direset. Harap tunggu hingga form mengambil nomor baru.');
       document.getElementById('btnSubmit').disabled = false;
     }
 
@@ -1238,10 +1258,11 @@
       el.querySelector('.step-icon').textContent = icon;
     }
     function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
-    function setStatus(type, msg) {
+    function setStatus(type, msg, persistent = false) {
       const el = document.getElementById('statusBar');
       el.className = 'status-bar ' + type;
       el.textContent = msg;
+      if (type === 'success' && !persistent) setTimeout(() => { el.style.display = 'none'; }, 10000);
     }
   </script>
 </body>
