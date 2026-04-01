@@ -66,8 +66,17 @@
     /* Foto grid */
     .photo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .photo-item { min-width: 0; overflow: hidden; }
-    .photo-item label { margin-bottom: 4px; }
-    .photo-item input[type=file] { width: 100%; max-width: 100%; font-size: 11px; }
+    .photo-item label { margin-bottom: 4px; font-size: 10px; }
+    .photo-item input[type=file] {
+      width: 100%; max-width: 100%; font-size: 11px;
+      padding: 5px; border: 1px dashed #aaa;
+      border-radius: 4px; background: #fafafa; cursor: pointer;
+    }
+    .photo-thumb {
+      margin-top: 4px; width: 100%; max-height: 80px;
+      object-fit: contain; display: none;
+      border: 1px solid #ddd; border-radius: 3px;
+    }
     .photo-thumb { width: 100%; max-height: 80px; object-fit: cover; border-radius: 4px; border: 1px solid #ddd; display: none; margin-top: 4px; }
     .photo-auto-preview { width: 100%; max-height: 80px; object-fit: cover; border-radius: 4px; border: 2px solid #27ae60; display: none; margin-top: 4px; }
     .photo-auto-label { font-size: 10px; color: #27ae60; font-weight: 600; display: none; margin-top: 2px; }
@@ -750,7 +759,8 @@
     });
 
     // ===== FETCH NOMOR BA =====
-    async function fetchNomorBA() {
+    async function fetchNomorBA(loadingMsg = '⏳ Mengambil nomor BA dari server…') {
+      setStatus('loading', loadingMsg);
       try {
         const r = await fetch(GAS_URL + '?action=getNomorBA');
         const d = await r.json();
@@ -758,6 +768,7 @@
           nomorData = d;
           document.getElementById('nomorBA').value = d.nomor;
           syncPreview();
+          setStatus('success', '✅ Nomor BA: ' + d.nomor);
         } else {
           setStatus('error', '⚠️ Gagal ambil nomor BA: ' + d.error);
         }
@@ -1242,9 +1253,8 @@
       // Reset TTD
       ['pelaksana','pengawas','pengguna'].forEach(t => clearTTD(t));
       nomorData = null;
-      fetchNomorBA();
       syncPreview();
-      setStatus('info', 'ℹ️ Form telah direset. Harap tunggu hingga form mengambil nomor baru.');
+      fetchNomorBA('ℹ️ Form direset — mengambil nomor BA baru dari server…');
       document.getElementById('btnSubmit').disabled = false;
     }
 
@@ -1263,6 +1273,7 @@
       el.style.display = '';
       el.className = 'status-bar ' + type;
       el.textContent = msg;
+      el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       if (type === 'success' && !persistent) setTimeout(() => { el.style.display = 'none'; }, 10000);
     }
   </script>
