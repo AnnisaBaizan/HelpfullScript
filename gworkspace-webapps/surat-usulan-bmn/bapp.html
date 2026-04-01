@@ -1260,6 +1260,7 @@
     function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
     function setStatus(type, msg, persistent = false) {
       const el = document.getElementById('statusBar');
+      el.style.display = '';
       el.className = 'status-bar ' + type;
       el.textContent = msg;
       if (type === 'success' && !persistent) setTimeout(() => { el.style.display = 'none'; }, 10000);
