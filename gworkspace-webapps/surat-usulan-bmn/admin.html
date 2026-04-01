@@ -127,23 +127,25 @@
   }
   .kop-img { width: 100%; display: block; }
   .kop-line { border-bottom: 3px solid #000; margin: 6px 0 16px; }
-  .surat-judul { text-align: center; font-weight: bold; font-size: 13pt; text-decoration: underline; text-transform: uppercase; margin: 16px 0 4px; }
-  .surat-nomor { text-align: center; font-size: 12pt; margin-bottom: 20px; }
-  .surat-tujuan { margin-bottom: 16px; line-height: 1.7; }
-  .surat-pembuka { margin-bottom: 14px; text-align: justify; }
-  .identitas-table, .detail-table { width: 100%; border-collapse: collapse; margin-bottom: 14px; }
-  .identitas-table td, .detail-table td { padding: 2px 0; vertical-align: top; font-size: 12pt; line-height: 1.7; }
+  .surat-judul { text-align: center; font-weight: bold; font-size: 13pt; text-decoration: underline; text-transform: uppercase; margin: 10px 0 2px; }
+  .surat-nomor { text-align: center; font-size: 12pt; margin-bottom: 12px; }
+  .surat-tujuan { margin-bottom: 10px; line-height: 1.5; }
+  .surat-pembuka { margin-bottom: 8px; text-align: justify; line-height: 1.5; }
+  .identitas-table, .detail-table { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+  .identitas-table td, .detail-table td { padding: 1px 0; vertical-align: top; font-size: 12pt; line-height: 1.5; }
   .identitas-table td:first-child { width: 34%; }
   .detail-table td:first-child { width: 38%; }
   .identitas-table td:nth-child(2), .detail-table td:nth-child(2) { width: 4%; text-align: center; }
   .nilai { border-bottom: 1px solid #000; padding-left: 4px; }
   .kondisi-option { display: inline-block; padding: 0 4px; }
   .kondisi-option.aktif { text-decoration: underline; font-weight: bold; }
-  .surat-penutup { text-align: justify; margin-bottom: 20px; line-height: 1.8; }
+  .surat-penutup { text-align: justify; margin-bottom: 10px; line-height: 1.5; }
   .ttd-row { display: flex; justify-content: space-between; margin-top: 20px; }
   .ttd-col { text-align: center; width: 45%; }
   .ttd-col .ttd-nama { font-weight: bold; border-bottom: 1px solid #000; min-height: 80px; padding-bottom: 4px; margin-top: 4px; word-break: break-word; }
   .ttd-col .ttd-nip { margin-top: 4px; }
+  .ttd-block { text-align: center; }
+  .ttd-img-wrap { min-height: 65px; display: flex; align-items: center; justify-content: center; margin: 6px 0 2px; }
   .lampiran-title { font-weight: bold; text-align: center; font-size: 12pt; margin-bottom: 16px; text-decoration: underline; }
   .foto-item { margin-bottom: 20px; page-break-inside: avoid; break-inside: avoid; }
   .foto-item .foto-caption { font-weight: bold; font-size: 11pt; margin-bottom: 6px; border-bottom: 1px solid #999; padding-bottom: 4px; }
@@ -444,26 +446,32 @@
       Demikianlah berita acara serah terima pemeliharaan/perbaikan barang milik negara ini dibuat, untuk dipergunakan sebagaimana mestinya. Atas perhatiaannya diucapkan terimakasih.
     </div>
     <div style="text-align:right;margin-bottom:16px;font-size:12pt">Palembang, <span id="brTanggalTTD"></span></div>
-    <div style="display:flex;justify-content:space-between;font-size:12pt;margin-bottom:20px;">
-      <div style="width:44%;text-align:center">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;font-size:12pt;margin-bottom:12px;">
+      <div class="ttd-block" style="width:44%">
         <div>Yang mengawasi pekerjaan</div>
-        <div id="brJabPengawas" style="margin-bottom:4px"></div>
-        <img id="brTTDPengawas" style="max-width:150px;max-height:70px;display:none" />
-        <div style="border-bottom:1px solid #000;min-height:24px;margin:4px 10px;" id="brNamaPengawas"></div>
+        <div id="brJabPengawas" style="margin-bottom:4px;font-size:11pt"></div>
+        <div class="ttd-img-wrap">
+          <img id="brTTDPengawas" style="max-width:150px;max-height:65px;display:none" />
+        </div>
+        <div style="border-bottom:1px solid #000;padding:1px 0;min-height:20px;" id="brNamaPengawas"></div>
       </div>
-      <div style="width:44%;text-align:center">
+      <div class="ttd-block" style="width:44%">
         <div>Yang Melaksanakan</div>
-        <div id="brJabPelaksanaTTD" style="margin-bottom:4px"></div>
-        <img id="brTTDPelaksana" style="max-width:150px;max-height:70px;display:none" />
-        <div style="border-bottom:1px solid #000;min-height:24px;margin:4px 10px;" id="brNamaPelaksanaTTD"></div>
+        <div id="brJabPelaksanaTTD" style="margin-bottom:4px;font-size:11pt"></div>
+        <div class="ttd-img-wrap">
+          <img id="brTTDPelaksana" style="max-width:150px;max-height:65px;display:none" />
+        </div>
+        <div style="border-bottom:1px solid #000;padding:1px 0;min-height:20px;" id="brNamaPelaksanaTTD"></div>
       </div>
     </div>
-    <div style="text-align:center;font-size:12pt">
+    <div class="ttd-block" style="font-size:12pt">
       <div>Mengetahui,</div>
       <div>Pengguna Barang Milik Negara</div>
-      <div id="brJabPengguna" style="margin-bottom:4px"></div>
-      <img id="brTTDPengguna" style="max-width:150px;max-height:70px;display:none" />
-      <div style="border-bottom:1px solid #000;min-height:24px;margin:4px auto;width:200px;" id="brNamaPengguna"></div>
+      <div id="brJabPengguna" style="margin-bottom:4px;font-size:11pt"></div>
+      <div class="ttd-img-wrap">
+        <img id="brTTDPengguna" style="max-width:150px;max-height:65px;display:none" />
+      </div>
+      <div style="border-bottom:1px solid #000;padding:1px 0;min-height:20px;width:200px;margin:0 auto;" id="brNamaPengguna"></div>
     </div>
   </div>
 
