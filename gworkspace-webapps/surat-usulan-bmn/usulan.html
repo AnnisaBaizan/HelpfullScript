@@ -232,13 +232,12 @@
     }
 
     .status-bar {
-      margin-top: 12px;
-      padding: 10px;
+      padding: 9px 12px;
       border-radius: 4px;
       font-size: 12px;
       display: none;
-      text-align: center;
       font-weight: 600;
+      margin-bottom: 12px;
     }
 
     .status-bar.info {
@@ -709,6 +708,12 @@
         page-break-before: auto;
       }
     }
+
+    @media (max-width: 900px) {
+      .main-layout { grid-template-columns: 1fr; height: auto; overflow: visible; }
+      .preview-panel { display: none; }
+      .form-panel { padding-bottom: 100px; }
+    }
   </style>
 </head>
 
@@ -721,8 +726,7 @@
     </div>
     <div style="margin-left:auto;display:flex;gap:8px;align-items:center;">
       <a href="index.html" style="color:rgba(255,255,255,.8);font-size:12px;text-decoration:none;padding:5px 12px;border:1px solid rgba(255,255,255,.3);border-radius:4px;">← Beranda</a>
-      <a href="admin.html" style="color:rgba(255,255,255,.5);font-size:11px;text-decoration:none;"
-        title="Admin Panel">🔐</a>
+      <a href="admin.html" style="color:rgba(255,255,255,.8);font-size:12px;text-decoration:none;padding:5px 12px;border:1px solid rgba(255,255,255,.3);border-radius:4px;">⚙️ Admin</a>
     </div>
   </div>
 
@@ -731,6 +735,7 @@
     <!-- ===== FORM PANEL ===== -->
     <div class="form-panel">
       <h2>Form Pengisian Surat</h2>
+      <div class="status-bar" id="statusBar"></div>
 
       <!-- Nomor Surat -->
       <div class="form-section">
@@ -945,8 +950,6 @@
         <button class="btn btn-reset" onclick="resetForm()">🔄 Reset</button>
       </div>
 
-      <div class="status-bar" id="statusBar">—</div>
-
 
     </div>
 
@@ -1134,7 +1137,7 @@
 
   <script>
     // ===== CONFIG — GANTI URL DI BAWAH INI =====
-    const GAS_URL = 'https://script.google.com/macros/s/AKfycbxxaKYMKYkkKFuDrceOnxMSgrwGUMtJ-4gcsVa4w9ad1At7h2eTXjtclxghe_Ma-n-n9w/exec';
+    const GAS_URL = 'https://script.google.com/macros/s/AKfycbxfnVRBiL1jGoe8iYJDNzuCKW0nH1LYD-c96e69XFZDmSV2V0bCAeQV68Dq49yDkvcwng/exec';
     // ============================================
 
     // ===== STATE =====
@@ -1493,7 +1496,7 @@
         nomor: g('nomorSurat'), urut: nomorData.urut,
         tanggalSurat: g('tanggalSurat'), kota: g('kotaSurat'),
         nama: g('nama'), nip: g('nip'), jabatan: g('jabatan'), bagian: g('bagian'),
-        namaBarang: g('namaBarang'), merekTipe: g('merekTipe'),
+        namaBarang: g('namaBarang'), merek: g('merekTipe'),
         tipe: selTipe, ruangan: g('ruangan'), nup: g('nup'),
         kondisi: document.querySelector('input[name=kondisi]:checked')?.value || '',
         keluhan: g('keluhan'),
@@ -1526,22 +1529,19 @@
           await sleep(500);
 
           hideModal();
-          setStatus('success', '✅ Berhasil! Membuka dialog simpan PDF…');
+          setStatus('success', '✅ Berhasil disimpan! Klik Reset untuk mengisi surat baru.', true);
           downloadPDF();
-          nomorData = null;
-          fetchNomor();
+          // Nomor tidak di-refresh otomatis — btn tetap disabled, user harus klik Reset
         } else {
           throw new Error(result.error || 'Respons tidak valid');
         }
       } catch (e) {
-        // Tampilkan error di dalam modal dulu sebelum tutup
         const stepEl = document.getElementById('modalStep');
         if (stepEl) stepEl.innerHTML = `<span style="color:#c0392b">❌ ${e.name === 'AbortError' ? 'Timeout — GAS tidak merespons dalam 60 detik' : e.message}</span>`;
         ['step2', 'step3', 'step4', 'step5'].forEach(id => setModalStep(id, '', '⏳'));
         await sleep(3000);
         hideModal();
         setStatus('error', '❌ Gagal submit: ' + (e.name === 'AbortError' ? 'Request timeout (60s). Cek koneksi atau ukuran foto.' : e.message));
-      } finally {
         btn.disabled = false;
       }
     }
@@ -1627,16 +1627,19 @@
         const el = document.getElementById(id); if (el) el.style.display = 'flex';
       });
       updatePreview();
-      setStatus('info', 'ℹ️ Form telah direset.');
+      document.getElementById('btnSubmit').disabled = false;
+      setStatus('info', 'ℹ️ Form telah direset. Harap tunggu hingga form mengambil nomor baru.');
+      fetchNomor();
     }
 
     // ===== STATUS BAR =====
-    function setStatus(type, msg) {
+    function setStatus(type, msg, persistent = false) {
       const bar = document.getElementById('statusBar');
       bar.className = 'status-bar ' + type;
       bar.textContent = msg;
-      if (type === 'success') setTimeout(() => { bar.style.display = 'none'; }, 10000);
+      if (type === 'success' && !persistent) setTimeout(() => { bar.style.display = 'none'; }, 10000);
     }
+
 
     updatePreview();
   </script>
