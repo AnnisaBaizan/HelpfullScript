@@ -646,7 +646,7 @@ function handleSubmitBA(d) {
       d.nup,                // J: NUP
       d.lainLain || '',     // K: Lain-lain / No.Inv
       d.kondisi,            // L: Kondisi
-      d.rincian || '',      // M: Rincian Pemeliharaan/Perbaikan
+      d.rincian || '',      // M: Rincian Pemeliharaan/Perbaikan/Penggantian
       d.namaPelaksana,      // N: Nama Pelaksana
       d.jabPelaksana,       // O: Jabatan Pelaksana
       d.namaPengawas,       // P: Nama Pengawas
