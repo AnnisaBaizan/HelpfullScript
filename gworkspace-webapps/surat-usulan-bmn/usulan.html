@@ -716,6 +716,30 @@
       .surat-wrapper { transform-origin: top left; }
       .form-panel { padding-bottom: 40px; }
     }
+
+    /* ===== TTD DIGITAL ===== */
+    .ttd-section { border: 1px solid #d6eaf8; border-radius: 6px; padding: 12px; margin-bottom: 10px; background: #f8fafc; }
+    .ttd-section h4 { font-size: 11px; font-weight: 700; color: #1a3a5c; margin-bottom: 8px; }
+    .ttd-preview-wrap { margin-top: 8px; text-align: center; }
+    .ttd-preview-img { max-width: 100%; max-height: 80px; border: 1px solid #ddd; border-radius: 4px; display: none; margin: 0 auto; }
+    .ttd-status { font-size: 10px; color: #888; margin-top: 3px; }
+    .ttd-status.signed { color: #27ae60; font-weight: 700; }
+    .btn-ttd { display: inline-block; padding: 6px 14px; background: #1a3a5c; color: #fff; border: none; border-radius: 4px; font-size: 11px; cursor: pointer; font-weight: 600; }
+    .btn-ttd:hover { background: #0f2640; }
+    .btn-clear-ttd { display: none; padding: 4px 10px; background: #e74c3c; color: #fff; border: none; border-radius: 4px; font-size: 11px; cursor: pointer; margin-left: 6px; }
+
+    /* TTD Modal */
+    .ttd-modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 9999; align-items: center; justify-content: center; }
+    .ttd-modal-overlay.show { display: flex; }
+    .ttd-modal-box { background: #fff; border-radius: 10px; padding: 20px; width: 90%; max-width: 600px; box-shadow: 0 8px 32px rgba(0,0,0,.2); }
+    .ttd-modal-title { font-size: 14px; font-weight: 700; color: #1a3a5c; margin-bottom: 12px; }
+    #ttdCanvas { width: 100%; height: 200px; border: 2px dashed #1a3a5c; border-radius: 6px; background: #fafafa; cursor: crosshair; touch-action: none; display: block; }
+    .ttd-modal-hint { font-size: 11px; color: #888; margin-top: 6px; margin-bottom: 12px; }
+    .ttd-modal-actions { display: flex; gap: 8px; }
+    .btn-ttd-save   { flex: 1; padding: 10px; background: #27ae60; color: #fff; border: none; border-radius: 5px; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .btn-ttd-clear  { flex: 1; padding: 10px; background: #f39c12; color: #fff; border: none; border-radius: 5px; font-size: 13px; font-weight: 700; cursor: pointer; }
+    .btn-ttd-cancel { flex: 1; padding: 10px; background: #95a5a6; color: #fff; border: none; border-radius: 5px; font-size: 13px; font-weight: 700; cursor: pointer; }
+    @media print { .ttd-modal-overlay { display: none !important; } }
   </style>
 </head>
 
@@ -754,6 +778,30 @@
         <div class="form-row">
           <label>Kota</label>
           <input type="text" id="kotaSurat" value="Palembang" />
+        </div>
+      </div>
+
+      <!-- Identitas Penerima -->
+      <div class="form-section">
+        <h3>Identitas Penerima</h3>
+        <div class="ttd-section">
+          <h4>Penerima</h4>
+          <div class="form-row">
+            <label>Nama Penerima <span class="req">*</span></label>
+            <input type="text" id="namaPenerima" placeholder="Nama lengkap penerima" oninput="syncPreview()" />
+          </div>
+          <div class="form-row">
+            <label>NIP Penerima <span class="req">*</span></label>
+            <input type="text" id="nipPenerima" placeholder="19XXXXXX XXXXXX X XXX" oninput="syncPreview()" />
+          </div>
+          <div class="ttd-preview-wrap">
+            <button class="btn-ttd" onclick="openTTD('penerima')">✍️ Tanda Tangan</button>
+            <button class="btn-clear-ttd" id="clearTTD_penerima" onclick="clearTTD('penerima')">✕ Hapus</button>
+            <div>
+              <img id="previewTTD_penerima" class="ttd-preview-img" />
+              <div class="ttd-status" id="statusTTD_penerima">Belum ditandatangani</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -830,6 +878,17 @@
             <option>Unit Pengembangan Kompetensi SDM Kesehatan</option>
             <option>PUI-PK (Pusat Unggulan Iptek – Perguruan Tinggi Kesehatan)</option>
           </select>
+        </div>
+        <div class="ttd-section" style="margin-top:10px">
+          <h4>Tanda Tangan Pengirim</h4>
+          <div class="ttd-preview-wrap">
+            <button class="btn-ttd" onclick="openTTD('pengirim')">✍️ Tanda Tangan</button>
+            <button class="btn-clear-ttd" id="clearTTD_pengirim" onclick="clearTTD('pengirim')">✕ Hapus</button>
+            <div>
+              <img id="previewTTD_pengirim" class="ttd-preview-img" />
+              <div class="ttd-status" id="statusTTD_pengirim">Belum ditandatangani</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -1071,12 +1130,18 @@
         <div class="ttd-row">
           <div class="ttd-col">
             <div class="ttd-label">Penerima,</div>
-            <div class="ttd-nama" style="padding-top:60px;font-weight:bold;"></div>
-            <div class="ttd-nip"></div>
+            <div style="min-height:65px;display:flex;align-items:center;justify-content:center;">
+              <img id="pvTTDPenerima" style="max-width:150px;max-height:65px;display:none;" />
+            </div>
+            <div class="ttd-nama" style="font-weight:bold;" id="pvNamaPenerima">&nbsp;</div>
+            <div class="ttd-nip">NIP. <span id="pvNipPenerima">&nbsp;</span></div>
           </div>
           <div class="ttd-col">
             <div class="ttd-label">Pengirim,</div>
-            <div class="ttd-nama" style="padding-top:60px;font-weight:bold;" id="pvNamaTtd">&nbsp;</div>
+            <div style="min-height:65px;display:flex;align-items:center;justify-content:center;">
+              <img id="pvTTDPengirim" style="max-width:150px;max-height:65px;display:none;" />
+            </div>
+            <div class="ttd-nama" style="font-weight:bold;" id="pvNamaTtd">&nbsp;</div>
             <div class="ttd-nip">NIP. <span id="pvNipTtd">&nbsp;</span></div>
           </div>
         </div>
@@ -1089,7 +1154,7 @@
 
         <div class="foto-item first" id="itemNup">
           <div class="foto-caption">1. Foto NUP Barang</div>
-          <img id="prevNup" src="" style="display:none;width:100%;height:auto;max-width:100%;display:none;block;" />
+          <img id="prevNup" src="" style="display:none;width:100%;height:auto;max-width:100%;" />
           <div class="foto-placeholder" id="phNup">[ Belum ada foto NUP ]</div>
         </div>
 
@@ -1121,6 +1186,20 @@
     </div><!-- /preview-panel -->
   </div><!-- /main-layout -->
 
+  <!-- ===== TTD MODAL ===== -->
+  <div class="ttd-modal-overlay" id="ttdModal">
+    <div class="ttd-modal-box">
+      <div class="ttd-modal-title" id="ttdModalTitle">✍️ Tanda Tangan</div>
+      <canvas id="ttdCanvas"></canvas>
+      <div class="ttd-modal-hint">Tanda tangan di area di atas. Gunakan jari (HP) atau mouse.</div>
+      <div class="ttd-modal-actions">
+        <button class="btn-ttd-save"   onclick="saveTTD()">✅ Simpan</button>
+        <button class="btn-ttd-clear"  onclick="clearCanvas()">🔄 Ulangi</button>
+        <button class="btn-ttd-cancel" onclick="closeTTDModal()">✕ Batal</button>
+      </div>
+    </div>
+  </div>
+
   <!-- ===== LOADING MODAL ===== -->
   <div class="modal-overlay" id="loadingModal">
     <div class="modal-box">
@@ -1144,6 +1223,10 @@
 
     // ===== STATE =====
     let nomorData = null;
+    const ttdData = { penerima: null, pengirim: null };
+    let currentTTDTarget = null;
+    let isDrawing = false;
+    let ctx = null;
     let asetData = [];   // [{nup, nama, merk, tipe}]
     let selNup = '';
     let selNama = '';
@@ -1393,6 +1476,8 @@
       set('pvNip', g('nip'));
       set('pvNipTtd', g('nip'));
       set('pvNamaTtd', g('nama'));
+      set('pvNamaPenerima', g('namaPenerima'));
+      set('pvNipPenerima', g('nipPenerima'));
       set('pvJabatan', g('jabatan'));
       set('pvBagian', g('bagian'));
       set('pvNamaBarang', g('namaBarang'));
@@ -1468,6 +1553,84 @@
     }
     function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
 
+    // ===== TTD DIGITAL =====
+    function openTTD(target) {
+      currentTTDTarget = target;
+      const titles = { penerima: 'TTD — Penerima', pengirim: 'TTD — Pengirim' };
+      document.getElementById('ttdModalTitle').textContent = '✍️ ' + titles[target];
+      document.getElementById('ttdModal').classList.add('show');
+      const canvas = document.getElementById('ttdCanvas');
+      const rect = canvas.getBoundingClientRect();
+      canvas.width  = rect.width  || 560;
+      canvas.height = rect.height || 200;
+      ctx = canvas.getContext('2d');
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.strokeStyle = '#000'; ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      bindCanvas(canvas);
+    }
+
+    function bindCanvas(canvas) {
+      const clone = canvas.cloneNode(true);
+      canvas.parentNode.replaceChild(clone, canvas);
+      const c = document.getElementById('ttdCanvas');
+      ctx = c.getContext('2d');
+      ctx.strokeStyle = '#000'; ctx.lineWidth = 2.5; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      const getPos = ev => {
+        const r = c.getBoundingClientRect();
+        const src = ev.touches ? ev.touches[0] : ev;
+        return { x: (src.clientX - r.left) * (c.width / r.width), y: (src.clientY - r.top) * (c.height / r.height) };
+      };
+      const start = ev => { ev.preventDefault(); isDrawing = true; const p = getPos(ev); ctx.beginPath(); ctx.moveTo(p.x, p.y); };
+      const draw  = ev => { ev.preventDefault(); if (!isDrawing) return; const p = getPos(ev); ctx.lineTo(p.x, p.y); ctx.stroke(); };
+      const stop  = () => { isDrawing = false; };
+      c.addEventListener('mousedown',  start);
+      c.addEventListener('mousemove',  draw);
+      c.addEventListener('mouseup',    stop);
+      c.addEventListener('mouseleave', stop);
+      c.addEventListener('touchstart', start, { passive: false });
+      c.addEventListener('touchmove',  draw,  { passive: false });
+      c.addEventListener('touchend',   stop);
+    }
+
+    function clearCanvas() {
+      const c = document.getElementById('ttdCanvas');
+      if (ctx) ctx.clearRect(0, 0, c.width, c.height);
+    }
+
+    function saveTTD() {
+      const c   = document.getElementById('ttdCanvas');
+      const b64 = c.toDataURL('image/png');
+      ttdData[currentTTDTarget] = b64;
+      const pvMap = { penerima: 'pvTTDPenerima', pengirim: 'pvTTDPengirim' };
+      const pvImg = document.getElementById(pvMap[currentTTDTarget]);
+      if (pvImg) { pvImg.src = b64; pvImg.style.display = 'block'; }
+      const formImg = document.getElementById('previewTTD_' + currentTTDTarget);
+      if (formImg) { formImg.src = b64; formImg.style.display = 'block'; }
+      const statusEl = document.getElementById('statusTTD_' + currentTTDTarget);
+      if (statusEl) { statusEl.textContent = '✅ Sudah ditandatangani'; statusEl.classList.add('signed'); }
+      const clearBtn = document.getElementById('clearTTD_' + currentTTDTarget);
+      if (clearBtn) clearBtn.style.display = 'inline-block';
+      closeTTDModal();
+    }
+
+    function closeTTDModal() {
+      document.getElementById('ttdModal').classList.remove('show');
+      currentTTDTarget = null;
+    }
+
+    function clearTTD(target) {
+      ttdData[target] = null;
+      const pvMap = { penerima: 'pvTTDPenerima', pengirim: 'pvTTDPengirim' };
+      const pvImg = document.getElementById(pvMap[target]);
+      if (pvImg) pvImg.style.display = 'none';
+      const formImg = document.getElementById('previewTTD_' + target);
+      if (formImg) { formImg.style.display = 'none'; formImg.src = ''; }
+      const statusEl = document.getElementById('statusTTD_' + target);
+      if (statusEl) { statusEl.textContent = 'Belum ditandatangani'; statusEl.classList.remove('signed'); }
+      const clearBtn = document.getElementById('clearTTD_' + target);
+      if (clearBtn) clearBtn.style.display = 'none';
+    }
+
     // ===== SUBMIT → KIRIM DATA + DOWNLOAD PDF =====
     async function submitForm() {
       console.log('[BMN] submitForm called, nomorData:', nomorData);
@@ -1481,6 +1644,7 @@
 
       const g = id => document.getElementById(id)?.value?.trim() || '';
       const required = {
+        'Nama Penerima': g('namaPenerima'), 'NIP Penerima': g('nipPenerima'),
         'Nama': g('nama'), 'NIP': g('nip'), 'Jabatan': g('jabatan'), 'Bagian': g('bagian'),
         'NUP': g('nup'), 'Nama Barang': g('namaBarang'), 'Merek': g('merekTipe'),
         'Ruangan': g('ruangan'), 'Keluhan': g('keluhan'), 'Tanggal': g('tanggalSurat')
@@ -1516,6 +1680,7 @@
         action: 'submit',
         nomor: g('nomorSurat'), urut: nomorData.urut,
         tanggalSurat: g('tanggalSurat'), kota: g('kotaSurat'),
+        namaPenerima: g('namaPenerima'), nipPenerima: g('nipPenerima'),
         nama: g('nama'), nip: g('nip'), jabatan: g('jabatan'), bagian: g('bagian'),
         namaBarang: g('namaBarang'), merek: g('merekTipe'),
         tipe: selTipe, ruangan: g('ruangan'), nup: g('nup'),
@@ -1523,7 +1688,8 @@
         keluhan: g('keluhan'),
         fotoNup: photoData.fotoNup || '', fotoMerek: photoData.fotoMerek || '',
         fotoKerusakan: photoData.fotoKerusakan || '', fotoKeseluruhan: photoData.fotoKeseluruhan || '',
-        fotoLainLain: photoData.fotoLainLain || ''
+        fotoLainLain: photoData.fotoLainLain || '',
+        ttdPenerima: ttdData.penerima || '', ttdPengirim: ttdData.pengirim || ''
       };
 
       try {

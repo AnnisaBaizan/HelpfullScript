@@ -163,7 +163,8 @@ function getDataAset() {
 //         F=NIP, G=Jabatan, H=Bagian, I=NamaBarang,
 //         J=Merek, K=Tipe, L=Ruangan, M=NUP, N=Kondisi, O=Keluhan,
 //         P=FotoNUP, Q=FotoMerek, R=FotoKerusakan, S=FotoKeseluruhan, T=FotoLainLain,
-//         U=Status, V=Keterangan
+//         U=Status, V=Keterangan, W=TTDPenerima, X=TTDPengirim,
+//         Y=NamaPenerima, Z=NIPPenerima
 // ============================================================
 function getSuratList() {
   try {
@@ -173,7 +174,7 @@ function getSuratList() {
     const lastRow = sheet.getLastRow();
     if (lastRow < 2) return { status: 'ok', data: [] };
 
-    const raw = sheet.getRange(2, 1, lastRow - 1, 22).getValues();
+    const raw = sheet.getRange(2, 1, lastRow - 1, 26).getValues();
     const data = raw
       .filter(r => r[1])
       .map(r => ({
@@ -195,6 +196,10 @@ function getSuratList() {
         fotoKerusakan   : String(r[17] || '-'),
         fotoKeseluruhan : String(r[18] || '-'),
         fotoLainLain    : String(r[19] || '-'),
+        ttdPenerima     : String(r[22] || '-'),
+        ttdPengirim     : String(r[23] || '-'),
+        namaPenerima    : String(r[24] || ''),
+        nipPenerima     : String(r[25] || ''),
       }))
       .reverse();
     return { status: 'ok', count: data.length, data: data };
@@ -244,6 +249,8 @@ function handleSubmit(d) {
       kerusakan: uploadFoto(subFolder, d.fotoKerusakan, 'Foto_Kerusakan_' + d.nup),
       keseluruhan: uploadFoto(subFolder, d.fotoKeseluruhan, 'Foto_Keseluruhan_' + d.nup),
       lainlain: uploadFoto(subFolder, d.fotoLainLain, 'Foto_LainLain_' + d.nup),
+      ttdPenerima: uploadFoto(subFolder, d.ttdPenerima, 'TTD_Penerima_' + d.nup),
+      ttdPengirim: uploadFoto(subFolder, d.ttdPengirim, 'TTD_Pengirim_' + d.nup),
     };
 
     // --- 2. Append ke Spreadsheet ---
@@ -277,6 +284,10 @@ function handleSubmit(d) {
       fotoLinks.lainlain,              // T: Link Foto Lain-lain
       'Menunggu Tindak Lanjut',        // U: Status
       '',                              // V: Keterangan
+      fotoLinks.ttdPenerima,           // W: TTD Penerima
+      fotoLinks.ttdPengirim,           // X: TTD Pengirim
+      d.namaPenerima || '',            // Y: Nama Penerima
+      d.nipPenerima  || '',            // Z: NIP Penerima
     ]);
 
     // Format kolom tanggal submit

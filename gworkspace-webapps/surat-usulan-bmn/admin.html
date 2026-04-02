@@ -354,12 +354,18 @@
     <div class="ttd-row">
       <div class="ttd-col">
         <div style="margin-bottom:4px">Penerima,</div>
-        <div class="ttd-nama" style="padding-top:60px"></div>
-        <div class="ttd-nip"></div>
+        <div style="min-height:65px;display:flex;align-items:center;justify-content:center;">
+          <img id="prTTDPenerima" style="max-width:150px;max-height:65px;display:none;" />
+        </div>
+        <div class="ttd-nama" style="font-weight:bold;" id="prNamaPenerima"></div>
+        <div class="ttd-nip">NIP. <span id="prNipPenerima"></span></div>
       </div>
       <div class="ttd-col">
         <div style="margin-bottom:4px">Pengirim,</div>
-        <div class="ttd-nama" style="padding-top:60px" id="prNamaTtd"></div>
+        <div style="min-height:65px;display:flex;align-items:center;justify-content:center;">
+          <img id="prTTDPengirim" style="max-width:150px;max-height:65px;display:none;" />
+        </div>
+        <div class="ttd-nama" style="padding-top:0;font-weight:bold;" id="prNamaTtd"></div>
         <div class="ttd-nip">NIP. <span id="prNipTtd"></span></div>
       </div>
     </div>
@@ -639,7 +645,8 @@ function selectRow(idx) {
   `;
 
   const fotoAda = [d.fotoNup,d.fotoMerek,d.fotoKerusakan,d.fotoKeseluruhan,d.fotoLainLain].filter(f=>f&&f!=='-').length;
-  document.getElementById('fotoStatus').textContent = `📎 ${fotoAda} dari 4 foto tersedia di Drive`;
+  const ttdAda  = [d.ttdPenerima,d.ttdPengirim].filter(f=>f&&f!=='-').length;
+  document.getElementById('fotoStatus').textContent = `📎 ${fotoAda} foto • ✍️ ${ttdAda} TTD tersedia di Drive`;
   document.getElementById('statusBar').style.display = 'none';
   document.getElementById('detailPanel').style.display = 'block';
   document.getElementById('btnRegen').disabled = false;
@@ -672,6 +679,9 @@ async function startRegenPDF() {
   set('prNomor', d.nomor);       set('prNomorLampiran', d.nomor);
   set('prNama', d.nama);         set('prNamaTtd', d.nama);
   set('prNip',  d.nip);          set('prNipTtd',  d.nip);
+  set('prNamaPenerima', d.namaPenerima || ''); set('prNipPenerima', d.nipPenerima || '');
+  // Reset TTD Penerima & Pengirim
+  ['prTTDPenerima','prTTDPengirim'].forEach(id => { const el = document.getElementById(id); if(el){ el.src=''; el.style.display='none'; } });
   set('prJabatan', d.jabatan);   set('prBagian', d.bagian);
   set('prNamaBarang', d.namaBarang);
   set('prTipe',  d.tipe    || '');
@@ -719,6 +729,21 @@ async function startRegenPDF() {
       }
     } catch(_) {}
   }));
+
+  // Load TTD Penerima & Pengirim
+  const ttdMap = { prTTDPenerima: d.ttdPenerima, prTTDPengirim: d.ttdPengirim };
+  await Promise.all(Object.entries(ttdMap).map(async ([imgId, url]) => {
+    if (!url || url === '-') return;
+    try {
+      const resp = await fetch(GAS_URL + '?action=getPhoto&url=' + encodeURIComponent(url));
+      const data = await resp.json();
+      if (data.status === 'ok' && data.base64) {
+        const img = document.getElementById(imgId);
+        if (img) { img.src = data.base64; img.style.display = 'block'; }
+      }
+    } catch(_) {}
+  }));
+
   setStep('ms2', 'done', `✅ ${fetched} foto dimuat`);
   await sleep(300);
 
