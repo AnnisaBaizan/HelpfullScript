@@ -277,7 +277,7 @@
   <!-- HEADER -->
   <div class="app-header">
     <div>
-      <h1>📝 Berita Acara Serah Terima Pemeliharaan/Perbaikan BMN</h1>
+      <h1>📝 Berita Acara Serah Terima Pemeliharaan/Perbaikan/Penggantian BMN</h1>
       <small>Instalasi Sarana Prasarana — Isi form kiri → Preview kanan → Submit / Cetak</small>
     </div>
     <div class="hdr-right">
@@ -378,14 +378,14 @@
           </div>
         </div>
         <div class="form-row">
-          <label>Rincian Pemeliharaan/Perbaikan <span class="req">*</span></label>
+          <label>Rincian Pemeliharaan/Perbaikan/Penggantian <span class="req">*</span></label>
           <textarea id="rincian" rows="3" placeholder="Uraikan rincian pekerjaan yang dilakukan…" oninput="syncPreview()"></textarea>
         </div>
       </div>
 
       <!-- FOTO -->
       <div class="form-section">
-        <h3>Foto-foto Pemeliharaan/Perbaikan</h3>
+        <h3>Foto-foto Pemeliharaan/Perbaikan/Penggantian</h3>
         <div class="photo-grid">
           <!-- Foto 1 & 2: bisa auto dari surat usulan -->
           <div class="photo-item">
@@ -429,9 +429,9 @@
       <div class="form-section">
         <h3>Penandatangan</h3>
 
-        <!-- Yang Melaksanakan -->
+        <!-- Yang Malaksanakan/Menerima -->
         <div class="ttd-section">
-          <h4>Yang Melaksanakan Pekerjaan</h4>
+          <h4>Yang Malaksanakan/Menerima Pekerjaan</h4>
           <div class="form-row">
             <label>Nama <span class="req">*</span></label>
             <input type="text" id="namaPelaksana" placeholder="Nama lengkap" oninput="syncPreview()" />
@@ -450,9 +450,9 @@
           </div>
         </div>
 
-        <!-- Yang Mengawasi -->
+        <!-- Yang Mengawasi/Menyerahkan -->
         <div class="ttd-section">
-          <h4>Yang Mengawasi Pekerjaan</h4>
+          <h4>Yang Mengawasi/Menyerahkan Pekerjaan</h4>
           <div class="form-row">
             <label>Nama <span class="req">*</span></label>
             <input type="text" id="namaPengawas" placeholder="Nama lengkap" oninput="syncPreview()" />
@@ -473,7 +473,7 @@
 
         <!-- Pengguna BMN -->
         <div class="ttd-section">
-          <h4>Mengetahui — Pengguna Barang Milik Negara</h4>
+          <h4>Pengguna Barang Milik Negara — Pengguna Barang Milik Negara</h4>
           <div class="form-row">
             <label>Nama <span class="req">*</span></label>
             <input type="text" id="namaPengguna" placeholder="Nama lengkap" oninput="syncPreview()" />
@@ -518,7 +518,7 @@
         </div>
         <hr class="kop-line" />
 
-        <div class="surat-judul">Berita Acara Serah Terima Pemeliharaan/Perbaikan Barang Milik Negara</div>
+        <div class="surat-judul">Berita Acara Serah Terima Pemeliharaan/Perbaikan/Penggantian Barang Milik Negara</div>
         <div class="surat-nomor">NOMOR: <span id="pvNomorBA">…………………………</span></div>
 
         <p class="surat-pembuka">
@@ -535,12 +535,12 @@
             <td id="pvJabPelaksana">……………………………………………</td>
           </tr>
           <tr>
-            <td colspan="3" class="disebut">Disebut Pihak yang Melaksanakan</td>
+            <td colspan="3" class="disebut">Disebut Pihak yang Malaksanakan/Menerima</td>
           </tr>
         </table>
 
         <p class="telah-para">
-          Telah selesai melakukan pemeliharaan/perbaikan BMN, sesuai dengan ketentuan sebagai berikut:
+          Telah selesai melakukan/menerima hasil pemeliharaan/perbaikan/penggantian BMN, sesuai dengan ketentuan sebagai berikut:
         </p>
 
         <ul class="detail-list">
@@ -618,7 +618,7 @@
         </ul>
 
         <p class="surat-penutup">
-          Demikianlah berita acara serah terima pemeliharaan/perbaikan barang milik negara ini dibuat, untuk dipergunakan sebagaimana mestinya. Atas perhatiaannya diucapkan terimakasih.
+          Demikianlah berita acara serah terima pemeliharaan/perbaikan/penggantian barang milik negara ini dibuat, untuk dipergunakan sebagaimana mestinya. Atas perhatiaannya diucapkan terimakasih.
         </p>
 
         <div class="ttd-area">
@@ -627,7 +627,7 @@
           </div>
           <div class="ttd-top-row">
             <div class="ttd-col">
-              <div class="jabatan-ttd" id="pvJabPengawasLabel">Yang mengawasi pekerjaan</div>
+              <div class="jabatan-ttd" id="pvJabPengawasLabel">Yang Mengawasi/Menyerahkan pekerjaan</div>
               <div class="jabatan-ttd" id="pvJabPengawasSub">……………………</div>
               <div class="ttd-img-wrap">
                 <img id="pvTTDPengawas" class="ttd-img" />
@@ -635,7 +635,7 @@
               <div class="ttd-nama-line" id="pvNamaPengawas">……………………………………</div>
             </div>
             <div class="ttd-col">
-              <div class="jabatan-ttd">Yang Melaksanakan</div>
+              <div class="jabatan-ttd">Yang Malaksanakan/Menerima</div>
               <div class="jabatan-ttd" id="pvJabPelaksanaSub">……………………</div>
               <div class="ttd-img-wrap">
                 <img id="pvTTDPelaksana" class="ttd-img" />
@@ -645,7 +645,7 @@
           </div>
           <div class="ttd-bottom-row">
             <div class="ttd-col">
-              <div>Mengetahui,</div>
+              <div>Pengguna Barang Milik Negara,</div>
               <div>Pengguna Barang Milik Negara</div>
               <div id="pvJabPenggunaSub" style="margin-bottom:4px">……………………</div>
               <div class="ttd-img-wrap">
@@ -1040,7 +1040,7 @@
     // ===== TTD CANVAS MODAL =====
     function openTTD(target) {
       currentTTDTarget = target;
-      const titles = { pelaksana: 'TTD — Yang Melaksanakan', pengawas: 'TTD — Yang Mengawasi', pengguna: 'TTD — Pengguna BMN' };
+      const titles = { pelaksana: 'TTD — Yang Malaksanakan/Menerima', pengawas: 'TTD — Yang Mengawasi/Menyerahkan', pengguna: 'TTD — Pengguna BMN' };
       document.getElementById('ttdModalTitle').textContent = '✍️ ' + titles[target];
       document.getElementById('ttdModal').classList.add('show');
 
