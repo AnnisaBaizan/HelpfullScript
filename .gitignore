@@ -42,6 +42,7 @@ desktop.ini
 
 # Node
 node_modules/
+dist/
 
 # Logs
 *.log

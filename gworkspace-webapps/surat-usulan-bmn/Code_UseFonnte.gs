@@ -163,8 +163,8 @@ function getDataAset() {
 //         F=NIP, G=Jabatan, H=Bagian, I=NamaBarang,
 //         J=Merek, K=Tipe, L=Ruangan, M=NUP, N=Kondisi, O=Keluhan,
 //         P=FotoNUP, Q=FotoMerek, R=FotoKerusakan, S=FotoKeseluruhan, T=FotoLainLain,
-//         U=Status, V=Keterangan, W=TTDPenerima, X=TTDPengirim,
-//         Y=NamaPenerima, Z=NIPPenerima
+//         U=TTDPenerima, V=TTDPengirim, W=NamaPenerima, X=NIPPenerima,
+//         Y=Status, Z=Keterangan
 // ============================================================
 function getSuratList() {
   try {
@@ -196,10 +196,10 @@ function getSuratList() {
         fotoKerusakan   : String(r[17] || '-'),
         fotoKeseluruhan : String(r[18] || '-'),
         fotoLainLain    : String(r[19] || '-'),
-        ttdPenerima     : String(r[22] || '-'),
-        ttdPengirim     : String(r[23] || '-'),
-        namaPenerima    : String(r[24] || ''),
-        nipPenerima     : String(r[25] || ''),
+        ttdPenerima     : String(r[20] || '-'),
+        ttdPengirim     : String(r[21] || '-'),
+        namaPenerima    : String(r[22] || ''),
+        nipPenerima     : String(r[23] || ''),
       }))
       .reverse();
     return { status: 'ok', count: data.length, data: data };
@@ -282,12 +282,12 @@ function handleSubmit(d) {
       fotoLinks.kerusakan,             // R: Link Foto Kerusakan
       fotoLinks.keseluruhan,           // S: Link Foto Keseluruhan
       fotoLinks.lainlain,              // T: Link Foto Lain-lain
-      'Menunggu Tindak Lanjut',        // U: Status
-      '',                              // V: Keterangan
-      fotoLinks.ttdPenerima,           // W: TTD Penerima
-      fotoLinks.ttdPengirim,           // X: TTD Pengirim
-      d.namaPenerima || '',            // Y: Nama Penerima
-      d.nipPenerima  || '',            // Z: NIP Penerima
+      fotoLinks.ttdPenerima,           // U: TTD Penerima
+      fotoLinks.ttdPengirim,           // V: TTD Pengirim
+      d.namaPenerima || '',            // W: Nama Penerima
+      d.nipPenerima  || '',            // X: NIP Penerima
+      'Menunggu Tindak Lanjut',        // Y: Status
+      '',                              // Z: Keterangan
     ]);
 
     // Format kolom tanggal submit
