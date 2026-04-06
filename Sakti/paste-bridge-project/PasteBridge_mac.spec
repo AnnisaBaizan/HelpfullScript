@@ -6,6 +6,10 @@ a = Analysis(
     binaries=[],
     datas=[('paste_bridge_icon.icns', '.')],
     hiddenimports=[
+        'tkinter',
+        'tkinter.ttk',
+        'tkinter.messagebox',
+        '_tkinter',
         'customtkinter',
         'flask',
         'pyperclip',
