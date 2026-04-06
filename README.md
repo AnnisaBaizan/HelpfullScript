@@ -23,10 +23,14 @@ The core challenge: SAKTI uses Angular with PrimeNG masked input fields that rej
 **[PasteBridge](https://github.com/AnnisaBaizan/HelpfullScript/tree/main/Sakti/paste-bridge-project)** — A two-component system: a Tampermonkey script detects values and sends them to a local Python server via HTTP, and the Python server pastes them using real `Ctrl+V` simulation (pyautogui), which Angular treats as trusted keyboard input.
 
 - Cross-platform: Windows, macOS, Linux
-- Ships as a standalone `.exe` (no Python install needed)
+- Ships as a standalone executable (no Python install needed)
 - GUI built with customtkinter
 
-**Download:** [PasteBridge.exe — Releases](https://github.com/AnnisaBaizan/HelpfullScript/releases/tag/v1.0.0)
+**Download:**
+- [PasteBridge.exe — Windows](https://github.com/AnnisaBaizan/HelpfullScript/releases/tag/v1.0.0)
+- [PasteBridge.dmg — macOS (Apple Silicon)](https://github.com/AnnisaBaizan/HelpfullScript/releases/tag/v1.0.0)
+
+> **macOS note:** After first launch, grant Accessibility permission: System Settings → Privacy & Security → Accessibility → enable PasteBridge
 
 **Stack:** Python · Flask · pyautogui · pyperclip · customtkinter · Tampermonkey (JavaScript)
 

@@ -11,7 +11,7 @@ __pycache__/
 # PyInstaller
 build/
 dist/
-*.spec
+# *.spec intentionally NOT ignored — spec files are build recipes, keep them tracked
 
 # Sensitive / Credentials
 auth.json
@@ -39,6 +39,9 @@ desktop.ini
 *.dll
 *.so
 *.dylib
+*.dmg
+*.icns
+*.iconset/
 
 # Node
 node_modules/
