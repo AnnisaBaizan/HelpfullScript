@@ -5,7 +5,6 @@
 // @description  Otomatisasi pengiriman naskah keluar di Srikandi ANRI
 // @author       Annisa Baizan
 // @icon         https://avatars.githubusercontent.com/u/117755758?s=48&v=4
-// @author       Assistant
 // @match        https://srikandi.arsip.go.id/pembuatan-naskah-keluar/tandatangan-naskah*
 // @grant        none
 // ==/UserScript==
@@ -143,65 +142,114 @@
     }
 
     // ===================================================
-    // 📄 Fase LIST_KIRIM — Pilih dropdown BELUM, ambil link
+    // 📄 Fase LIST_KIRIM — Pilih dropdown BELUM, tunggu tabel, ambil link
     // ===================================================
     async function handleListKirim() {
         const state = getState();
         if (!state || !state.running) return;
 
-        console.log("📄 Fase LIST_KIRIM — buka dropdown Status Kirim...");
-
+        console.log("📄 Fase LIST_KIRIM — tunggu halaman load...");
         await sleep(CONFIG.DELAYS.PAGE_LOAD);
 
-        // Klik dropdown react-select "Cari Status Kirim"
+        // Tunggu tabel dasar muncul dulu
         try {
-            // Cari placeholder "Cari Status Kirim"
-            const placeholder = findByText("div", "Cari Status Kirim");
-            if (placeholder) {
-                const selectControl = placeholder.closest(".css-13cymwt-control") ||
-                                      placeholder.closest("[class*='-control']");
-                if (selectControl) {
-                    simulateClick(selectControl);
+            await waitForElement("table", 30000);
+        } catch {
+            console.warn("⚠️ Tabel belum muncul, tunggu lebih lama...");
+            await sleep(CONFIG.DELAYS.PAGE_LOAD);
+        }
+        await sleep(CONFIG.DELAYS.MEDIUM);
+
+        // ── STEP 1: Klik dropdown react-select "Cari Status Kirim" ──
+        console.log("📌 Memilih filter Status Kirim = BELUM...");
+
+        let dropdownSelected = false;
+        try {
+            // Ada 2 dropdown react-select di halaman:
+            // 1. "Cari Status Penandatangan"
+            // 2. "Cari Status Kirim"
+            // Perlu target yang kedua secara spesifik
+
+            // Cari semua placeholder react-select
+            const allPlaceholders = document.querySelectorAll(".css-1jqq78o-placeholder");
+            let kirimPlaceholder = null;
+            for (const ph of allPlaceholders) {
+                if (ph.textContent.trim() === "Cari Status Kirim") {
+                    kirimPlaceholder = ph;
+                    break;
+                }
+            }
+
+            // Cek apakah sudah terpilih (placeholder hilang, singleValue muncul)
+            // Naik ke container react-select
+            const selectContainer = kirimPlaceholder
+                ? kirimPlaceholder.closest("[class*='container']")
+                : null;
+
+            if (selectContainer) {
+                const existingValue = selectContainer.querySelector("[class*='-singleValue']");
+                if (existingValue && existingValue.textContent.trim() === "BELUM") {
+                    console.log("✅ Filter sudah BELUM, skip dropdown");
+                    dropdownSelected = true;
+                }
+            }
+
+            if (!dropdownSelected && kirimPlaceholder) {
+                // Cari control element dari placeholder
+                const controlEl = kirimPlaceholder.closest(".css-13cymwt-control");
+
+                if (controlEl) {
+                    simulateClick(controlEl);
                     console.log("✅ Klik dropdown Status Kirim");
                     await sleep(CONFIG.DELAYS.MEDIUM);
 
-                    // Tunggu menu muncul, cari option "BELUM"
-                    await sleep(CONFIG.DELAYS.SHORT);
-                    const options = document.querySelectorAll("[class*='-option']");
-                    let belumOption = null;
-                    for (const opt of options) {
-                        if (opt.textContent.trim() === "BELUM") {
-                            belumOption = opt;
-                            break;
-                        }
+                    // Tunggu menu muncul (polling 5x)
+                    let menuEl = null;
+                    for (let i = 0; i < 5; i++) {
+                        menuEl = document.querySelector("[class*='-menu']");
+                        if (menuEl) break;
+                        await sleep(500);
                     }
 
-                    if (belumOption) {
-                        simulateClick(belumOption);
-                        console.log('✅ Pilih "BELUM"');
-                        await sleep(CONFIG.DELAYS.LONG);
-                    } else {
-                        console.warn("⚠️ Option BELUM tidak ditemukan, coba klik langsung");
-                        // Fallback: cari di menu list
-                        const menuOptions = document.querySelectorAll("[class*='-menu'] [class*='-option']");
-                        for (const opt of menuOptions) {
+                    if (menuEl) {
+                        const allOptions = menuEl.querySelectorAll("[class*='-option']");
+                        for (const opt of allOptions) {
                             if (opt.textContent.trim() === "BELUM") {
                                 simulateClick(opt);
-                                console.log('✅ Pilih "BELUM" (fallback)');
-                                await sleep(CONFIG.DELAYS.LONG);
+                                console.log('✅ Pilih "BELUM"');
+                                dropdownSelected = true;
                                 break;
                             }
                         }
                     }
+
+                    if (!dropdownSelected) {
+                        console.warn("⚠️ Option BELUM tidak ditemukan di menu");
+                    }
+                } else {
+                    console.warn("⚠️ Control dropdown tidak ditemukan");
                 }
-            } else {
-                console.warn("⚠️ Dropdown Status Kirim tidak ditemukan");
+            } else if (!dropdownSelected) {
+                console.warn("⚠️ Placeholder 'Cari Status Kirim' tidak ditemukan");
             }
         } catch (err) {
             console.error("❌ Error dropdown:", err.message);
         }
 
-        // Tunggu tabel load
+        if (!dropdownSelected) {
+            console.error("❌ Gagal pilih filter BELUM. Reload & coba lagi...");
+            await sleep(CONFIG.DELAYS.LONG);
+            window.location.reload();
+            return;
+        }
+
+        // ── STEP 2: Tunggu tabel refresh setelah filter ──
+        console.log("⏳ Menunggu tabel refresh setelah filter BELUM...");
+
+        // Tunggu sebentar agar API call terpicu
+        await sleep(CONFIG.DELAYS.LONG);
+
+        // Tunggu sampai ada link detail muncul (atau tabel kosong)
         let links;
         try {
             links = await waitForTableData();
@@ -219,10 +267,12 @@
 
         console.log(`📊 Ditemukan ${links.length} naskah untuk dikirim`);
 
+        // ── STEP 3: Navigasi ke detail baris pertama ──
         setState({
             ...state,
             phase: "DETAIL_CHECK_TTE",
             detailUrl: links[0],
+            checkTteCount: 0,
         });
 
         window.location.href = links[0];
