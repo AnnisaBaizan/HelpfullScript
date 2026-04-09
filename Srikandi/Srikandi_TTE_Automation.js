@@ -5,6 +5,7 @@
 // @description  Otomatisasi tanda tangan elektronik naskah keluar di Srikandi ANRI
 // @author       Annisa Baizan
 // @icon         https://avatars.githubusercontent.com/u/117755758?s=48&v=4
+// @author       Assistant
 // @match        https://srikandi.arsip.go.id/pembuatan-naskah-keluar/tandatangan-naskah*
 // @grant        none
 // ==/UserScript==
@@ -476,11 +477,12 @@
     }
 
     // ===================================================
-    // 📦 Fase DETAIL_TTE — isi form TTE (step 10-16)
+    // 📦 Fase DETAIL_TTE — isi form TTE
     // ===================================================
     async function handleDetailTTE() {
         const state = getState();
-        console.log("📦 Fase TTE — isi form");
+        const tteRetry = state.tteRetry || 0;
+        console.log(`📦 Fase TTE — isi form (retry ke-${tteRetry})`);
 
         try {
             await waitForElement("h5.MuiTypography-root", 20000);
@@ -547,20 +549,92 @@
                 console.warn("⚠️ Dialog konfirmasi tidak muncul");
             }
 
-            // Selesai, balik ke list
-            const newTotal = (state.totalProcessed || 0) + 1;
-            console.log(`✅ Naskah ke-${newTotal} selesai`);
-
+            // Pindah ke fase VERIFY — cek apakah TTE berhasil
             setState({
                 ...state,
-                phase: "LIST",
-                totalProcessed: newTotal,
+                phase: "DETAIL_VERIFY_TTE",
+                verifyCount: 0,
+                tteRetry: tteRetry,
             });
 
-            window.location.href = CONFIG.LIST_URL;
+            console.log("🔄 Refresh untuk verifikasi TTE...");
+            window.location.reload();
 
         } catch (err) {
             console.error(`❌ Error fase TTE: ${err.message}`);
+            setState({ ...state, phase: "LIST" });
+            window.location.href = CONFIG.LIST_URL;
+        }
+    }
+
+    // ===================================================
+    // ✅ Fase DETAIL_VERIFY_TTE — cek apakah Form TTE masih muncul
+    //    Masih muncul = gagal, ulangi isi form
+    //    Sudah hilang = berhasil, balik ke list
+    // ===================================================
+    async function handleDetailVerifyTTE() {
+        const state = getState();
+        const verifyCount = state.verifyCount || 0;
+        const tteRetry = state.tteRetry || 0;
+
+        console.log(`✅ Verifikasi TTE (cek ke-${verifyCount + 1}/3, retry TTE ke-${tteRetry})`);
+
+        try {
+            await waitForElement("h5.MuiTypography-root", 20000);
+            await sleep(CONFIG.DELAYS.MEDIUM);
+
+            // Cek apakah Form TTE masih ada
+            const tteHeader = findByText("h5", "Form TTE");
+            const tteForm = document.querySelector('form#formTte') ||
+                            document.querySelector('input[name="nomor"]');
+
+            const formStillExists = !!(tteHeader || tteForm);
+
+            if (!formStillExists) {
+                // Form TTE hilang = TTE BERHASIL!
+                const newTotal = (state.totalProcessed || 0) + 1;
+                console.log(`🎉 TTE berhasil! Naskah ke-${newTotal} selesai`);
+
+                setState({
+                    ...state,
+                    phase: "LIST",
+                    totalProcessed: newTotal,
+                });
+
+                window.location.href = CONFIG.LIST_URL;
+                return;
+            }
+
+            // Form TTE masih muncul = TTE gagal
+            console.warn(`⚠️ Form TTE masih muncul (cek ke-${verifyCount + 1}/3)`);
+
+            const newVerifyCount = verifyCount + 1;
+
+            if (newVerifyCount < 3) {
+                // Refresh dan cek lagi
+                setState({ ...state, verifyCount: newVerifyCount });
+                console.log("🔄 Refresh untuk cek ulang...");
+                window.location.reload();
+            } else if (tteRetry < 1) {
+                // Sudah 3x cek masih ada, ulangi isi form TTE
+                console.warn("⚠️ 3x cek Form TTE masih ada, ulangi proses TTE...");
+                setState({
+                    ...state,
+                    phase: "DETAIL_TTE",
+                    tteRetry: tteRetry + 1,
+                    verifyCount: 0,
+                });
+                // Langsung proses tanpa reload (form sudah ada di halaman)
+                await handleDetailTTE();
+            } else {
+                // Sudah retry TTE + 3x cek, skip surat
+                console.error("❌ TTE gagal setelah retry. Skip surat ini.");
+                setState({ ...state, phase: "LIST" });
+                window.location.href = CONFIG.LIST_URL;
+            }
+
+        } catch (err) {
+            console.error(`❌ Error verifikasi TTE: ${err.message}`);
             setState({ ...state, phase: "LIST" });
             window.location.href = CONFIG.LIST_URL;
         }
@@ -705,6 +779,15 @@
             case "DETAIL_TTE":
                 if (isDetailPage) {
                     await handleDetailTTE();
+                } else {
+                    setState({ ...state, phase: "LIST" });
+                    window.location.href = CONFIG.LIST_URL;
+                }
+                break;
+
+            case "DETAIL_VERIFY_TTE":
+                if (isDetailPage) {
+                    await handleDetailVerifyTTE();
                 } else {
                     setState({ ...state, phase: "LIST" });
                     window.location.href = CONFIG.LIST_URL;
