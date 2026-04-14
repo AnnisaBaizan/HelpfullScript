@@ -110,6 +110,44 @@
         await sleep(CONFIG.DELAYS.SHORT);
     }
 
+    /** Tunggu SweetAlert selesai proses (loading → success/error/close) */
+    async function waitForSwalComplete(timeout = 60000) {
+        const startTime = Date.now();
+        console.log("⏳ Menunggu proses TTE selesai...");
+
+        while (Date.now() - startTime < timeout) {
+            if (!isRunning()) return;
+
+            const swalContainer = document.querySelector(".swal2-container");
+            if (!swalContainer) {
+                console.log("✅ SweetAlert sudah tertutup — proses selesai");
+                return;
+            }
+
+            // Cek apakah muncul icon success
+            const successIcon = swalContainer.querySelector(".swal2-icon-success");
+            if (successIcon) {
+                console.log("✅ Proses TTE berhasil (success icon)");
+                const okBtn = swalContainer.querySelector("button.swal2-confirm");
+                if (okBtn) { okBtn.click(); await sleep(500); }
+                return;
+            }
+
+            // Cek apakah muncul icon error
+            const errorIcon = swalContainer.querySelector(".swal2-icon-error");
+            if (errorIcon) {
+                console.warn("⚠️ Proses TTE gagal (error icon)");
+                const okBtn = swalContainer.querySelector("button.swal2-confirm");
+                if (okBtn) { okBtn.click(); await sleep(500); }
+                return;
+            }
+
+            await sleep(500);
+        }
+
+        console.warn("⏰ Timeout menunggu proses SweetAlert selesai");
+    }
+
     /** Tunggu tabel load sampai ada link detail (tanpa batas waktu) */
     function waitForTableData() {
         return new Promise((resolve, reject) => {
@@ -148,17 +186,95 @@
         const state = getState();
         if (!state || !state.running) return;
 
-        console.log("📄 Fase LIST_KIRIM — tunggu halaman load...");
-        await sleep(CONFIG.DELAYS.PAGE_LOAD);
+        console.log("📄 Fase LIST_KIRIM — tunggu elemen muncul...");
 
-        // Tunggu tabel dasar muncul dulu
+        // Tunggu tabel dasar muncul dulu (langsung, tanpa tunggu full page load)
         try {
             await waitForElement("table", 30000);
         } catch {
-            console.warn("⚠️ Tabel belum muncul, tunggu lebih lama...");
-            await sleep(CONFIG.DELAYS.PAGE_LOAD);
+            console.warn("⚠️ Tabel belum muncul, reload...");
+            window.location.reload();
+            return;
         }
-        await sleep(CONFIG.DELAYS.MEDIUM);
+        await sleep(CONFIG.DELAYS.SHORT);
+
+        // ── STEP 0: Klik dropdown react-select "Cari Status Penandatangan" ──
+        console.log("📌 Memilih filter Status Penandatangan = SETUJU...");
+
+        let penandatanganSelected = false;
+        try {
+            // Cari placeholder "Cari Status Penandatangan"
+            const allPh = document.querySelectorAll(".css-1jqq78o-placeholder");
+            let penandatanganPlaceholder = null;
+            for (const ph of allPh) {
+                if (ph.textContent.trim() === "Cari Status Penandatangan") {
+                    penandatanganPlaceholder = ph;
+                    break;
+                }
+            }
+
+            // Cek apakah sudah terpilih SETUJU (placeholder hilang, singleValue muncul)
+            if (!penandatanganPlaceholder) {
+                const singleValues = document.querySelectorAll("[class*='-singleValue']");
+                for (const sv of singleValues) {
+                    const badge = sv.querySelector(".MuiBadge-badge");
+                    if (badge && badge.textContent.trim() === "SETUJU") {
+                        console.log("✅ Filter Penandatangan sudah SETUJU, skip");
+                        penandatanganSelected = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!penandatanganSelected && penandatanganPlaceholder) {
+                const controlEl = penandatanganPlaceholder.closest(".css-13cymwt-control");
+
+                if (controlEl) {
+                    simulateClick(controlEl);
+                    console.log("✅ Klik dropdown Status Penandatangan");
+                    await sleep(CONFIG.DELAYS.MEDIUM);
+
+                    // Tunggu menu muncul (polling 5x)
+                    let menuEl = null;
+                    for (let i = 0; i < 5; i++) {
+                        menuEl = document.querySelector("[class*='-menu']");
+                        if (menuEl) break;
+                        await sleep(500);
+                    }
+
+                    if (menuEl) {
+                        const allOptions = menuEl.querySelectorAll("[class*='-option']");
+                        for (const opt of allOptions) {
+                            if (opt.textContent.trim() === "SETUJU") {
+                                simulateClick(opt);
+                                console.log('✅ Pilih "SETUJU"');
+                                penandatanganSelected = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    if (!penandatanganSelected) {
+                        console.warn("⚠️ Option SETUJU tidak ditemukan di menu");
+                    }
+                } else {
+                    console.warn("⚠️ Control dropdown Penandatangan tidak ditemukan");
+                }
+            }
+        } catch (err) {
+            console.error("❌ Error dropdown Penandatangan:", err.message);
+        }
+
+        if (!penandatanganSelected) {
+            console.error("❌ Gagal pilih filter SETUJU. Reload & coba lagi...");
+            await sleep(CONFIG.DELAYS.LONG);
+            window.location.reload();
+            return;
+        }
+
+        // Tunggu tabel refresh setelah filter Penandatangan
+        console.log("⏳ Menunggu tabel refresh setelah filter Penandatangan...");
+        await sleep(CONFIG.DELAYS.LONG);
 
         // ── STEP 1: Klik dropdown react-select "Cari Status Kirim" ──
         console.log("📌 Memilih filter Status Kirim = BELUM...");
@@ -378,7 +494,8 @@
                 const btnConfirm = await waitForElement("button.swal2-confirm", 10000);
                 btnConfirm.click();
                 console.log("✅ Konfirmasi Ya, Tandatangani");
-                await sleep(CONFIG.DELAYS.AFTER_SUBMIT);
+                // Tunggu proses TTE selesai (polling, bukan fixed delay)
+                await waitForSwalComplete(60000);
             } catch {
                 console.warn("⚠️ Dialog konfirmasi tidak muncul");
             }
@@ -686,7 +803,7 @@
 
         console.log(`🧭 Router Kirim — phase: ${state.phase}, detail: ${isDetailPage}, list: ${isListPage}`);
 
-        await sleep(CONFIG.DELAYS.MEDIUM);
+        // Tidak perlu sleep — setiap handler sudah waitForElement sendiri
 
         switch (state.phase) {
             case "LIST_KIRIM":
@@ -752,11 +869,11 @@
     // ===================================================
     // 🏁 Inisialisasi
     // ===================================================
-    if (document.readyState === "complete") {
-        setTimeout(router, 2000);
+    // Mulai secepat mungkin — tidak perlu tunggu full page load
+    // Setiap handler sudah pakai waitForElement untuk tunggu elemen spesifik
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", () => router());
     } else {
-        window.addEventListener("load", () => {
-            setTimeout(router, 2000);
-        });
+        router();
     }
 })();

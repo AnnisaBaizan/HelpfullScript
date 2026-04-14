@@ -137,6 +137,44 @@
         await sleep(CONFIG.DELAYS.SHORT);
     }
 
+    /** Tunggu SweetAlert selesai proses (loading → success/error/close) */
+    async function waitForSwalComplete(timeout = 60000) {
+        const startTime = Date.now();
+        console.log("⏳ Menunggu proses TTE selesai...");
+
+        while (Date.now() - startTime < timeout) {
+            if (!isRunning()) return;
+
+            const swalContainer = document.querySelector(".swal2-container");
+            if (!swalContainer) {
+                console.log("✅ SweetAlert sudah tertutup — proses selesai");
+                return;
+            }
+
+            // Cek apakah muncul icon success
+            const successIcon = swalContainer.querySelector(".swal2-icon-success");
+            if (successIcon) {
+                console.log("✅ Proses TTE berhasil (success icon)");
+                const okBtn = swalContainer.querySelector("button.swal2-confirm");
+                if (okBtn) { okBtn.click(); await sleep(500); }
+                return;
+            }
+
+            // Cek apakah muncul icon error
+            const errorIcon = swalContainer.querySelector(".swal2-icon-error");
+            if (errorIcon) {
+                console.warn("⚠️ Proses TTE gagal (error icon)");
+                const okBtn = swalContainer.querySelector("button.swal2-confirm");
+                if (okBtn) { okBtn.click(); await sleep(500); }
+                return;
+            }
+
+            await sleep(500);
+        }
+
+        console.warn("⏰ Timeout menunggu proses SweetAlert selesai");
+    }
+
     // ===================================================
     // ⏳ Tunggu tabel selesai loading (data row muncul)
     // ===================================================
@@ -544,7 +582,8 @@
                 );
                 btnConfirm.click();
                 console.log("✅ Konfirmasi Ya, Tandatangani");
-                await sleep(CONFIG.DELAYS.AFTER_SUBMIT);
+                // Tunggu proses TTE selesai (polling, bukan fixed delay)
+                await waitForSwalComplete(60000);
             } catch {
                 console.warn("⚠️ Dialog konfirmasi tidak muncul");
             }
@@ -737,7 +776,7 @@
 
         console.log(`🧭 Router — phase: ${state.phase}, detail: ${isDetailPage}, list: ${isListPage}`);
 
-        await sleep(CONFIG.DELAYS.MEDIUM); // Tunggu DOM settle
+        // Tidak perlu sleep — setiap handler sudah waitForElement sendiri
 
         switch (state.phase) {
             case "LIST":
@@ -804,11 +843,11 @@
     // ===================================================
     // 🏁 Inisialisasi
     // ===================================================
-    if (document.readyState === "complete") {
-        setTimeout(router, 2000);
+    // Mulai secepat mungkin — tidak perlu tunggu full page load
+    // Setiap handler sudah pakai waitForElement untuk tunggu elemen spesifik
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", () => router());
     } else {
-        window.addEventListener("load", () => {
-            setTimeout(router, 2000);
-        });
+        router();
     }
 })();
