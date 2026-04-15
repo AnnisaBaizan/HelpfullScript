@@ -498,6 +498,20 @@
             await waitForElement("h5.MuiTypography-root", 20000);
             await sleep(CONFIG.DELAYS.MEDIUM);
 
+            // Cek apakah naskah sudah dikirim sebelumnya
+            const bannerSudahKirim = findByText("h5", "Naskah ini telah dikirim");
+            if (bannerSudahKirim) {
+                const newTotal = (state.totalProcessed || 0) + 1;
+                console.log(`✅ Naskah sudah dikirim sebelumnya (ke-${newTotal}). Kembali ke list...`);
+                setState({
+                    ...state,
+                    phase: "LIST_KIRIM",
+                    totalProcessed: newTotal,
+                });
+                window.location.href = CONFIG.LIST_URL;
+                return;
+            }
+
             const tteHeader = findByText("h5", "Form TTE");
             const tteForm = document.querySelector('form#formTte') ||
                             document.querySelector('input[name="nomor"]');
