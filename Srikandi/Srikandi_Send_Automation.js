@@ -179,6 +179,70 @@
         });
     }
 
+    /** Tunggu tombol "Hitung Total" selesai loading (text berubah dari MOHON TUNGGU kembali) */
+    function waitForHitungTotal(timeout = 60000) {
+        return new Promise((resolve, reject) => {
+            const startTime = Date.now();
+            let wasLoading = false;
+
+            const check = () => {
+                if (!isRunning()) { reject(new Error("Dihentikan")); return; }
+                if (Date.now() - startTime > timeout) {
+                    console.warn("⏰ Timeout menunggu Hitung Total selesai");
+                    resolve(); // lanjut saja
+                    return;
+                }
+
+                // Cari tombol yang mengandung text "Hitung Total" atau "MOHON TUNGGU" atau "Hitung Ulang"
+                const allButtons = document.querySelectorAll("button");
+                let targetBtn = null;
+                for (const btn of allButtons) {
+                    const txt = btn.textContent.trim().toUpperCase();
+                    if (txt.includes("HITUNG TOTAL") || txt.includes("MOHON TUNGGU") || txt.includes("HITUNG ULANG")) {
+                        targetBtn = btn;
+                        break;
+                    }
+                }
+
+                if (!targetBtn) {
+                    // Tombol tidak ditemukan, lanjut saja
+                    console.log("⚠️ Tombol Hitung Total tidak ditemukan, skip...");
+                    resolve();
+                    return;
+                }
+
+                const btnText = targetBtn.textContent.trim().toUpperCase();
+
+                if (btnText.includes("MOHON TUNGGU")) {
+                    wasLoading = true;
+                    const elapsed = Math.round((Date.now() - startTime) / 1000);
+                    console.log(`⏳ Tombol masih "MOHON TUNGGU"... (${elapsed}s)`);
+                    setTimeout(check, 500);
+                    return;
+                }
+
+                // Jika pernah loading dan sekarang sudah selesai
+                if (wasLoading) {
+                    console.log(`✅ Tombol kembali ke "${targetBtn.textContent.trim()}" — data sudah dimuat`);
+                    resolve();
+                    return;
+                }
+
+                // Belum pernah loading — mungkin belum mulai, tunggu sebentar
+                const elapsed = Math.round((Date.now() - startTime) / 1000);
+                if (elapsed > 5) {
+                    // Sudah 5 detik belum pernah loading, anggap sudah selesai
+                    console.log("✅ Tombol tidak pernah berubah ke MOHON TUNGGU, lanjut...");
+                    resolve();
+                    return;
+                }
+
+                setTimeout(check, 500);
+            };
+            check();
+        });
+    }
+
     // ===================================================
     // 📄 Fase LIST_KIRIM — Pilih dropdown BELUM, tunggu tabel, ambil link
     // ===================================================
@@ -272,9 +336,30 @@
             return;
         }
 
-        // Tunggu tabel refresh setelah filter Penandatangan
-        console.log("⏳ Menunggu tabel refresh setelah filter Penandatangan...");
-        await sleep(CONFIG.DELAYS.LONG);
+        // Tunggu tombol "Hitung Total" selesai loading setelah filter Penandatangan
+        console.log("⏳ Menunggu Hitung Total selesai setelah filter Penandatangan...");
+        try {
+            await waitForHitungTotal();
+        } catch (err) {
+            console.error(`❌ ${err.message}`);
+            finishAutomation();
+            return;
+        }
+
+        // Tunggu data tabel muncul
+        try {
+            const penandatanganLinks = await waitForTableData();
+            console.log(`✅ Tabel refresh setelah filter Penandatangan — ${penandatanganLinks.length} naskah`);
+            if (penandatanganLinks.length === 0) {
+                console.log("✅ Tidak ada naskah dengan status SETUJU");
+                finishAutomation();
+                return;
+            }
+        } catch (err) {
+            console.error(`❌ Gagal tunggu tabel setelah filter Penandatangan: ${err.message}`);
+            finishAutomation();
+            return;
+        }
 
         // ── STEP 1: Klik dropdown react-select "Cari Status Kirim" ──
         console.log("📌 Memilih filter Status Kirim = BELUM...");
@@ -360,10 +445,16 @@
         }
 
         // ── STEP 2: Tunggu tabel refresh setelah filter ──
-        console.log("⏳ Menunggu tabel refresh setelah filter BELUM...");
+        console.log("⏳ Menunggu Hitung Total selesai setelah filter BELUM...");
 
-        // Tunggu sebentar agar API call terpicu
-        await sleep(CONFIG.DELAYS.LONG);
+        // Tunggu tombol "Hitung Total" selesai loading
+        try {
+            await waitForHitungTotal();
+        } catch (err) {
+            console.error(`❌ ${err.message}`);
+            finishAutomation();
+            return;
+        }
 
         // Tunggu sampai ada link detail muncul (atau tabel kosong)
         let links;
