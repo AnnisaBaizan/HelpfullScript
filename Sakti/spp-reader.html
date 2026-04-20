@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SPP Reader — Poltekkes Palembang</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap');
+
+  :root {
+    --bg: #0f1117;
+    --surface: #1a1d27;
+    --surface2: #22263a;
+    --border: #2e3350;
+    --accent: #4f8ef7;
+    --accent2: #00d4aa;
+    --warn: #f7a24f;
+    --danger: #f75f5f;
+    --text: #e8eaf6;
+    --text2: #8b92b8;
+    --mono: 'IBM Plex Mono', monospace;
+    --sans: 'IBM Plex Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 16px 32px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: var(--surface);
+  }
+
+  .logo {
+    width: 32px; height: 32px;
+    background: var(--accent);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--mono);
+    font-size: 14px; font-weight: 600;
+    color: white;
+  }
+
+  header h1 { font-size: 15px; font-weight: 600; letter-spacing: 0.02em; }
+  header span { font-size: 12px; color: var(--text2); font-family: var(--mono); }
+
+  .badge {
+    margin-left: auto;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 11px;
+    color: var(--text2);
+    font-family: var(--mono);
+  }
+
+  main {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    height: calc(100vh - 57px);
+  }
+
+  /* LEFT PANEL */
+  .left {
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 24px;
+    gap: 20px;
+    overflow-y: auto;
+  }
+
+  .section-label {
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--text2);
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  /* UPLOAD ZONE */
+  .upload-zone {
+    border: 2px dashed var(--border);
+    border-radius: 12px;
+    padding: 40px 24px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: var(--surface);
+    position: relative;
+  }
+
+  .upload-zone:hover, .upload-zone.drag {
+    border-color: var(--accent);
+    background: rgba(79, 142, 247, 0.05);
+  }
+
+  .upload-zone input {
+    position: absolute; inset: 0;
+    opacity: 0; cursor: pointer; width: 100%; height: 100%;
+  }
+
+  .upload-icon {
+    font-size: 36px; margin-bottom: 12px;
+  }
+
+  .upload-zone h3 { font-size: 15px; font-weight: 500; margin-bottom: 6px; }
+  .upload-zone p { font-size: 12px; color: var(--text2); }
+
+  /* API KEY */
+  .api-section {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+  }
+
+  .api-section label {
+    font-size: 11px;
+    color: var(--text2);
+    font-family: var(--mono);
+    display: block;
+    margin-bottom: 8px;
+  }
+
+  .api-row {
+    display: flex; gap: 8px;
+  }
+
+  .api-section input[type="password"],
+  .api-section input[type="text"] {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 8px 12px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    outline: none;
+  }
+
+  .api-section input:focus { border-color: var(--accent); }
+
+  .btn-sm {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 11px;
+    font-family: var(--mono);
+    transition: all 0.15s;
+  }
+  .btn-sm:hover { border-color: var(--accent); color: var(--accent); }
+
+  /* LOG */
+  .log-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text2);
+    min-height: 100px;
+    max-height: 180px;
+    overflow-y: auto;
+    line-height: 1.7;
+  }
+
+  .log-box .log-line { display: flex; gap: 8px; }
+  .log-box .log-time { color: var(--border); }
+  .log-box .ok { color: var(--accent2); }
+  .log-box .info { color: var(--accent); }
+  .log-box .warn { color: var(--warn); }
+  .log-box .err { color: var(--danger); }
+
+  /* FILE PREVIEW */
+  .file-info {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .file-icon { font-size: 24px; }
+
+  .file-meta h4 { font-size: 13px; font-weight: 500; }
+  .file-meta p { font-size: 11px; color: var(--text2); font-family: var(--mono); margin-top: 2px; }
+
+  .btn-primary {
+    margin-left: auto;
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 8px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: var(--sans);
+  }
+  .btn-primary:hover { background: #6ba3ff; transform: translateY(-1px); }
+  .btn-primary:disabled { background: var(--surface2); color: var(--text2); cursor: not-allowed; transform: none; }
+
+  /* RIGHT PANEL */
+  .right {
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .right-header {
+    padding: 20px 24px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .jenis-badge {
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-family: var(--mono);
+    font-weight: 600;
+    letter-spacing: 0.05em;
+  }
+  .jenis-111 { background: rgba(79,142,247,0.15); color: var(--accent); border: 1px solid rgba(79,142,247,0.3); }
+  .jenis-210 { background: rgba(0,212,170,0.15); color: var(--accent2); border: 1px solid rgba(0,212,170,0.3); }
+  .jenis-300 { background: rgba(247,162,79,0.15); color: var(--warn); border: 1px solid rgba(247,162,79,0.3); }
+
+  .right-body { padding: 20px 24px; flex: 1; }
+
+  /* FIELDS */
+  .field-group {
+    margin-bottom: 20px;
+  }
+
+  .field-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+
+  .field-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    transition: border-color 0.15s;
+  }
+  .field-item:focus-within { border-color: var(--accent); }
+  .field-item.full { grid-column: 1 / -1; }
+
+  .field-item label {
+    display: block;
+    font-size: 10px;
+    color: var(--text2);
+    font-family: var(--mono);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 4px;
+  }
+
+  .field-item input, .field-item textarea {
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-size: 13px;
+    font-family: var(--sans);
+    resize: none;
+  }
+
+  .field-item.nominal input {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--accent2);
+    font-weight: 600;
+  }
+
+  /* AKUN POTONGAN */
+  .potongan-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+
+  .potongan-item label {
+    font-size: 10px;
+    color: var(--text2);
+    font-family: var(--mono);
+    letter-spacing: 0.08em;
+    display: block;
+    margin-bottom: 3px;
+  }
+
+  .potongan-item input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: var(--text);
+    font-size: 13px;
+    font-family: var(--sans);
+    width: 100%;
+  }
+
+  .potongan-item .nilai input {
+    font-family: var(--mono);
+    color: var(--danger);
+    font-weight: 600;
+  }
+
+  .divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 16px 0;
+  }
+
+  .total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 16px;
+  }
+
+  .total-row .label { font-size: 12px; color: var(--text2); }
+  .total-row .value { font-family: var(--mono); font-size: 16px; font-weight: 600; color: var(--accent2); }
+
+  /* ACTION BAR */
+  .action-bar {
+    padding: 16px 24px;
+    border-top: 1px solid var(--border);
+    background: var(--surface);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .btn-send {
+    background: var(--accent2);
+    color: #0f1117;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    font-family: var(--sans);
+    transition: all 0.15s;
+    margin-left: auto;
+  }
+  .btn-send:hover { opacity: 0.85; transform: translateY(-1px); }
+  .btn-send:disabled { background: var(--surface2); color: var(--text2); cursor: not-allowed; transform: none; }
+
+  .btn-reset {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text2);
+    padding: 10px 18px;
+    border-radius: 8px;
+    font-size: 13px;
+    cursor: pointer;
+    font-family: var(--sans);
+    transition: all 0.15s;
+  }
+  .btn-reset:hover { border-color: var(--danger); color: var(--danger); }
+
+  /* EMPTY STATE */
+  .empty-state {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    color: var(--text2);
+    gap: 12px;
+    padding: 40px;
+    text-align: center;
+  }
+
+  .empty-state .icon { font-size: 48px; opacity: 0.3; }
+  .empty-state h3 { font-size: 15px; font-weight: 500; color: var(--text2); }
+  .empty-state p { font-size: 12px; line-height: 1.6; }
+
+  /* LOADING */
+  .loading-overlay {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(15,17,23,0.85);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .loading-overlay.show { display: flex; }
+
+  .spinner {
+    width: 40px; height: 40px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .loading-overlay p { font-size: 13px; color: var(--text2); font-family: var(--mono); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">SP</div>
+  <div>
+    <h1>SPP Reader</h1>
+    <span>Poltekkes Kemenkes Palembang · Satker 632160</span>
+  </div>
+  <div class="badge">v1.0.0</div>
+</header>
+
+<main>
+  <!-- LEFT -->
+  <div class="left">
+
+    <!-- API Key -->
+    <div class="api-section">
+      <label>GOOGLE GEMINI API KEY</label>
+      <div class="api-row">
+        <input type="password" id="apiKey" placeholder="AIza..." autocomplete="off">
+        <button class="btn-sm" onclick="toggleKey()">👁</button>
+        <button class="btn-sm" onclick="saveKey()">Simpan</button>
+      </div>
+    </div>
+
+    <!-- Upload -->
+    <div>
+      <div class="section-label">Upload Dokumen SPP</div>
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="fileInput" accept=".pdf,.jpg,.jpeg,.png" onchange="handleFile(this)">
+        <div class="upload-icon">📄</div>
+        <h3>Drop file di sini atau klik untuk pilih</h3>
+        <p>PDF, JPG, PNG — scan maupun digital</p>
+      </div>
+    </div>
+
+    <!-- File info -->
+    <div id="fileInfo" class="file-info hidden">
+      <div class="file-icon" id="fileIcon">📄</div>
+      <div class="file-meta">
+        <h4 id="fileName">—</h4>
+        <p id="fileSize">—</p>
+      </div>
+      <button class="btn-primary" id="btnAnalyze" onclick="analyzeDoc()">Analisa →</button>
+    </div>
+
+    <!-- Log -->
+    <div>
+      <div class="section-label">Log</div>
+      <div class="log-box" id="logBox">
+        <div class="log-line"><span class="log-time">00:00</span><span class="info">Sistem siap. Upload dokumen SPP untuk memulai.</span></div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- RIGHT -->
+  <div class="right" id="rightPanel">
+
+    <div class="empty-state" id="emptyState">
+      <div class="icon">🔍</div>
+      <h3>Belum ada dokumen</h3>
+      <p>Upload dan analisa dokumen SPP<br>hasil ekstraksi akan tampil di sini untuk diverifikasi</p>
+    </div>
+
+    <!-- RESULT (hidden by default) -->
+    <div id="resultSection" class="hidden" style="display:flex;flex-direction:column;height:100%;">
+
+      <div class="right-header">
+        <div>
+          <div class="section-label">Hasil Ekstraksi</div>
+          <div style="font-size:14px;font-weight:600;" id="nomorSPP">SPP —</div>
+        </div>
+        <div class="jenis-badge" id="jenisBadge">—</div>
+      </div>
+
+      <div class="right-body" style="overflow-y:auto;">
+
+        <!-- INFO DASAR -->
+        <div class="section-label">Informasi Dasar</div>
+        <div class="field-group">
+          <div class="field-grid">
+            <div class="field-item">
+              <label>No. SPP</label>
+              <input type="text" id="f_noSPP">
+            </div>
+            <div class="field-item">
+              <label>Tanggal</label>
+              <input type="text" id="f_tanggal">
+            </div>
+            <div class="field-item">
+              <label>KPPN</label>
+              <input type="text" id="f_kppn">
+            </div>
+            <div class="field-item">
+              <label>Jenis Tagihan</label>
+              <input type="text" id="f_jenisTagihan">
+            </div>
+            <div class="field-item full">
+              <label>Uraian Pembayaran</label>
+              <textarea id="f_uraian" rows="2"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- SUPPLIER -->
+        <div class="section-label">Data Supplier</div>
+        <div class="field-group">
+          <div class="field-grid">
+            <div class="field-item full">
+              <label>Nama Supplier</label>
+              <input type="text" id="f_supplier">
+            </div>
+            <div class="field-item">
+              <label>No. Rekening</label>
+              <input type="text" id="f_rekening">
+            </div>
+            <div class="field-item">
+              <label>Bank</label>
+              <input type="text" id="f_bank">
+            </div>
+            <div class="field-item">
+              <label>NPWP</label>
+              <input type="text" id="f_npwp">
+            </div>
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- COA & NILAI -->
+        <div class="section-label">Akun Pengeluaran</div>
+        <div class="field-group">
+          <div class="field-grid">
+            <div class="field-item full">
+              <label>Kode COA</label>
+              <input type="text" id="f_coa" style="font-family:var(--mono);font-size:11px;">
+            </div>
+            <div class="field-item nominal full">
+              <label>Nilai Pengeluaran (Rp)</label>
+              <input type="text" id="f_nilaiPengeluaran">
+            </div>
+          </div>
+        </div>
+
+        <hr class="divider">
+
+        <!-- POTONGAN -->
+        <div class="section-label">Akun Potongan Pajak</div>
+        <div class="field-group" id="potonganContainer">
+          <!-- filled by JS -->
+        </div>
+
+        <!-- TOTAL -->
+        <div class="total-row">
+          <span class="label">TOTAL PEMBAYARAN</span>
+          <span class="value" id="f_totalBayar">—</span>
+        </div>
+
+        <!-- KONTRAKTUAL EXTRA -->
+        <div id="extraKontraktual" class="hidden">
+          <hr class="divider">
+          <div class="section-label">Data Kontrak</div>
+          <div class="field-grid">
+            <div class="field-item full">
+              <label>No. BAST</label>
+              <input type="text" id="f_noBAST">
+            </div>
+            <div class="field-item">
+              <label>No. Kontrak</label>
+              <input type="text" id="f_noKontrak">
+            </div>
+            <div class="field-item">
+              <label>No. CAN</label>
+              <input type="text" id="f_noCAN">
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="action-bar">
+        <button class="btn-reset" onclick="resetAll()">↺ Reset</button>
+        <span style="font-size:11px;color:var(--text2);font-family:var(--mono);">Periksa data sebelum kirim</span>
+        <button class="btn-send" id="btnSend" onclick="sendToSAKTI()">Kirim ke SAKTI →</button>
+      </div>
+
+    </div>
+
+  </div>
+</main>
+
+<!-- Loading -->
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <p id="loadingText">Membaca dokumen...</p>
+</div>
+
+<script>
+let currentFile = null;
+let extractedData = null;
+
+// API Key management
+function saveKey() {
+  const k = document.getElementById('apiKey').value.trim();
+  if (k) { localStorage.setItem('gemini_key', k); addLog('ok', 'API key tersimpan'); }
+}
+function toggleKey() {
+  const inp = document.getElementById('apiKey');
+  inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+window.onload = () => {
+  const saved = localStorage.getItem('gemini_key');
+  if (saved) document.getElementById('apiKey').value = saved;
+};
+
+// Drag & drop
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+zone.addEventListener('drop', e => {
+  e.preventDefault(); zone.classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if (f) processFile(f);
+});
+
+function handleFile(input) {
+  if (input.files[0]) processFile(input.files[0]);
+}
+
+function processFile(file) {
+  currentFile = file;
+  const ext = file.name.split('.').pop().toLowerCase();
+  const icons = { pdf: '📋', jpg: '🖼️', jpeg: '🖼️', png: '🖼️' };
+  
+  document.getElementById('fileIcon').textContent = icons[ext] || '📄';
+  document.getElementById('fileName').textContent = file.name;
+  document.getElementById('fileSize').textContent = (file.size / 1024).toFixed(1) + ' KB · ' + ext.toUpperCase();
+  document.getElementById('fileInfo').classList.remove('hidden');
+  addLog('info', `File dipilih: ${file.name}`);
+}
+
+// LOG
+function addLog(type, msg) {
+  const box = document.getElementById('logBox');
+  const now = new Date();
+  const t = `${String(now.getMinutes()).padStart(2,'0')}:${String(now.getSeconds()).padStart(2,'0')}`;
+  const line = document.createElement('div');
+  line.className = 'log-line';
+  line.innerHTML = `<span class="log-time">${t}</span><span class="${type}">${msg}</span>`;
+  box.appendChild(line);
+  box.scrollTop = box.scrollHeight;
+}
+
+// ANALYZE
+async function analyzeDoc() {
+  const apiKey = document.getElementById('apiKey').value.trim();
+  if (!apiKey) { addLog('err', 'API key Gemini belum diisi!'); return; }
+  if (!currentFile) { addLog('err', 'Pilih file dulu!'); return; }
+
+  setLoading(true, 'Membaca dokumen...');
+  addLog('info', 'Mengirim ke Gemini AI...');
+
+  try {
+    // Convert file to base64
+    const b64 = await toBase64(currentFile);
+    const mimeType = currentFile.type || 'application/pdf';
+
+    setLoading(true, 'AI sedang menganalisa...');
+
+    const prompt = `Kamu adalah asisten pembaca dokumen SPP (Surat Perintah Pembayaran) pemerintah Indonesia.
+
+Baca dokumen ini dan ekstrak semua informasi penting, lalu kembalikan HANYA JSON dengan format berikut (tanpa markdown, tanpa penjelasan):
+
+{
+  "jenis_spp": "111" atau "210" atau "300",
+  "jenis_label": "Non Gaji Kontraktual" atau "Non Kontraktual" atau "KKP",
+  "no_spp": "",
+  "tanggal": "",
+  "kppn": "",
+  "jenis_tagihan": "",
+  "uraian": "",
+  "supplier": "",
+  "rekening": "",
+  "bank": "",
+  "npwp": "",
+  "coa_pengeluaran": "",
+  "nilai_pengeluaran": "",
+  "potongan": [
+    {"akun": "411124", "label": "PPh Pasal 23", "nilai": ""},
+    {"akun": "411211", "label": "PPN Dalam Negeri", "nilai": ""}
+  ],
+  "total_bayar": "",
+  "no_bast": "",
+  "no_kontrak": "",
+  "no_can": ""
+}
+
+Aturan deteksi jenis SPP:
+- Jika ada kata "KONTRAKTUAL" dan ada nomor BAST/kontrak → jenis_spp = "111"
+- Jika "NON GAJI" tanpa kontrak, atau ada kwitansi biasa → jenis_spp = "210"  
+- Jika ada KKP atau GUP-KKP → jenis_spp = "300"
+
+Untuk nilai uang: tulis tanpa "Rp", gunakan format angka dengan titik pemisah ribuan. Contoh: 31.640,00
+Jika field tidak ditemukan, isi dengan string kosong "".
+Kembalikan HANYA JSON valid.`;
+
+    const body = {
+      contents: [{
+        parts: [
+          { text: prompt },
+          { inline_data: { mime_type: mimeType, data: b64 } }
+        ]
+      }],
+      generationConfig: { temperature: 0.1, maxOutputTokens: 2048 }
+    };
+
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`,
+      { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }
+    );
+
+    if (!res.ok) {
+      const err = await res.json();
+      throw new Error(err.error?.message || 'API error');
+    }
+
+    const data = await res.json();
+    let text = data.candidates?.[0]?.content?.parts?.[0]?.text || '';
+    
+    // Clean JSON
+    text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+    
+    const parsed = JSON.parse(text);
+    extractedData = parsed;
+    
+    addLog('ok', `Terdeteksi: SPP ${parsed.jenis_spp} — ${parsed.jenis_label}`);
+    addLog('ok', `Supplier: ${parsed.supplier || '—'}`);
+    addLog('ok', `Total bayar: Rp ${parsed.total_bayar || '—'}`);
+    
+    renderResult(parsed);
+    setLoading(false);
+
+  } catch (e) {
+    addLog('err', 'Error: ' + e.message);
+    setLoading(false);
+  }
+}
+
+function toBase64(file) {
+  return new Promise((res, rej) => {
+    const r = new FileReader();
+    r.onload = () => res(r.result.split(',')[1]);
+    r.onerror = rej;
+    r.readAsDataURL(file);
+  });
+}
+
+function renderResult(d) {
+  // Show result panel
+  document.getElementById('emptyState').classList.add('hidden');
+  const rs = document.getElementById('resultSection');
+  rs.classList.remove('hidden');
+  rs.style.display = 'flex';
+
+  // Header
+  document.getElementById('nomorSPP').textContent = 'SPP ' + (d.no_spp || '—');
+  
+  const badge = document.getElementById('jenisBadge');
+  badge.textContent = d.jenis_spp + ' · ' + d.jenis_label;
+  badge.className = 'jenis-badge jenis-' + d.jenis_spp;
+
+  // Fields
+  document.getElementById('f_noSPP').value = d.no_spp || '';
+  document.getElementById('f_tanggal').value = d.tanggal || '';
+  document.getElementById('f_kppn').value = d.kppn || '';
+  document.getElementById('f_jenisTagihan').value = d.jenis_tagihan || '';
+  document.getElementById('f_uraian').value = d.uraian || '';
+  document.getElementById('f_supplier').value = d.supplier || '';
+  document.getElementById('f_rekening').value = d.rekening || '';
+  document.getElementById('f_bank').value = d.bank || '';
+  document.getElementById('f_npwp').value = d.npwp || '';
+  document.getElementById('f_coa').value = d.coa_pengeluaran || '';
+  document.getElementById('f_nilaiPengeluaran').value = d.nilai_pengeluaran || '';
+  document.getElementById('f_totalBayar').textContent = 'Rp ' + (d.total_bayar || '—');
+
+  // Potongan
+  const pc = document.getElementById('potonganContainer');
+  pc.innerHTML = '';
+  (d.potongan || []).forEach((p, i) => {
+    if (!p.nilai) return;
+    pc.innerHTML += `
+      <div class="potongan-item">
+        <div>
+          <label>AKUN ${p.akun}</label>
+          <input type="text" value="${p.label}" oninput="extractedData.potongan[${i}].label=this.value">
+        </div>
+        <div class="nilai">
+          <label>NILAI (Rp)</label>
+          <input type="text" value="${p.nilai}" oninput="extractedData.potongan[${i}].nilai=this.value">
+        </div>
+      </div>`;
+  });
+
+  // Extra kontraktual
+  if (d.jenis_spp === '111') {
+    document.getElementById('extraKontraktual').classList.remove('hidden');
+    document.getElementById('f_noBAST').value = d.no_bast || '';
+    document.getElementById('f_noKontrak').value = d.no_kontrak || '';
+    document.getElementById('f_noCAN').value = d.no_can || '';
+  } else {
+    document.getElementById('extraKontraktual').classList.add('hidden');
+  }
+}
+
+function sendToSAKTI() {
+  // Kumpulkan data terkini dari form
+  const data = {
+    jenis_spp: extractedData?.jenis_spp,
+    no_spp: document.getElementById('f_noSPP').value,
+    tanggal: document.getElementById('f_tanggal').value,
+    uraian: document.getElementById('f_uraian').value,
+    supplier: document.getElementById('f_supplier').value,
+    rekening: document.getElementById('f_rekening').value,
+    bank: document.getElementById('f_bank').value,
+    npwp: document.getElementById('f_npwp').value,
+    coa: document.getElementById('f_coa').value,
+    nilai_pengeluaran: document.getElementById('f_nilaiPengeluaran').value,
+    potongan: extractedData?.potongan || [],
+    total_bayar: document.getElementById('f_totalBayar').textContent,
+    no_bast: document.getElementById('f_noBAST')?.value || '',
+    no_kontrak: document.getElementById('f_noKontrak')?.value || '',
+    no_can: document.getElementById('f_noCAN')?.value || '',
+  };
+
+  // Kirim ke Tampermonkey via localhost:3031
+  fetch('http://localhost:3031/spp', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data)
+  })
+  .then(r => r.json())
+  .then(() => addLog('ok', 'Data terkirim ke SAKTI bot!'))
+  .catch(() => {
+    // Fallback: copy ke clipboard sebagai JSON
+    navigator.clipboard.writeText(JSON.stringify(data, null, 2));
+    addLog('warn', 'Bot tidak aktif — data disalin ke clipboard');
+  });
+}
+
+function resetAll() {
+  currentFile = null;
+  extractedData = null;
+  document.getElementById('fileInput').value = '';
+  document.getElementById('fileInfo').classList.add('hidden');
+  document.getElementById('emptyState').classList.remove('hidden');
+  document.getElementById('resultSection').classList.add('hidden');
+  addLog('info', 'Reset. Siap untuk dokumen baru.');
+}
+
+function setLoading(show, text) {
+  const ol = document.getElementById('loadingOverlay');
+  ol.classList.toggle('show', show);
+  if (text) document.getElementById('loadingText').textContent = text;
+}
+</script>
+</body>
+</html>
