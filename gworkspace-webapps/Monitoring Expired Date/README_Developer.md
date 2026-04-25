@@ -30,9 +30,9 @@ Sistem ini dibangun sebagai bagian dari kegiatan **Aktualisasi CPNS Latsar Golon
 ```
 monitoring-ed-lab-kesgi/
 │
-├── Monitoring_ED_LabKesgi.xlsx        # Template spreadsheet (upload ke Google Drive)
+├── Monitoring_ED_LabKesgi.xlsx        # Template spreadsheet awal (v1)
 ├── apps_script/
-│   └── monitoring_ed.gs               # Full Apps Script code
+│   └── monitoring_ed.gs               # Full Apps Script code (selalu update ke versi terbaru)
 ├── docs/
 │   ├── Panduan_User_Monitoring_ED.docx
 │   └── README_Developer.md            # File ini
@@ -48,10 +48,17 @@ monitoring-ed-lab-kesgi/
 
 | Tab | Warna | Fungsi | Editable |
 |---|---|---|---|
-| `DATABASE` | Biru | Tab utama — input & display semua data bahan | ✅ PLP |
+| `BAHAN BHP 2026` | Biru | Tab utama — input & display semua data bahan | ✅ PLP |
 | `REFERENSI` | Abu | Master data dropdown (satuan, lokasi, kategori) | ⚠️ Admin only |
-| `RINGKASAN` | Hijau | Dashboard rekap otomatis via COUNTIF | ❌ Read-only |
+| `RINGKASAN` | Hijau | Dashboard rekap + pengaturan threshold dinamis | ✅ PLP (sel D4 & D6) |
 | `LOG` | Abu gelap | Catatan perubahan manual oleh PLP | ✅ PLP |
+
+> ⚠️ **Catatan nama sheet:** Nama tab utama adalah `BAHAN BHP 2026` (bukan `DATABASE`). Semua referensi formula di sheet lain yang merujuk tab ini harus menggunakan tanda kutip satu karena mengandung spasi:
+> ```
+> ='BAHAN BHP 2026'!I4:I200
+> ```
+
+---
 
 ### DATABASE Column Map
 
@@ -65,10 +72,15 @@ monitoring-ed-lab-kesgi/
 | F | TANGGAL MASUK | Date (DD/MM/YYYY) | Manual |
 | G | TANGGAL EXPIRED | Date (DD/MM/YYYY) | **Manual — dari kemasan fisik** |
 | H | SISA HARI | Formula | `=IF(G{n}="","",G{n}-TODAY())` |
-| I | STATUS ED | Formula | IFS based on H value — lihat formula section |
-| J | LOKASI SIMPAN | Dropdown | Source: `REFERENSI!$C$2:$C$8` |
-| K | MERK / PRODUSEN | String | Manual — opsional |
-| L | KETERANGAN | String | Manual — opsional |
+| I | STATUS ED | Formula | IFS dinamis — lihat formula section |
+| J | KODE BARANG | String | Manual — kode inventaris/BMN |
+| K | LOKASI SIMPAN | Dropdown | Source: `REFERENSI!$C$2:$C$8` |
+| L | MERK / PRODUSEN | String | Manual — opsional |
+| M | KETERANGAN | String | Manual — opsional |
+
+**Total kolom aktif: 13 (A–M)**
+
+---
 
 ### Key Formulas
 
@@ -77,21 +89,31 @@ monitoring-ed-lab-kesgi/
 =IF(G4="","",G4-TODAY())
 ```
 
-**Kolom I — Status ED:**
+**Kolom I — Status ED (Dinamis):**
 ```
-=IF(H4="","",IF(H4<0,"⛔ EXPIRED",IF(H4<=30,"🔴 KRITIS",IF(H4<=90,"🟡 PERHATIAN","🟢 AMAN"))))
+=IF(H4="","",IF(H4<0,"⛔ EXPIRED",IF(H4<=RINGKASAN!$D$6,"🔴 KRITIS",IF(H4<=RINGKASAN!$D$4,"🟡 PERHATIAN","🟢 AMAN"))))
 ```
+
+> Threshold diambil langsung dari sheet RINGKASAN:
+> - `RINGKASAN!$D$4` = batas hari PERHATIAN (default: 90)
+> - `RINGKASAN!$D$6` = batas hari KRITIS (default: 30)
+> 
+> Mengubah nilai D4/D6 di RINGKASAN → seluruh STATUS ED di sheet BAHAN BHP 2026 otomatis menyesuaikan.
 
 **RINGKASAN sheet — COUNTIF formulas:**
 ```
-=COUNTIF(DATABASE!I4:I200,"*AMAN*")
-=COUNTIF(DATABASE!I4:I200,"*PERHATIAN*")
-=COUNTIF(DATABASE!I4:I200,"*KRITIS*")
-=COUNTIF(DATABASE!I4:I200,"*EXPIRED*")
-=COUNTA(DATABASE!B4:B200)
+=COUNTIF('BAHAN BHP 2026'!I4:I200,"*AMAN*")
+=COUNTIF('BAHAN BHP 2026'!I4:I200,"*PERHATIAN*")
+=COUNTIF('BAHAN BHP 2026'!I4:I200,"*KRITIS*")
+=COUNTIF('BAHAN BHP 2026'!I4:I200,"*EXPIRED*")
+=COUNTA('BAHAN BHP 2026'!B4:B200)
 ```
 
-### Conditional Formatting Rules (Database, A4:L100)
+> ⚠️ Tanda kutip satu wajib karena nama sheet mengandung spasi. Tanpa tanda kutip → error `#REF!`.
+
+---
+
+### Conditional Formatting Rules (BAHAN BHP 2026, A4:M100)
 
 Applied in priority order (highest first wins):
 
@@ -101,6 +123,8 @@ Applied in priority order (highest first wins):
 | 2 | `=AND($H4>=0,$H4<=30)` | `#FFE0B2` | `#E65100` bold |
 | 3 | `=AND($H4>30,$H4<=90)` | `#FFF9C4` | `#F57F17` |
 | 4 | `=$H4>90` | `#E8F5E9` | `#1B5E20` |
+
+> Jika threshold diubah di RINGKASAN, conditional formatting **tidak otomatis berubah** — perlu diupdate manual di Format → Conditional formatting jika ingin konsisten secara visual dengan nilai threshold baru.
 
 ---
 
@@ -113,42 +137,86 @@ Script dijalankan dari akun Google **terpisah** dari pemilik spreadsheet. Akses 
 
 ```javascript
 const CONFIG = {
-  EMAIL_PENERIMA: "labkesgi.poltekkesplg@gmail.com", // email tujuan notifikasi
-  NAMA_LAB:       "Laboratorium Kesehatan Gigi",
-  INSTITUSI:      "Poltekkes Kemenkes Palembang",
-  BATAS_HARI:     90,                                 // threshold alert
-  ID_SPREADSHEET: "1l-g93l5iLpI5ZGsiF6ajH41btcl7GQxc3hHDElGMswM",
-  NAMA_SHEET:     "DATABASE",
-  BARIS_MULAI:    4,                                  // header di baris 3, data mulai baris 4
+  EMAIL_PENERIMA:      "labkesgi.poltekkesplg@gmail.com",
+  NAMA_LAB:            "Laboratorium Kesehatan Gigi",
+  INSTITUSI:           "Poltekkes Kemenkes Palembang",
+  BATAS_HARI:          90,
+  ID_SPREADSHEET:      "1l-g93l5iLpI5ZGsiF6ajH41btcl7GQxc3hHDElGMswM",
+  NAMA_SHEET:          "BAHAN BHP 2026",   // nama tab utama
+  NAMA_RINGKASAN:      "RINGKASAN",
+  BARIS_MULAI:         4,
+  SEL_BATAS_PERHATIAN: "D4",               // RINGKASAN!D4
+  SEL_BATAS_KRITIS:    "D6",               // RINGKASAN!D6
+};
+```
+
+### COL Mapping
+
+```javascript
+const COL = {
+  NO:           1,   // A
+  NAMA_BAHAN:   2,   // B
+  KATEGORI:     3,   // C
+  SATUAN:       4,   // D
+  STOK:         5,   // E
+  TGL_MASUK:    6,   // F
+  TGL_EXPIRED:  7,   // G
+  SISA_HARI:    8,   // H
+  STATUS:       9,   // I
+  KODE_BARANG:  10,  // J  ← ditambahkan v1.1
+  LOKASI:       11,  // K
+  MERK:         12,  // L
+  KET:          13,  // M
 };
 ```
 
 ### Alert Logic
 
 ```
-for each row in DATABASE starting from BARIS_MULAI:
+for each row in BAHAN BHP 2026 starting from BARIS_MULAI:
   if (namaBahan is empty OR tglExpired is empty) → skip
-  if (stok <= 0) → skip (bahan habis, tidak perlu alert)
-  
+  if (stok <= 0) → skip
+
   hitung sisaHari = tglExpired - today
-  
-  if (sisaHari <= BATAS_HARI):   // yaitu <= 90
-    if (sisaHari < 0)   → kelompok.expired
-    if (sisaHari <= 30) → kelompok.kritis
-    else                → kelompok.perhatian
+
+  if (stok > 0 AND sisaHari <= batasPerhatian):
+    if (sisaHari < 0)              → kelompok.expired
+    if (sisaHari <= batasKritis)   → kelompok.kritis
+    else                           → kelompok.perhatian
   else:
     tidak masuk list (aman)
 
-if (totalAlert == 0) → TIDAK kirim email, return
+if (totalAlert == 0) → TIDAK kirim email
 if (totalAlert > 0)  → kirim email HTML ke EMAIL_PENERIMA
 ```
+
+### Threshold — Dibaca Dinamis dari Sheet RINGKASAN
+
+```javascript
+const batasPerhatian = ringkasan.getRange("D4").getValue();
+const batasKritis    = ringkasan.getRange("D6").getValue();
+```
+
+Script **tidak hardcode angka 30/90**. Nilai dibaca langsung dari sheet setiap kali script berjalan. Ubah D4/D6 di spreadsheet → email alert besok langsung pakai nilai baru.
+
+### Email Columns (per bahan di tabel)
+
+| Kolom Email | Source |
+|---|---|
+| Nama Bahan | COL.NAMA_BAHAN |
+| Kode Barang | COL.KODE_BARANG ← baru v1.1 |
+| Tgl Expired | COL.TGL_EXPIRED |
+| Sisa / Status | Dihitung dari sisaHari |
+| Stok | COL.STOK |
+| Lokasi | COL.LOKASI |
+| Merk | COL.MERK |
 
 ### Functions
 
 | Function | Deskripsi | Dipanggil oleh |
 |---|---|---|
 | `kirimEmailAlertED()` | Fungsi utama — baca sheet, filter bahan, kirim email | Trigger harian |
-| `buatBodyEmail(kelompok, total, today)` | Generate HTML email body | `kirimEmailAlertED()` |
+| `buatBodyEmail(kelompok, total, today, batasKritis, batasPerhatian)` | Generate HTML email body | `kirimEmailAlertED()` |
 | `buatTabel(items, warnaHeader)` | Generate HTML tabel per kategori | `buatBodyEmail()` |
 | `setupTriggerHarian()` | Buat time-based trigger harian jam 07.00 | Manual — jalankan sekali |
 | `testKirimEmailSekarang()` | Test kirim email langsung | Manual saat testing |
@@ -159,20 +227,23 @@ if (totalAlert > 0)  → kirim email HTML ke EMAIL_PENERIMA
 ScriptApp.newTrigger("kirimEmailAlertED")
   .timeBased()
   .everyDays(1)
-  .atHour(7)        // 07.00–08.00 WIB
+  .atHour(7)
   .create();
 ```
 
-Timezone default Apps Script mengikuti timezone project Google Cloud. Pastikan timezone di script project sudah diset ke **Asia/Jakarta (WIB, UTC+7)**:
-- Di Apps Script editor → Project Settings → Time zone → pilih `(GMT+07:00) Asia/Jakarta`
+> **Tidak perlu deploy** untuk mengaktifkan trigger. Cukup jalankan `setupTriggerHarian()` sekali via tombol Run di Apps Script editor.
+
+Pastikan timezone project Apps Script sudah diset ke **Asia/Jakarta (WIB, UTC+7)**:
+- Apps Script editor → Project Settings → Time zone → `(GMT+07:00) Asia/Jakarta`
 
 ### Email Quota
 
-Google Apps Script memiliki quota pengiriman email:
-- Akun **Google Workspace**: 1.500 email/hari
-- Akun **Gmail biasa (@gmail.com)**: 100 email/hari
+| Tipe Akun | Limit/hari |
+|---|---|
+| Gmail biasa (@gmail.com) | 100 email |
+| Google Workspace | 1.500 email |
 
-Sistem ini hanya mengirim **1 email per hari** — jauh di bawah limit. Aman untuk akun Gmail biasa.
+Sistem hanya kirim **1 email per hari** (atau 0 jika semua aman) — jauh di bawah limit.
 
 ---
 
@@ -182,32 +253,35 @@ Sistem ini hanya mengirim **1 email per hari** — jauh di bawah limit. Aman unt
 
 ```
 1. Download file Monitoring_ED_LabKesgi.xlsx
-2. Buka drive.google.com menggunakan akun lab (labkesgi.poltekkesplg@gmail.com)
+2. Buka drive.google.com dengan akun lab (labkesgi.poltekkesplg@gmail.com)
 3. Upload file xlsx
 4. Klik kanan → Open with → Google Sheets
-5. File akan terkonversi otomatis ke format Google Sheets
+5. File terkonversi otomatis ke Google Sheets
 6. Catat Spreadsheet ID dari URL:
    https://docs.google.com/spreadsheets/d/{SPREADSHEET_ID}/edit
+7. Rename tab "DATABASE" → "BAHAN BHP 2026"
+8. Update semua formula COUNTIF di sheet RINGKASAN:
+   Ctrl+H → cari "DATABASE!" → ganti "'BAHAN BHP 2026'!" → Replace All
 ```
 
 ### 2. Setup Apps Script
 
 ```
-1. Buka browser baru / tab incognito
-2. Login dengan akun Google yang digunakan untuk script (BUKAN akun lab)
+1. Buka tab baru / incognito
+2. Login dengan akun script (bukan akun lab)
 3. Buka script.google.com
 4. Klik "New project"
-5. Ganti nama project menjadi: "Monitoring ED - Lab Kesgi"
+5. Rename project: "Monitoring ED - Lab Kesgi"
 6. Hapus semua kode default
-7. Paste seluruh kode dari apps_script/monitoring_ed.gs
-8. Update CONFIG.ID_SPREADSHEET dengan ID yang dicatat di langkah 1
+7. Paste kode dari apps_script/monitoring_ed.gs
+8. Update CONFIG.ID_SPREADSHEET dengan ID dari langkah 1
 9. Simpan (Ctrl+S)
 ```
 
 ### 3. Test & Authorize
 
 ```
-1. Di dropdown fungsi, pilih: testKirimEmailSekarang
+1. Dropdown fungsi → pilih: testKirimEmailSekarang
 2. Klik Run ▶
 3. Klik "Review permissions" → pilih akun script → Advanced → Allow
 4. Cek Logger untuk konfirmasi hasil
@@ -217,38 +291,37 @@ Sistem ini hanya mengirim **1 email per hari** — jauh di bawah limit. Aman unt
 ### 4. Aktifkan Trigger Harian
 
 ```
-1. Di dropdown fungsi, pilih: setupTriggerHarian
-2. Klik Run ▶
-3. Verifikasi di menu Triggers (ikon jam di sidebar kiri):
+1. Dropdown fungsi → pilih: setupTriggerHarian
+2. Klik Run ▶ (tidak perlu deploy)
+3. Verifikasi di Triggers (ikon jam sidebar kiri):
    kirimEmailAlertED | Time-driven | Day timer | 7am-8am
 ```
 
-### 5. Share Spreadsheet ke Akun Lab
+### 5. Share Spreadsheet ke Akun PLP
 
 ```
 1. Buka spreadsheet di akun lab
-2. Klik tombol Share (pojok kanan atas)
-3. Tambahkan akun PLP lain yang perlu akses edit
-4. Set permission: Editor
+2. Klik Share → tambah email PLP → set permission: Editor
 ```
 
 ---
 
-## Data Migration — Replace Dummy Data
+## Troubleshooting
 
-Spreadsheet awal berisi 36 baris data dummy dari stock opname Februari 2026.
+### #REF! error di sheet RINGKASAN
 
-**Langkah mengganti dengan data asli:**
-1. Buka tab DATABASE di Google Sheets
-2. Select baris 4 sampai 39 (semua data dummy)
-3. Delete rows
-4. Input ulang data asli dari stock opname terbaru
-5. Verifikasi kolom G (Tanggal Expired) terbaca sebagai Date (bukan teks)
-6. Cek kolom H dan I terisi otomatis
+```
+Penyebab: Formula COUNTIF masih mereferensikan nama sheet lama ("DATABASE")
+          padahal nama sheet sudah diganti.
 
----
-
-## Maintenance & Troubleshooting
+Solusi:
+1. Buka sheet RINGKASAN
+2. Tekan Ctrl+H (Find & Replace)
+3. Find:         DATABASE!
+   Replace with: 'BAHAN BHP 2026'!
+4. Centang "Also search within formulas"
+5. Replace All → Done
+```
 
 ### Trigger tidak jalan / email tidak dikirim
 
@@ -256,75 +329,69 @@ Spreadsheet awal berisi 36 baris data dummy dari stock opname Februari 2026.
 1. Buka script.google.com di akun script
 2. Buka project "Monitoring ED - Lab Kesgi"
 3. Klik Triggers (ikon jam di sidebar)
-4. Pastikan trigger ada dan aktif
-5. Jika tidak ada → jalankan setupTriggerHarian() lagi
-6. Cek Executions (ikon play di sidebar) untuk melihat log error
+4. Jika tidak ada trigger → jalankan setupTriggerHarian() lagi
+5. Cek Executions (ikon play di sidebar) untuk melihat log error
 ```
 
 ### Email masuk ke Spam
 
 ```
-1. Buka Gmail lab
-2. Buka folder Spam
-3. Cari email dari akun script
-4. Klik "Not spam" / "Report not spam"
-5. Tambahkan akun script ke Contacts Gmail lab
+1. Buka Gmail lab → folder Spam
+2. Cari email dari akun script
+3. Klik "Not spam"
+4. Tambahkan akun script ke Contacts Gmail lab
 ```
 
-### Sisa Hari tidak terhitung (kolom H kosong atau error)
+### Sisa Hari tidak terhitung (kolom H kosong)
 
 ```
-Penyebab: Kolom G tidak terbaca sebagai Date oleh Google Sheets
+Penyebab: Kolom G tidak terbaca sebagai Date
 Solusi:
-1. Select seluruh kolom G
-2. Format → Number → Date
-3. Pilih format DD/MM/YYYY
-4. Re-enter tanggal di baris yang bermasalah
+1. Select kolom G
+2. Format → Number → Date → pilih DD/MM/YYYY
+3. Re-enter tanggal di baris yang bermasalah
 ```
 
-### Menambah pilihan dropdown baru
+### Status ED tidak berubah setelah ubah threshold D4/D6
 
 ```
-1. Buka tab REFERENSI
-2. Tambahkan nilai baru di kolom yang sesuai:
-   - Kolom A: Satuan baru
-   - Kolom C: Lokasi penyimpanan baru
-   - Kolom E: Kategori bahan baru
-3. Range dropdown otomatis menyesuaikan (sudah dikonfigurasi hingga baris 20)
-4. Jika melebihi baris 20, update range DataValidation di spreadsheet
+Penyebab: Google Sheets perlu refresh untuk recalculate
+Solusi: Tutup dan buka kembali file, atau tekan Ctrl+R
+Catatan: Conditional formatting (warna baris) tidak otomatis ikut threshold —
+         perlu update manual di Format → Conditional formatting jika diperlukan.
 ```
 
 ### Menambah penerima email
 
 ```javascript
-// Di CONFIG, ubah EMAIL_PENERIMA menjadi multiple emails:
+// Ubah EMAIL_PENERIMA di CONFIG menjadi multiple (pisah koma):
 EMAIL_PENERIMA: "labkesgi.poltekkesplg@gmail.com,ketua.kesgi@poltekkes-plg.ac.id",
 ```
 
 ---
 
-## Rebuild Spreadsheet Template
+## Data Migration
 
-Jika perlu rebuild file xlsx dari awal:
+Spreadsheet awal berisi data dummy. Langkah migrasi ke data asli:
 
-```bash
-# Install dependency
-pip install openpyxl
-
-# Jalankan script builder
-python build/build_monitoring_ed.py
-
-# Output: Monitoring_ED_LabKesgi.xlsx
+```
+1. Buka tab BAHAN BHP 2026
+2. Select baris 4 sampai baris terakhir data dummy
+3. Delete rows
+4. Input data asli dari stock opname terbaru
+5. Pastikan kolom G (Tanggal Expired) terbaca sebagai Date
+6. Cek kolom H dan I terisi otomatis
+7. Cek sheet RINGKASAN — pastikan COUNTIF sudah menampilkan angka (bukan #REF!)
 ```
 
 ---
 
 ## Security Notes
 
-- **Spreadsheet ID** bersifat semi-publik — siapa saja dengan link bisa lihat jika sharing setting salah. Pastikan sharing setting di Google Sheets diset ke **"Restricted"** (hanya orang yang diberi akses).
-- **Akun script** tidak menyimpan credential apapun — hanya menggunakan OAuth token yang dikelola Google.
-- **Email penerima** hardcoded di CONFIG — update manual jika email lab berubah.
-- Tidak ada data yang dikirim ke pihak ketiga. Semua berjalan di ekosistem Google.
+- **Spreadsheet ID** bersifat semi-publik — pastikan sharing setting diset ke **"Restricted"**
+- **Akun script** menggunakan OAuth token yang dikelola Google — tidak ada credential tersimpan
+- **Email penerima** hardcoded di CONFIG — update manual jika email lab berubah
+- Tidak ada data yang dikirim ke pihak ketiga — semua berjalan di ekosistem Google
 
 ---
 
@@ -333,6 +400,7 @@ python build/build_monitoring_ed.py
 | Tanggal | Versi | Perubahan | Developer |
 |---|---|---|---|
 | 04/04/2026 | v1.0.0 | Initial release — 36 item dummy, 4 sheet, trigger harian, email HTML | Annisa Baizan |
+| 10/04/2026 | v1.1.0 | Tambah kolom KODE BARANG (J), COL mapping 12→13, threshold dinamis via RINGKASAN, rename sheet DATABASE→BAHAN BHP 2026 | Annisa Baizan |
 
 ---
 
