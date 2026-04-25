@@ -1,156 +1,100 @@
 # README Bahasa Bayi — Sistem Monitoring ED Bahan Lab
 
 **Lab Kesehatan Gigi · Poltekkes Kemenkes Palembang**  
-**Versi santai banget / non-tech / anti mumet**  
+**Versi santai / non-tech / ringkas / tanpa pengulangan**  
 **Update: April 2026**
 
 ---
 
 ## Daftar Isi
 
-Klik judul di bawah ini buat langsung lompat ke bagian yang mau dibaca.
-
-- [0. Baca Ini Dulu, Biar Nggak Panik](#0-baca-ini-dulu-biar-nggak-panik)
-- [1. Sistem Ini Sebenarnya Apa?](#1-sistem-ini-sebenarnya-apa)
-- [2. Untuk Siapa Sistem Ini?](#2-untuk-siapa-sistem-ini)
-- [3. Sistem Ini Dibuat Pakai Apa?](#3-sistem-ini-dibuat-pakai-apa)
-- [4. Isi File / Kotak Kerjanya Ada Apa Aja?](#4-isi-file-kotak-kerjanya-ada-apa-aja)
-- [5. Google Sheets Itu Isinya Apa?](#5-google-sheets-itu-isinya-apa)
-- [6. Tab Utama: `BAHAN BHP 2026`](#6-tab-utama-bahan-bhp-2026)
-- [7. Status Warna Itu Maksudnya Apa?](#7-status-warna-itu-maksudnya-apa)
-- [8. Rumus Ajaib: Sisa Hari](#8-rumus-ajaib-sisa-hari)
-- [9. Rumus Ajaib: Status ED](#9-rumus-ajaib-status-ed)
-- [10. Threshold Itu Apa?](#10-threshold-itu-apa)
-- [11. Tab `RINGKASAN` Itu Buat Apa?](#11-tab-ringkasan-itu-buat-apa)
-- [12. Warna Otomatis Itu Apa?](#12-warna-otomatis-itu-apa)
-- [13. Robot Apps Script Itu Apa?](#13-robot-apps-script-itu-apa)
-- [14. Kartu Identitas Robot: `CONFIG`](#14-kartu-identitas-robot-config)
-- [15. Robot Tahu Kolom Dari Mana?](#15-robot-tahu-kolom-dari-mana)
-- [16. Kerja Robot Tiap Pagi](#16-kerja-robot-tiap-pagi)
-- [17. Kenapa Bahan Stok 0 Tidak Masuk Email?](#17-kenapa-bahan-stok-0-tidak-masuk-email)
-- [18. Email Dikirim Kapan?](#18-email-dikirim-kapan)
-- [19. Isi Email Alert](#19-isi-email-alert)
-- [20. Tombol-Tombol Robot](#20-tombol-tombol-robot)
-- [21. Cara Input Bahan Baru](#21-cara-input-bahan-baru)
-- [22. Cara Update Stok](#22-cara-update-stok)
-- [23. Apa yang Harus Dilakukan Kalau Ada Email Alert?](#23-apa-yang-harus-dilakukan-kalau-ada-email-alert)
-- [24. Tab `LOG` Untuk Apa?](#24-tab-log-untuk-apa)
-- [25. Cara Pasang Sistem Dari Nol](#25-cara-pasang-sistem-dari-nol)
-- [26. Masalah Umum dan Cara Beresinnya](#26-masalah-umum-dan-cara-beresinnya)
-- [27. Aturan Jangan Nakal](#27-aturan-jangan-nakal)
-- [28. Keamanan Data](#28-keamanan-data)
-- [29. Checklist Setelah Sistem Dipasang](#29-checklist-setelah-sistem-dipasang)
-- [30. Checklist Harian PLP](#30-checklist-harian-plp)
-- [31. Checklist Saat Ada Bahan Baru](#31-checklist-saat-ada-bahan-baru)
-- [32. Penjelasan Paling Pendek Sedunia](#32-penjelasan-paling-pendek-sedunia)
-- [33. Versi “Ngomong ke Bayi”](#33-versi-ngomong-ke-bayi)
-- [34. Ringkasan Developer Tapi Tetap Santai](#34-ringkasan-developer-tapi-tetap-santai)
-- [35. Riwayat Singkat](#35-riwayat-singkat)
-- [36. Penutup](#36-penutup)
+- [0. Baca Ini Dulu](#0-baca-ini-dulu)
+- [1. Sistem Ini Apa?](#1-sistem-ini-apa)
+- [2. Dipakai Oleh Siapa?](#2-dipakai-oleh-siapa)
+- [3. Komponen Sistem](#3-komponen-sistem)
+- [4. Struktur Spreadsheet](#4-struktur-spreadsheet)
+- [5. Tab Utama: `BAHAN BHP 2026`](#5-tab-utama-bahan-bhp-2026)
+- [6. Status ED dan Sisa Hari](#6-status-ed-dan-sisa-hari)
+- [7. Threshold / Batas Hari](#7-threshold--batas-hari)
+- [8. Tab `RINGKASAN`, Warna Otomatis, dan `LOG`](#8-tab-ringkasan-warna-otomatis-dan-log)
+- [9. Robot Apps Script](#9-robot-apps-script)
+- [10. Cara Kerja Email Alert](#10-cara-kerja-email-alert)
+- [11. Cara Input dan Update Data](#11-cara-input-dan-update-data)
+- [12. Cara Menindaklanjuti Email Alert](#12-cara-menindaklanjuti-email-alert)
+- [13. Cara Pasang Sistem Dari Nol](#13-cara-pasang-sistem-dari-nol)
+- [14. Tes Sistem](#14-tes-sistem)
+- [15. Masalah Umum dan Solusi](#15-masalah-umum-dan-solusi)
+- [16. Aturan Aman](#16-aturan-aman)
+- [17. Checklist Pemakaian](#17-checklist-pemakaian)
+- [18. Ringkasan Developer](#18-ringkasan-developer)
+- [19. Riwayat dan Penutup](#19-riwayat-dan-penutup)
 
 ---
 
-## 0. Baca Ini Dulu, Biar Nggak Panik
+## 0. Baca Ini Dulu
 
-Dokumen ini adalah versi **super sederhana** dari penjelasan sistem Monitoring ED.
+Dokumen ini menjelaskan sistem Monitoring ED dengan bahasa sederhana untuk pengguna yang tidak harus paham IT.
 
-Bahasanya sengaja dibuat kayak lagi jelasin ke orang yang **nggak ngerti IT sama sekali**.
+Anggap saja sistem ini seperti **buku catatan pintar** yang dibantu **robot kecil**.
 
-Ibaratnya:
+- **Google Sheets** = buku catatan bahan lab
+- **Apps Script** = robot kecil yang mengecek data
+- **Trigger** = alarm yang membangunkan robot setiap pagi
+- **Email alert** = surat peringatan otomatis
+- **Formula** = hitungan otomatis
+- **Threshold** = batas hari sebelum bahan dianggap perlu diperhatikan
 
-> Ada rak bahan lab.  
-> Di rak itu ada banyak bahan.  
-> Tiap bahan punya tanggal kedaluwarsa.  
-> Sistem ini jadi **robot kecil** yang bantu lihat:  
-> “Mana bahan yang masih aman?”  
-> “Mana yang hampir basi?”  
-> “Mana yang sudah nggak boleh dipakai?”
+Tujuan utamanya sederhana:
 
-Jadi jangan takut sama kata-kata seperti **Google Sheets**, **Apps Script**, **trigger**, atau **formula**.
-
-Anggap saja:
-
-- Google Sheets = buku catatan pintar
-- Apps Script = robot kecil
-- Trigger = alarm bangunin robot
-- Email alert = surat peringatan
-- Formula = hitungan otomatis
-- Threshold = batas hari bahaya
+> Bahan yang hampir expired atau sudah expired tidak terlewat.
 
 ---
 
-## 1. Sistem Ini Sebenarnya Apa?
+## 1. Sistem Ini Apa?
 
-Sistem Monitoring ED adalah **buku catatan pintar** untuk bahan praktikum habis pakai di laboratorium.
+Sistem Monitoring ED adalah sistem berbasis Google Sheets dan Google Apps Script untuk mencatat, menghitung, dan memantau masa expired bahan praktikum habis pakai.
 
-Tugas utamanya:
+Sistem ini membantu untuk:
 
 1. Menyimpan daftar bahan lab.
-2. Mencatat tanggal expired setiap bahan.
-3. Menghitung otomatis sisa hari sebelum expired.
-4. Memberi status warna: aman, perhatian, kritis, atau expired.
-5. Mengirim email otomatis setiap pagi kalau ada bahan yang harus diperhatikan.
+2. Mencatat tanggal masuk dan tanggal expired.
+3. Menghitung sisa hari sebelum expired.
+4. Memberi status bahan: `AMAN`, `PERHATIAN`, `KRITIS`, atau `EXPIRED`.
+5. Mengirim email otomatis jika ada bahan yang perlu dicek.
 
-Bayangin kamu punya **kulkas besar**.
-
-Di dalam kulkas ada banyak makanan.
-
-Kalau kamu cek satu-satu setiap hari, capek.
-
-Nah sistem ini seperti **anak kecil rajin** yang tiap pagi buka kulkas, lihat tanggal makanan, lalu bilang:
-
-> “Ini masih aman.”  
-> “Ini bentar lagi basi.”  
-> “Ini sudah basi, jangan dimakan.”
-
-Versi lab-nya:
-
-> “Bahan ini masih aman.”  
-> “Bahan ini mendekati expired.”  
-> “Bahan ini kritis.”  
-> “Bahan ini sudah expired, jangan dipakai.”
+Kalau semua bahan masih aman, sistem tidak mengirim email agar tidak membuat spam.
 
 ---
 
-## 2. Untuk Siapa Sistem Ini?
+## 2. Dipakai Oleh Siapa?
 
-Sistem ini dibuat untuk membantu:
+Sistem ini dibuat untuk:
 
 - PLP / pengelola laboratorium
 - petugas lab
 - kepala lab / ketua jurusan
-- siapa pun yang perlu memantau bahan praktikum
+- pihak lain yang perlu memantau bahan praktikum
 
-Tujuannya sederhana:
+Manfaatnya:
 
-> Biar bahan yang mau expired tidak kelewat.  
-> Biar bahan expired tidak dipakai mahasiswa.  
-> Biar kerja lab lebih rapi dan aman.
-
----
-
-## 3. Sistem Ini Dibuat Pakai Apa?
-
-Anggap sistem ini seperti warung kecil.
-
-| Benda di Warung     | Dalam Sistem        | Bahasa Bayinya                 |
-| ------------------- | ------------------- | ------------------------------ |
-| Buku catatan besar  | Google Sheets       | Tempat nulis semua bahan       |
-| Robot kecil         | Google Apps Script  | Yang ngecek dan kirim email    |
-| Tukang pos          | Gmail / MailApp     | Yang nganter surat peringatan  |
-| Alarm pagi          | Trigger harian      | Yang bangunin robot jam 7 pagi |
-| Kalkulator otomatis | Formula spreadsheet | Yang ngitung sisa hari         |
-
-Biaya bulanannya:
-
-> **Rp 0**  
-> Alias gratis, karena numpang layanan Google.
+- bahan expired tidak dipakai mahasiswa;
+- bahan yang hampir expired bisa diprioritaskan;
+- stok dan riwayat bahan lebih rapi;
+- pengelolaan lab menjadi lebih aman.
 
 ---
 
-## 4. Isi File / Kotak Kerjanya Ada Apa Aja?
+## 3. Komponen Sistem
 
-Struktur proyeknya kira-kira seperti ini:
+| Komponen            | Fungsi                           | Bahasa Sederhana    |
+| ------------------- | -------------------------------- | ------------------- |
+| Google Sheets       | Tempat menyimpan data bahan      | Buku catatan pintar |
+| Google Apps Script  | Mengecek data dan mengirim email | Robot kecil         |
+| Gmail / MailApp     | Mengirim laporan                 | Tukang pos          |
+| Trigger harian      | Menjalankan robot otomatis       | Alarm pagi          |
+| Formula spreadsheet | Menghitung sisa hari dan status  | Kalkulator otomatis |
+
+Struktur file proyek:
 
 ```text
 monitoring-ed-lab-kesgi/
@@ -159,201 +103,149 @@ monitoring-ed-lab-kesgi/
 │   └── template spreadsheet awal
 │
 ├── monitoring_ed_final.gs
-│   └── otak robot email otomatis
+│   └── script email otomatis
 │
 ├── Panduan_User_Monitoring_ED.docx
-│   └── buku panduan untuk pengguna lab
+│   └── panduan pengguna lab
 │
 └── README_Sederhana.md
-    └── penjelasan teknis yang sudah disederhanakan
+    └── penjelasan ringkas sistem
 ```
 
-Kalau dianalogikan:
-
-- file `.xlsx` = buku kosong yang siap diisi
-- file `.gs` = otak robot
-- file `.docx` = buku petunjuk manusia
-- file `.md` ini = versi cerita bayi biar gampang paham
-
----
-
-## 5. Google Sheets Itu Isinya Apa?
-
-Spreadsheet punya **4 tab**.
-
-Anggap tab itu seperti **4 halaman dalam satu buku**.
-
-| Tab              | Ibaratnya               | Fungsinya                                                 | Yang Boleh Edit          |
-| ---------------- | ----------------------- | --------------------------------------------------------- | ------------------------ |
-| `BAHAN BHP 2026` | halaman utama buku stok | tempat isi data semua bahan                               | PLP / pengelola lab      |
-| `REFERENSI`      | daftar pilihan          | isi dropdown seperti kategori, satuan, lokasi             | admin saja               |
-| `RINGKASAN`      | papan skor              | lihat total bahan aman/kritis/expired dan atur batas hari | PLP, khusus sel tertentu |
-| `LOG`            | buku harian             | catatan perubahan manual                                  | PLP                      |
-
-Yang paling sering dipakai adalah:
-
-> `BAHAN BHP 2026`  
-> karena di situlah data bahan dimasukkan.
-
----
-
-## 6. Tab Utama: `BAHAN BHP 2026`
-
-Tab ini adalah **meja besar tempat semua bahan ditulis**.
-
-Setiap baris = satu bahan.
-
-Setiap kolom = satu info kecil tentang bahan itu.
-
-| Kolom | Nama Kolom      | Bahasa Bayi                        |
-| ----- | --------------- | ---------------------------------- |
-| A     | NO              | nomor urut                         |
-| B     | NAMA BAHAN      | nama bahan di kemasan              |
-| C     | KATEGORI        | jenis bahan                        |
-| D     | SATUAN          | botol, kotak, gram, set, dll       |
-| E     | JUMLAH STOK     | jumlah yang masih ada              |
-| F     | TANGGAL MASUK   | kapan bahan masuk lab              |
-| G     | TANGGAL EXPIRED | kapan bahan kedaluwarsa            |
-| H     | SISA HARI       | dihitung otomatis, jangan disentuh |
-| I     | STATUS ED       | status otomatis, jangan disentuh   |
-| J     | KODE BARANG     | kode inventaris / BMN              |
-| K     | LOKASI SIMPAN   | bahan ditaruh di mana              |
-| L     | MERK / PRODUSEN | merk bahan                         |
-| M     | KETERANGAN      | catatan tambahan                   |
-
-Kolom yang paling penting:
-
-> **G — TANGGAL EXPIRED**
-
-Kenapa?
-
-Karena semua hitungan sistem bergantung ke tanggal expired.
-
-Kalau tanggal expired salah, robot juga bisa salah baca.
-
----
-
-## 7. Status Warna Itu Maksudnya Apa?
-
-Sistem pakai 4 status.
-
-Bayangin seperti lampu lalu lintas.
-
-| Status    | Bahasa Bayi       | Artinya              | Tindakan                   |
-| --------- | ----------------- | -------------------- | -------------------------- |
-| AMAN      | masih santai      | expired masih jauh   | tidak perlu panik          |
-| PERHATIAN | mulai lihat-lihat | mendekati expired    | pantau dan prioritaskan    |
-| KRITIS    | bahaya dekat      | expired sangat dekat | segera gunakan / lapor     |
-| EXPIRED   | sudah lewat       | sudah kedaluwarsa    | pisahkan, jangan digunakan |
-
-Versi super gampang:
+Biaya bulanan sistem:
 
 ```text
-Hijau  = aman, bobok tenang.
-Kuning = awas, mulai dilihat.
-Merah  = cepat urus.
-Expired = jangan dipakai.
+Rp 0
+```
+
+Selama memakai layanan Google yang tersedia, sistem ini tidak membutuhkan aplikasi berbayar tambahan.
+
+---
+
+## 4. Struktur Spreadsheet
+
+Spreadsheet memiliki 4 tab utama.
+
+| Tab              | Fungsi                                  | Yang Boleh Edit          |
+| ---------------- | --------------------------------------- | ------------------------ |
+| `BAHAN BHP 2026` | tempat data bahan dimasukkan            | PLP / pengelola lab      |
+| `REFERENSI`      | daftar pilihan kategori, satuan, lokasi | admin                    |
+| `RINGKASAN`      | rekap status dan pengaturan threshold   | PLP, khusus sel tertentu |
+| `LOG`            | catatan perubahan penting               | PLP                      |
+
+Tab yang paling sering digunakan adalah:
+
+```text
+BAHAN BHP 2026
+```
+
+Karena semua data bahan utama dimasukkan di sana.
+
+---
+
+## 5. Tab Utama: `BAHAN BHP 2026`
+
+Setiap baris mewakili satu bahan. Setiap kolom berisi informasi tentang bahan tersebut.
+
+| Kolom | Nama Kolom      | Keterangan                    |
+| ----- | --------------- | ----------------------------- |
+| A     | NO              | nomor urut                    |
+| B     | NAMA BAHAN      | nama bahan sesuai kemasan     |
+| C     | KATEGORI        | jenis bahan                   |
+| D     | SATUAN          | botol, kotak, gram, set, dll  |
+| E     | JUMLAH STOK     | stok yang masih ada           |
+| F     | TANGGAL MASUK   | tanggal bahan masuk lab       |
+| G     | TANGGAL EXPIRED | tanggal kedaluwarsa           |
+| H     | SISA HARI       | otomatis, jangan diisi manual |
+| I     | STATUS ED       | otomatis, jangan diisi manual |
+| J     | KODE BARANG     | kode inventaris / BMN         |
+| K     | LOKASI SIMPAN   | lokasi penyimpanan            |
+| L     | MERK / PRODUSEN | merek bahan                   |
+| M     | KETERANGAN      | catatan tambahan              |
+
+Hal paling penting:
+
+```text
+Kolom G = TANGGAL EXPIRED
+```
+
+Semua hitungan sistem bergantung pada kolom ini. Kalau tanggal expired salah atau tidak terbaca sebagai tanggal, hasil sistem juga bisa salah.
+
+Data bahan mulai dibaca dari:
+
+```text
+Baris 4
 ```
 
 ---
 
-## 8. Rumus Ajaib: Sisa Hari
+## 6. Status ED dan Sisa Hari
 
-Di kolom H, sistem menghitung sisa hari.
+### Sisa Hari
 
-Rumusnya:
+Kolom H menghitung jumlah hari dari hari ini sampai tanggal expired.
+
+Rumus dasarnya:
 
 ```excel
 =IF(G4="","",G4-TODAY())
 ```
 
-Bahasa manusianya:
+Artinya:
 
-> Kalau tanggal expired kosong, ya sudah kosong.  
-> Kalau ada tanggal expired, hitung: tanggal expired dikurangi tanggal hari ini.
+- kalau tanggal expired kosong, kolom H ikut kosong;
+- kalau tanggal expired ada, sistem menghitung selisih hari dari hari ini.
 
 Contoh:
 
-- Hari ini 1 April
-- Expired 10 April
-- Sisa hari = 9 hari
-
-Jadi manusia tidak perlu ngitung manual.
-
-Bukunya yang ngitung sendiri.
-
----
-
-## 9. Rumus Ajaib: Status ED
-
-Di kolom I, sistem memberi status.
-
-Rumusnya kira-kira berpikir seperti ini:
-
 ```text
-Kalau sisa hari kosong:
-  kosongkan status
-
-Kalau sisa hari kurang dari 0:
-  status = EXPIRED
-
-Kalau sisa hari kecil banget:
-  status = KRITIS
-
-Kalau sisa hari mulai dekat:
-  status = PERHATIAN
-
-Kalau masih jauh:
-  status = AMAN
+Hari ini        : 1 April
+Tanggal expired : 10 April
+Sisa hari       : 9 hari
 ```
 
-Default batasnya:
+### Status ED
 
-- PERHATIAN = 90 hari
-- KRITIS = 30 hari
+Kolom I memberi status otomatis berdasarkan sisa hari.
 
-Jadi:
+| Status      | Artinya                        | Tindakan                      |
+| ----------- | ------------------------------ | ----------------------------- |
+| `AMAN`      | expired masih jauh             | tidak perlu tindakan khusus   |
+| `PERHATIAN` | mulai mendekati expired        | pantau dan prioritaskan       |
+| `KRITIS`    | expired sangat dekat           | segera gunakan / laporkan     |
+| `EXPIRED`   | sudah melewati tanggal expired | pisahkan dan jangan digunakan |
+
+Aturan default:
 
 ```text
 > 90 hari      = AMAN
 31–90 hari    = PERHATIAN
 0–30 hari     = KRITIS
-sudah lewat   = EXPIRED
+< 0 hari      = EXPIRED
 ```
-
-Tapi angka ini bisa diubah.
 
 ---
 
-## 10. Threshold Itu Apa?
+## 7. Threshold / Batas Hari
 
-Threshold itu bahasa ribet dari:
-
-> batas hari.
-
-Di sistem ini ada dua batas penting:
-
-| Sel | Nama            | Default | Artinya                                               |
-| --- | --------------- | ------- | ----------------------------------------------------- |
-| D4  | batas PERHATIAN | 90      | kalau sisa hari 90 atau kurang, mulai masuk perhatian |
-| D6  | batas KRITIS    | 30      | kalau sisa hari 30 atau kurang, masuk kritis          |
+Threshold adalah batas hari untuk menentukan status bahan.
 
 Letaknya di tab:
 
-> `RINGKASAN`
+```text
+RINGKASAN
+```
 
-Bahasa bayinya:
+| Sel | Fungsi            | Default |
+| --- | ----------------- | ------- |
+| D4  | batas `PERHATIAN` | 90      |
+| D6  | batas `KRITIS`    | 30      |
 
-> D4 itu pagar kuning.  
-> D6 itu pagar merah.
+Aturan wajib:
 
-Kalau bahan sudah melewati pagar kuning, dia masuk perhatian.
-
-Kalau sudah melewati pagar merah, dia masuk kritis.
-
-Aturan penting:
-
-> **D6 harus lebih kecil dari D4.**
+```text
+D6 harus lebih kecil dari D4
+```
 
 Contoh benar:
 
@@ -369,33 +261,23 @@ D4 = 30
 D6 = 90
 ```
 
-Kalau kebalik, robot bingung.
-
-Seperti bayi disuruh pakai sepatu di tangan.
+Kalau D4 dan D6 terbalik, robot sengaja berhenti agar tidak mengirim laporan yang salah.
 
 ---
 
-## 11. Tab `RINGKASAN` Itu Buat Apa?
+## 8. Tab `RINGKASAN`, Warna Otomatis, dan `LOG`
 
-Tab `RINGKASAN` adalah **papan skor**.
+### Tab `RINGKASAN`
 
-Dia menghitung:
+Tab ini menampilkan rekap jumlah bahan berdasarkan status:
 
-- berapa bahan aman
-- berapa bahan perhatian
-- berapa bahan kritis
-- berapa bahan expired
-- total semua bahan
+- total bahan aman;
+- total bahan perhatian;
+- total bahan kritis;
+- total bahan expired;
+- total semua bahan.
 
-Rumusnya pakai `COUNTIF`.
-
-Bahasa bayinya:
-
-> “Bukunya menghitung sendiri berapa teman yang hijau, kuning, merah, dan expired.”
-
-Catatan penting:
-
-Karena nama tab utama adalah `BAHAN BHP 2026` dan ada spasi, rumus harus pakai tanda kutip satu.
+Rumus biasanya memakai `COUNTIF`.
 
 Contoh:
 
@@ -403,68 +285,72 @@ Contoh:
 =COUNTIF('BAHAN BHP 2026'!I4:I200,"*AMAN*")
 ```
 
-Kalau tidak pakai tanda kutip, Google Sheets bisa bingung.
+Nama tab `BAHAN BHP 2026` harus ditulis dengan tanda kutip satu karena mengandung spasi.
 
----
-
-## 12. Warna Otomatis Itu Apa?
+### Warna Otomatis
 
 Warna otomatis disebut **conditional formatting**.
 
-Bahasa bayinya:
+Fungsinya:
 
-> Buku catatan punya stabilo otomatis.
+- `AMAN` diberi warna aman;
+- `PERHATIAN` diberi warna peringatan;
+- `KRITIS` diberi warna bahaya;
+- `EXPIRED` diberi warna paling tegas.
 
-Kalau bahan aman, distabilo hijau.
-
-Kalau perhatian, kuning.
-
-Kalau kritis, oranye / merah.
-
-Kalau expired, merah banget.
-
-Catatan:
-
-Kalau threshold D4/D6 diubah, status dan email ikut membaca angka baru.
-
-Tapi kalau aturan warna dibuat manual dengan angka lama, warna mungkin perlu dicek ulang di menu:
+Kalau threshold D4/D6 diubah, cek juga aturan warna di:
 
 ```text
 Format → Conditional formatting
 ```
 
+### Tab `LOG`
+
+Tab `LOG` dipakai sebagai buku catatan perubahan.
+
+Contoh yang perlu dicatat:
+
+- bahan baru masuk;
+- stok berubah banyak;
+- bahan expired dipisahkan;
+- bahan dibuang / dimusnahkan;
+- tanggal expired dikoreksi.
+
+Contoh isi LOG:
+
+```text
+Tanggal      : 10/04/2026
+Nama petugas : PLP Lab
+Aksi         : Update stok
+Bahan        : Alginat Merk X
+Detail       : Stok dari 5 menjadi 2 setelah praktikum
+```
+
 ---
 
-## 13. Robot Apps Script Itu Apa?
+## 9. Robot Apps Script
 
-Apps Script adalah **robot kecil** yang hidup di Google.
+Apps Script adalah robot kecil yang bekerja otomatis di Google.
 
-Dia tidak punya badan.
-
-Tapi dia bisa:
-
-1. membuka spreadsheet,
-2. membaca daftar bahan,
-3. menghitung sisa hari,
-4. memilih bahan yang perlu alert,
-5. membuat isi email,
-6. mengirim email.
-
-Robot ini ditulis di file:
+Script utama berada di file:
 
 ```text
 monitoring_ed_final.gs
 ```
 
----
+Robot dapat:
 
-## 14. Kartu Identitas Robot: `CONFIG`
+1. membuka spreadsheet;
+2. membaca data bahan;
+3. membaca threshold dari tab `RINGKASAN`;
+4. menghitung status bahan;
+5. memilih bahan yang perlu alert;
+6. membuat isi email;
+7. mengirim email ke penerima.
 
-Di dalam script ada bagian `CONFIG`.
+### CONFIG
 
-Anggap ini seperti KTP + daftar tugas robot.
-
-Isinya:
+Bagian `CONFIG` adalah identitas dan pengaturan utama robot.
 
 ```javascript
 const CONFIG = {
@@ -480,31 +366,22 @@ const CONFIG = {
 };
 ```
 
-Bahasa bayinya:
+Yang biasanya perlu diganti:
 
-- `EMAIL_PENERIMA` = email tujuan laporan
-- `ID_SPREADSHEET` = alamat rumah buku catatan
-- `NAMA_SHEET` = nama halaman utama
-- `BARIS_MULAI` = mulai baca data dari baris 4
-- `D4` = batas perhatian
-- `D6` = batas kritis
+| Bagian           | Diisi Dengan           |
+| ---------------- | ---------------------- |
+| `EMAIL_PENERIMA` | email penerima laporan |
+| `ID_SPREADSHEET` | ID spreadsheet         |
 
-Kalau email tujuan atau spreadsheet berubah, bagian ini harus disesuaikan.
+Kalau email penerima lebih dari satu, pisahkan dengan koma:
 
----
+```javascript
+EMAIL_PENERIMA: "email1@gmail.com,email2@gmail.com",
+```
 
-## 15. Robot Tahu Kolom Dari Mana?
+### Mapping Kolom
 
-Di script ada mapping kolom.
-
-Bahasa gampangnya:
-
-> Robot dikasih tahu:  
-> “Nama bahan ada di kolom B.”  
-> “Stok ada di kolom E.”  
-> “Tanggal expired ada di kolom G.”
-
-Contohnya:
+Robot membaca kolom berdasarkan nomor.
 
 ```javascript
 const COL = {
@@ -518,63 +395,52 @@ const COL = {
 };
 ```
 
-Kalau kolom di spreadsheet digeser sembarangan, robot bisa salah baca.
+Artinya:
 
-Jadi jangan suka mindahin kolom tanpa update script.
+- nama bahan dibaca dari kolom B;
+- stok dari kolom E;
+- tanggal expired dari kolom G;
+- status dari kolom I.
+
+Jangan menggeser kolom A sampai M tanpa mengubah mapping script.
+
+### Fungsi Penting
+
+| Fungsi                     | Kegunaan                         |
+| -------------------------- | -------------------------------- |
+| `kirimEmailAlertED()`      | mengecek data dan mengirim email |
+| `buatBodyEmail()`          | menyusun isi email HTML          |
+| `setupTriggerHarian()`     | memasang jadwal otomatis harian  |
+| `testKirimEmailSekarang()` | mengetes email secara manual     |
 
 ---
 
-## 16. Kerja Robot Tiap Pagi
+## 10. Cara Kerja Email Alert
 
-Setiap pagi jam 07.00 WIB, robot bangun.
+Robot dijalankan setiap pagi sekitar pukul:
 
-Lalu dia melakukan ini:
+```text
+07.00 WIB
+```
+
+Alur kerjanya:
 
 ```text
 1. Buka spreadsheet.
 2. Buka tab BAHAN BHP 2026.
 3. Buka tab RINGKASAN.
-4. Baca batas PERHATIAN dari D4.
-5. Baca batas KRITIS dari D6.
-6. Cek apakah D4 dan D6 angka beneran.
-7. Cek apakah D6 lebih kecil dari D4.
-8. Baca semua bahan mulai baris 4.
-9. Lewati baris kosong.
-10. Lewati bahan yang stoknya 0.
-11. Hitung sisa hari setiap bahan.
-12. Masukkan bahan ke kelompok EXPIRED / KRITIS / PERHATIAN.
-13. Kalau tidak ada bahan bahaya, tidak kirim email.
-14. Kalau ada bahan bahaya, kirim email laporan.
+4. Baca threshold D4 dan D6.
+5. Validasi D4 dan D6 harus angka.
+6. Pastikan D6 lebih kecil dari D4.
+7. Baca data mulai baris 4.
+8. Lewati baris kosong.
+9. Lewati bahan dengan stok 0.
+10. Hitung sisa hari.
+11. Kelompokkan bahan menjadi EXPIRED, KRITIS, atau PERHATIAN.
+12. Kirim email hanya jika ada bahan yang perlu diperhatikan.
 ```
 
-Bahasa bayinya:
-
-> Robot bangun, lihat rak, catat yang bahaya, lalu kirim surat.  
-> Kalau semua aman, robot diam saja biar tidak spam.
-
----
-
-## 17. Kenapa Bahan Stok 0 Tidak Masuk Email?
-
-Karena stok 0 artinya bahan sudah habis / sudah tidak aktif dipakai.
-
-Jadi robot menganggap:
-
-> “Kalau barangnya sudah tidak ada, tidak usah diteriakin lagi.”
-
-Maka kalau bahan expired sudah dipisahkan atau habis, cukup ubah stok di kolom E menjadi:
-
-```text
-0
-```
-
-Jangan langsung hapus barisnya kalau masih ingin menyimpan riwayat.
-
----
-
-## 18. Email Dikirim Kapan?
-
-Email dikirim kalau ada bahan dengan kondisi:
+Email dikirim jika:
 
 ```text
 stok > 0
@@ -582,91 +448,55 @@ DAN
 sisa hari <= batas PERHATIAN
 ```
 
-Artinya:
+Email tidak dikirim jika:
 
-- kalau semua bahan aman, email tidak dikirim
-- kalau ada bahan perhatian/kritis/expired, email dikirim
-- email dikirim setiap hari sekitar jam 07.00 WIB
+- semua bahan masih aman;
+- stok bahan sudah 0;
+- tidak ada bahan yang masuk kategori alert.
 
-Subject email kira-kira seperti:
+Isi email mencakup:
 
-```text
-[ALERT ED] X Bahan Perlu Perhatian — Laboratorium Kesehatan Gigi
-```
-
----
-
-## 19. Isi Email Alert
-
-Email berisi:
-
-- jumlah bahan expired
-- jumlah bahan kritis
-- jumlah bahan perhatian
-- threshold yang sedang aktif
-- tabel detail bahan
+- jumlah bahan expired;
+- jumlah bahan kritis;
+- jumlah bahan perhatian;
+- threshold aktif;
+- tabel detail bahan.
 
 Detail bahan yang muncul:
 
-| Info            | Diambil Dari         |
+| Info            | Sumber Kolom         |
 | --------------- | -------------------- |
-| nama bahan      | kolom B              |
-| kode barang     | kolom J              |
-| tanggal expired | kolom G              |
+| nama bahan      | B                    |
+| kode barang     | J                    |
+| tanggal expired | G                    |
 | sisa hari       | hasil hitungan robot |
-| stok            | kolom E              |
-| lokasi          | kolom K              |
-| merk            | kolom L              |
-
-Bahasa bayinya:
-
-> Email itu seperti surat dari robot:  
-> “Halo kak, ini bahan-bahan yang harus dicek hari ini.”
+| stok            | E                    |
+| lokasi          | K                    |
+| merk            | L                    |
 
 ---
 
-## 20. Tombol-Tombol Robot
+## 11. Cara Input dan Update Data
 
-Di script ada beberapa fungsi.
+### Input Bahan Baru
 
-Anggap ini seperti tombol mainan robot.
-
-| Nama Fungsi                | Tombol Apa?          | Gunanya                         |
-| -------------------------- | -------------------- | ------------------------------- |
-| `kirimEmailAlertED()`      | tombol kerja utama   | cek bahan dan kirim email       |
-| `buatBodyEmail()`          | tombol bikin surat   | menyusun isi email HTML         |
-| `setupTriggerHarian()`     | tombol pasang alarm  | membuat jadwal harian jam 07.00 |
-| `testKirimEmailSekarang()` | tombol coba sekarang | tes kirim email langsung        |
-
-Yang biasanya dipakai saat setup:
-
-1. Jalankan `testKirimEmailSekarang()` untuk uji coba.
-2. Jalankan `setupTriggerHarian()` untuk pasang jadwal otomatis.
-
----
-
-## 21. Cara Input Bahan Baru
-
-Kalau ada bahan baru masuk lab, lakukan ini:
+Saat ada bahan baru, isi data di tab `BAHAN BHP 2026` mulai dari baris kosong paling bawah.
 
 ```text
-1. Buka Google Sheets.
-2. Masuk ke tab BAHAN BHP 2026.
-3. Cari baris kosong paling bawah.
-4. Isi nomor urut di kolom A.
-5. Isi nama bahan di kolom B.
-6. Pilih kategori di kolom C.
-7. Pilih satuan di kolom D.
-8. Isi jumlah stok di kolom E.
-9. Isi tanggal masuk di kolom F.
-10. Isi tanggal expired dari kemasan di kolom G.
-11. Jangan isi kolom H dan I, biarkan otomatis.
-12. Isi kode barang di kolom J kalau ada.
-13. Pilih lokasi simpan di kolom K.
-14. Isi merk dan keterangan kalau perlu.
+1. Isi NO di kolom A.
+2. Isi NAMA BAHAN di kolom B.
+3. Pilih KATEGORI di kolom C.
+4. Pilih SATUAN di kolom D.
+5. Isi JUMLAH STOK di kolom E.
+6. Isi TANGGAL MASUK di kolom F.
+7. Isi TANGGAL EXPIRED di kolom G.
+8. Jangan isi kolom H dan I secara manual.
+9. Isi KODE BARANG di kolom J jika ada.
+10. Isi LOKASI SIMPAN di kolom K.
+11. Isi MERK dan KETERANGAN jika perlu.
 ```
 
-Format tanggal yang aman:
+Format tanggal yang disarankan:
 
 ```text
 DD/MM/YYYY
@@ -678,947 +508,249 @@ Contoh:
 15/06/2026
 ```
 
-Kalau kemasan cuma tulis bulan dan tahun, misalnya `JUN 2026`, pakai tanggal akhir bulan:
+Kalau kemasan hanya menulis bulan dan tahun, gunakan tanggal akhir bulan.
 
 ```text
-30/06/2026
+JUN 2026 → 30/06/2026
+DES 2026 → 31/12/2026
 ```
 
----
+### Update Stok
 
-## 22. Cara Update Stok
-
-Kalau stok berkurang setelah praktikum:
+Kalau stok berubah:
 
 ```text
 1. Cari nama bahan.
-2. Klik kolom E.
-3. Ganti jumlah stok terbaru.
+2. Ubah jumlah stok di kolom E.
+3. Catat perubahan penting di tab LOG.
 ```
 
 Kalau bahan sudah habis atau sudah dipisahkan:
 
 ```text
-isi kolom E = 0
+Isi stok di kolom E = 0
 ```
 
-Ingat:
-
-> Stok 0 tidak masuk email alert.
+Stok 0 tidak akan masuk email alert.
 
 ---
 
-## 23. Apa yang Harus Dilakukan Kalau Ada Email Alert?
+## 12. Cara Menindaklanjuti Email Alert
 
-Kalau pagi-pagi dapat email alert, jangan panik.
-
-Lakukan ini:
+Kalau mendapat email alert, lakukan urutan berikut:
 
 ```text
-1. Buka email.
-2. Lihat bagian EXPIRED dulu.
-3. Kalau ada expired, pisahkan bahan dari rak.
-4. Jangan gunakan bahan expired untuk praktikum.
-5. Lihat bagian KRITIS.
-6. Prioritaskan bahan kritis untuk dipakai dulu atau laporkan.
-7. Lihat bagian PERHATIAN.
-8. Pantau bahan tersebut.
-9. Update stok di spreadsheet kalau ada perubahan.
-10. Catat perubahan penting di tab LOG.
+1. Cek bagian EXPIRED terlebih dahulu.
+2. Pisahkan bahan yang sudah expired.
+3. Jangan gunakan bahan expired untuk praktikum.
+4. Cek bagian KRITIS.
+5. Prioritaskan pemakaian atau laporkan bahan kritis.
+6. Cek bagian PERHATIAN.
+7. Pantau bahan tersebut secara rutin.
+8. Update stok jika ada perubahan.
+9. Catat tindakan penting di tab LOG.
 ```
 
-Bahasa bayinya:
-
-> Email bukan buat nakut-nakutin.  
-> Email cuma bilang:  
-> “Kak, tolong lihat bahan ini ya.”
+Email alert bukan tanda sistem rusak. Email hanya memberi tahu bahan mana yang perlu dicek.
 
 ---
 
-## 24. Tab `LOG` Untuk Apa?
+## 13. Cara Pasang Sistem Dari Nol
 
-Tab `LOG` adalah buku harian.
+### A. Siapkan File dan Akun
 
-Dipakai untuk mencatat perubahan penting.
+Siapkan:
 
-Contoh yang bagus dicatat:
+| Yang Disiapkan                | Keterangan                   |
+| ----------------------------- | ---------------------------- |
+| `Monitoring_ED_LabKesgi.xlsx` | template spreadsheet         |
+| `monitoring_ed_final.gs`      | script robot                 |
+| akun Google lab               | tempat menyimpan spreadsheet |
+| email penerima alert          | tujuan laporan otomatis      |
+| data bahan asli               | hasil stock opname           |
 
-- bahan baru masuk
-- stok bahan berubah besar
-- bahan expired dipisahkan
-- bahan dibuang / dimusnahkan
-- ada koreksi data tanggal
-
-Contoh isi log:
-
-```text
-Tanggal: 10/04/2026
-Nama petugas: PLP Lab
-Aksi: Update stok
-Bahan: Alginat Merk X
-Detail: Stok dari 5 jadi 2 setelah praktikum
-```
-
-Kenapa perlu log?
-
-Karena manusia bisa lupa.
-
-Buku harian bantu ingat.
-
----
-
-## 25. Cara Pasang Sistem Dari Nol
-
-Bagian ini adalah versi **lebih detail** dari cara pasang sistem.
-
-Ibaratnya kita mau bikin **warung kecil yang punya robot penjaga stok**.
-
-Yang harus disiapkan:
-
-1. **Buku catatan pintar** → Google Sheets.
-2. **Otak robot** → Apps Script.
-3. **Alamat buku** → ID Spreadsheet.
-4. **Alamat penerima surat** → email penerima alert.
-5. **Alarm pagi** → trigger harian jam 07.00 WIB.
-
-Kalau bingung, ingat analogi dari poin sebelumnya:
-
-| Lihat Poin | Isinya                                     | Dipakai di Nomor 25 Untuk                 |
-| ---------- | ------------------------------------------ | ----------------------------------------- |
-| Poin 3     | Google Sheets, Apps Script, Gmail, Trigger | memahami alat yang dipasang               |
-| Poin 5     | isi 4 tab spreadsheet                      | memastikan bukunya sudah benar            |
-| Poin 6     | kolom A sampai M                           | memastikan data bahan bisa dibaca robot   |
-| Poin 10    | threshold / batas hari                     | mengatur kapan bahan dianggap bahaya      |
-| Poin 13    | robot Apps Script                          | memahami siapa yang kerja otomatis        |
-| Poin 14    | `CONFIG`                                   | mengisi identitas robot                   |
-| Poin 16    | kerja robot tiap pagi                      | memahami alur cek bahan                   |
-| Poin 18    | kapan email dikirim                        | memahami kenapa email kadang tidak muncul |
-| Poin 20    | tombol-tombol robot                        | tahu fungsi mana yang harus dipencet      |
-| Poin 26    | masalah umum                               | tempat cek kalau ada error                |
-| Poin 29    | checklist akhir                            | memastikan sistem sudah siap dipakai      |
-
----
-
-### 25.1 Gambaran Besarnya Dulu
-
-Jangan langsung panik lihat kata **script**.
-
-Urutan pasangnya cuma begini:
-
-```text
-1. Taruh buku catatan di Google Drive.
-2. Pastikan halaman dan kolomnya benar.
-3. Ambil ID buku catatan itu.
-4. Buka tempat bikin robot, yaitu Apps Script.
-5. Masukkan kode robot.
-6. Kasih tahu robot alamat buku dan email penerima.
-7. Tes robot sekali.
-8. Pasang alarm supaya robot jalan tiap pagi.
-9. Cek hasilnya.
-```
-
-Bahasa bayinya:
-
-> Kita taruh buku di meja.  
-> Kita masukin otak ke robot.  
-> Kita kasih robot alamat buku.  
-> Kita kasih robot alamat email.  
-> Kita pencet tombol tes.  
-> Kalau hidup, kita pasang alarm pagi.
-
----
-
-### 25.2 Yang Harus Disiapkan Sebelum Mulai
-
-Sebelum pasang, siapkan dulu benda-benda ini:
-
-| Yang Disiapkan                | Contoh                        | Kenapa Penting                  |
-| ----------------------------- | ----------------------------- | ------------------------------- |
-| File spreadsheet              | `Monitoring_ED_LabKesgi.xlsx` | ini buku catatan bahan lab      |
-| File script                   | `monitoring_ed_final.gs`      | ini otak robot email            |
-| Akun Google lab               | misalnya email lab            | tempat spreadsheet disimpan     |
-| Akun Google robot / developer | akun yang buka Apps Script    | yang menjalankan robot otomatis |
-| Email penerima alert          | email lab / admin             | tempat laporan dikirim          |
-| Daftar bahan asli             | data stock opname             | isi data beneran, bukan dummy   |
-
-Catatan bayi:
-
-> Jangan mulai kalau belum tahu email mana yang akan menerima alert.  
-> Jangan mulai kalau file spreadsheet belum ada.  
-> Jangan mulai kalau script robot belum siap.
-
----
-
-### 25.3 Langkah 1 — Upload Buku Catatan ke Google Drive
-
-Ini bagian membuat **buku catatan pintar**.
+### B. Upload Spreadsheet
 
 ```text
 1. Buka Google Drive.
-2. Login pakai akun lab.
-3. Upload file Monitoring_ED_LabKesgi.xlsx.
-4. Setelah upload selesai, klik kanan file itu.
-5. Pilih Open with → Google Sheets.
-6. Tunggu sampai file terbuka sebagai Google Sheets.
+2. Upload file Monitoring_ED_LabKesgi.xlsx.
+3. Klik kanan file.
+4. Pilih Open with → Google Sheets.
+5. Pastikan tabnya ada: BAHAN BHP 2026, REFERENSI, RINGKASAN, LOG.
 ```
 
-Bahasa bayinya:
-
-> File Excel itu seperti buku kertas.  
-> Kita pindahkan ke Google Sheets supaya bukunya bisa hidup dan dihitung otomatis.
-
-Setelah terbuka, cek bagian bawah spreadsheet.
-
-Harus ada tab seperti ini:
-
-```text
-BAHAN BHP 2026
-REFERENSI
-RINGKASAN
-LOG
-```
-
-Kalau nama tab utama masih beda, misalnya masih `DATABASE`, ganti jadi:
+Jika nama tab utama berbeda, ubah menjadi persis:
 
 ```text
 BAHAN BHP 2026
 ```
 
-Kenapa harus persis?
+### C. Cek Struktur Spreadsheet
 
-> Karena robot mencari tab dengan nama itu.  
-> Kalau namanya beda satu huruf saja, robot seperti anak kecil nyari kamar tapi tulisannya beda. Dia bingung.
-
----
-
-### 25.4 Langkah 2 — Cek Isi Tab `BAHAN BHP 2026`
-
-Tab ini adalah **rak utama**.
-
-Robot nanti membaca bahan dari tab ini.
-
-Pastikan kolomnya urut seperti poin 6:
-
-| Kolom | Nama            | Harus Ada? |
-| ----- | --------------- | ---------- |
-| A     | NO              | ya         |
-| B     | NAMA BAHAN      | ya         |
-| C     | KATEGORI        | ya         |
-| D     | SATUAN          | ya         |
-| E     | JUMLAH STOK     | ya         |
-| F     | TANGGAL MASUK   | ya         |
-| G     | TANGGAL EXPIRED | ya         |
-| H     | SISA HARI       | otomatis   |
-| I     | STATUS ED       | otomatis   |
-| J     | KODE BARANG     | disarankan |
-| K     | LOKASI SIMPAN   | disarankan |
-| L     | MERK / PRODUSEN | opsional   |
-| M     | KETERANGAN      | opsional   |
-
-Penting:
+Pastikan:
 
 ```text
-Data bahan mulai dari baris 4.
+1. Kolom A sampai M sesuai urutan.
+2. Data mulai dari baris 4.
+3. Kolom H dan I otomatis.
+4. Tab RINGKASAN tidak error.
+5. D4 dan D6 berisi angka.
+6. D6 lebih kecil dari D4.
 ```
 
-Kenapa baris 4?
-
-> Karena di kode robot, `BARIS_MULAI` disetel ke 4.  
-> Jadi robot mulai membaca dari baris 4 ke bawah.
-
-Kalau data ditulis di atas baris 4, robot bisa saja tidak membacanya.
-
----
-
-### 25.5 Langkah 3 — Cek Rumus Otomatis Kolom H dan I
-
-Kolom H dan I jangan diisi manual.
-
-| Kolom         | Tugas                                       |
-| ------------- | ------------------------------------------- |
-| H / SISA HARI | menghitung sisa hari menuju expired         |
-| I / STATUS ED | menentukan aman, perhatian, kritis, expired |
-
-Bahasa bayinya:
-
-> Kolom G adalah tanggal basi.  
-> Kolom H adalah hitungan “berapa hari lagi basi”.  
-> Kolom I adalah lampu warna statusnya.
-
-Coba isi satu baris dummy:
+Jika rumus `RINGKASAN` masih menunjuk ke nama tab lama seperti `DATABASE!`, perbaiki dengan:
 
 ```text
-Nama bahan     : TEST BAHAN
-Stok           : 1
-Tanggal Expired: tanggal beberapa hari dari hari ini
+Ctrl + H
+Cari       : DATABASE!
+Ganti      : 'BAHAN BHP 2026'!
+Replace All
 ```
 
-Lalu lihat:
+### D. Ambil ID Spreadsheet
 
-```text
-Kolom H harus muncul angka.
-Kolom I harus muncul status.
-```
+Buka URL spreadsheet.
 
-Kalau H dan I kosong, biasanya tanggal di kolom G belum terbaca sebagai tanggal.
-
-Solusi detailnya ada di poin 26.
-
----
-
-### 25.6 Langkah 4 — Cek Tab `RINGKASAN`
-
-Tab `RINGKASAN` itu seperti **papan skor**.
-
-Di sini sistem menghitung:
-
-```text
-berapa bahan aman
-berapa bahan perhatian
-berapa bahan kritis
-berapa bahan expired
-berapa total bahan
-```
-
-Di tab ini juga ada dua angka penting:
-
-| Sel | Artinya         | Contoh Default |
-| --- | --------------- | -------------- |
-| D4  | batas PERHATIAN | 90             |
-| D6  | batas KRITIS    | 30             |
-
-Bahasa bayinya:
-
-> D4 itu batas mulai “eh, awas ya”.  
-> D6 itu batas mulai “waduh, cepat urus”.
-
-Aturan wajib:
-
-```text
-D6 harus lebih kecil dari D4.
-```
-
-Contoh benar:
-
-```text
-D4 = 90
-D6 = 30
-```
-
-Contoh salah:
-
-```text
-D4 = 30
-D6 = 90
-```
-
-Kenapa salah?
-
-> Karena masa “kritis” kok lebih longgar daripada “perhatian”.  
-> Ibarat bilang: “sangat bahaya kalau masih 90 hari, tapi cuma perhatian kalau 30 hari.” Itu kebalik.
-
-Kalau D4/D6 salah, robot sengaja berhenti supaya tidak kirim laporan ngawur.
-
----
-
-### 25.7 Langkah 5 — Bereskan Rumus `RINGKASAN` Kalau Masih `#REF!`
-
-Kadang setelah tab diganti nama, rumus masih mencari nama lama.
-
-Contoh masalah:
-
-```text
-#REF!
-```
-
-Atau rumus masih menunjuk ke:
-
-```text
-DATABASE!
-```
-
-Solusinya:
-
-```text
-1. Buka tab RINGKASAN.
-2. Tekan Ctrl + H.
-3. Cari: DATABASE!
-4. Ganti dengan: 'BAHAN BHP 2026'!
-5. Centang pilihan untuk mencari di formula.
-6. Klik Replace All.
-```
-
-Kenapa pakai tanda kutip satu?
-
-```text
-'BAHAN BHP 2026'!
-```
-
-Karena nama tab ada spasi.
-
-Bahasa bayinya:
-
-> Kalau nama orang panjang dan ada spasi, harus dipanggil lengkap.  
-> Kalau tidak, Google Sheets bisa salah paham.
-
----
-
-### 25.8 Langkah 6 — Ambil ID Spreadsheet
-
-Robot butuh alamat buku catatan.
-
-Alamat itu disebut:
-
-```text
-ID_SPREADSHEET
-```
-
-Cara ambil:
-
-```text
-1. Buka spreadsheet di browser.
-2. Lihat URL di atas.
-3. Cari bagian setelah /d/ dan sebelum /edit.
-4. Salin bagian itu saja.
-```
-
-Contoh URL:
+Contoh:
 
 ```text
 https://docs.google.com/spreadsheets/d/1ABCdefGHIjklMNOP987xyz/edit
 ```
 
-Yang disalin:
+Yang disalin hanya bagian tengah:
 
 ```text
 1ABCdefGHIjklMNOP987xyz
 ```
 
-Bahasa bayinya:
+Jangan ikut menyalin `/edit`.
 
-> ID Spreadsheet itu seperti alamat rumah si buku.  
-> Robot perlu alamat itu supaya tidak nyasar.
-
-Jangan salah salin:
-
-| Salah                       | Benar                |
-| --------------------------- | -------------------- |
-| salin seluruh URL           | salin ID tengah saja |
-| ikut `/edit`                | jangan ikut `/edit`  |
-| ada spasi di depan/belakang | bersihkan spasi      |
-
----
-
-### 25.9 Langkah 7 — Buka Apps Script
-
-Sekarang kita pasang **otak robot**.
+### E. Pasang Apps Script
 
 ```text
 1. Buka script.google.com.
-2. Login memakai akun yang akan menjalankan robot.
+2. Login dengan akun yang akan menjalankan robot.
 3. Klik New project.
-4. Beri nama project, misalnya:
-   Monitoring ED - Lab Kesgi
+4. Beri nama project, misalnya Monitoring ED - Lab Kesgi.
+5. Hapus kode bawaan.
+6. Copy seluruh isi monitoring_ed_final.gs.
+7. Paste ke editor Apps Script.
+8. Simpan.
 ```
 
-Saran:
+### F. Isi CONFIG
 
-> Pakai akun yang memang disiapkan untuk sistem, bukan akun pribadi yang nanti bisa lupa password atau pindah orang.
-
-Bahasa bayinya:
-
-> Apps Script itu bengkel robot.  
-> Di sinilah otak robot ditempel.
-
----
-
-### 25.10 Langkah 8 — Masukkan Kode Robot
-
-Di project Apps Script baru:
-
-```text
-1. Hapus kode bawaan yang muncul.
-2. Buka file monitoring_ed_final.gs.
-3. Copy semua isi file itu.
-4. Paste ke editor Apps Script.
-5. Klik Save / Ctrl + S.
-```
-
-Jangan copy setengah.
-
-Harus dari awal sampai akhir, termasuk fungsi:
-
-```text
-kirimEmailAlertED()
-buatBodyEmail()
-setupTriggerHarian()
-testKirimEmailSekarang()
-```
-
-Bahasa bayinya:
-
-> Kalau otak robot cuma dicopy separuh, robot bisa hidup tapi linglung.  
-> Jadi copy semuanya.
-
----
-
-### 25.11 Langkah 9 — Isi `CONFIG`
-
-Di bagian atas script, ada bagian bernama:
+Ubah bagian berikut:
 
 ```javascript
-const CONFIG = {
-  EMAIL_PENERIMA: "[EMAIL_ADDRESS]",
-  NAMA_LAB: "Laboratorium Kesehatan Gigi",
-  INSTITUSI: "Poltekkes Kemenkes Palembang",
-  ID_SPREADSHEET: "[ID_SPREADSHEET]",
-  NAMA_SHEET: "BAHAN BHP 2026",
-  NAMA_RINGKASAN: "RINGKASAN",
-  BARIS_MULAI: 4,
-  SEL_BATAS_PERHATIAN: "D4",
-  SEL_BATAS_KRITIS: "D6",
-};
+EMAIL_PENERIMA: "email_tujuan@gmail.com",
+ID_SPREADSHEET: "ID_SPREADSHEET_HASIL_SALIN",
 ```
 
-Yang biasanya perlu diganti hanya:
+Jangan ubah nama sheet, baris mulai, atau sel threshold kalau struktur spreadsheet tidak berubah.
 
-| Bagian           | Isi Dengan                       |
-| ---------------- | -------------------------------- |
-| `EMAIL_PENERIMA` | email penerima laporan           |
-| `ID_SPREADSHEET` | ID spreadsheet dari langkah 25.8 |
+### G. Cek Timezone
 
-Contoh:
-
-```javascript
-EMAIL_PENERIMA: "labkesgi.poltekkesplg@gmail.com",
-ID_SPREADSHEET: "1ABCdefGHIjklMNOP987xyz",
-```
-
-Kalau penerima lebih dari satu, pisahkan dengan koma:
-
-```javascript
-EMAIL_PENERIMA: "email1@gmail.com,email2@gmail.com",
-```
-
-Jangan ubah ini kalau tidak perlu:
-
-```javascript
-NAMA_SHEET: "BAHAN BHP 2026";
-NAMA_RINGKASAN: "RINGKASAN";
-BARIS_MULAI: 4;
-SEL_BATAS_PERHATIAN: "D4";
-SEL_BATAS_KRITIS: "D6";
-```
-
-Karena itu sudah nyambung dengan struktur spreadsheet di poin 5, 6, dan 10.
-
----
-
-### 25.12 Langkah 10 — Pastikan Mapping Kolom Tidak Berubah
-
-Di script ada peta kolom bernama `COL`.
-
-Itu seperti denah rak.
-
-```text
-B = Nama bahan
-E = Stok
-G = Tanggal expired
-J = Kode barang
-K = Lokasi
-L = Merk
-```
-
-Robot membaca data berdasarkan posisi kolom, bukan berdasarkan perasaan.
-
-Jadi jangan sembarang geser kolom di spreadsheet.
-
-Contoh:
-
-> Kalau kolom TANGGAL EXPIRED dipindah dari G ke H, robot tetap mencari tanggal expired di G.  
-> Akhirnya robot bingung atau laporan salah.
-
-Aturan aman:
-
-```text
-Jangan mengubah urutan kolom A sampai M.
-```
-
-Kalau mau tambah kolom baru, sebaiknya taruh setelah kolom M dan konsultasi dulu.
-
----
-
-### 25.13 Langkah 11 — Tes Robot Sekarang
-
-Sebelum pasang alarm harian, robot harus dites dulu.
-
-Di Apps Script:
-
-```text
-1. Pilih fungsi testKirimEmailSekarang.
-2. Klik tombol Run.
-3. Kalau Google minta izin, klik Review permissions.
-4. Pilih akun robot.
-5. Klik Advanced kalau muncul peringatan.
-6. Klik Allow.
-```
-
-Kenapa Google minta izin?
-
-> Karena robot mau membaca spreadsheet dan mengirim email.  
-> Google perlu tanya dulu: “Bener nih robot boleh kerja?”
-
-Setelah itu:
-
-```text
-1. Buka menu Executions atau Logs.
-2. Lihat apakah ada tulisan sukses atau error.
-3. Cek inbox email penerima.
-4. Cek juga folder Spam.
-```
-
-Penting banget:
-
-> Kalau semua bahan masih aman, email memang tidak dikirim.  
-> Itu bukan error.
-
-Robot hanya kirim email kalau ada bahan:
-
-```text
-stok > 0
-DAN
-sisa hari <= D4
-```
-
-Kalau ingin mengetes email, buat satu data dummy:
-
-```text
-Nama bahan      : TEST ALERT
-Stok            : 1
-Tanggal Expired : tanggal dalam 1–30 hari ke depan
-```
-
-Lalu jalankan lagi:
-
-```text
-testKirimEmailSekarang
-```
-
-Kalau email masuk, robot sudah bisa kerja.
-
-Setelah selesai tes, data dummy boleh dihapus atau stoknya dibuat 0.
-
----
-
-### 25.14 Langkah 12 — Pasang Alarm Harian / Trigger
-
-Kalau tes sudah berhasil, pasang alarm harian.
-
-Di Apps Script:
-
-```text
-1. Pilih fungsi setupTriggerHarian.
-2. Klik Run.
-3. Tunggu sampai selesai.
-4. Buka menu Triggers / ikon jam.
-5. Pastikan ada trigger untuk fungsi kirimEmailAlertED.
-```
-
-Trigger yang benar kira-kira seperti ini:
-
-```text
-Function       : kirimEmailAlertED
-Event source   : Time-driven
-Type           : Day timer
-Jam            : 07.00 - 08.00
-```
-
-Bahasa bayinya:
-
-> Trigger itu alarm.  
-> Alarm membangunkan robot setiap pagi.  
-> Setelah bangun, robot cek bahan.  
-> Kalau ada yang bahaya, robot kirim email.
-
-Catatan penting:
-
-> Fungsi `setupTriggerHarian()` sengaja menghapus trigger lama dulu supaya alarm tidak dobel.
-
-Jadi kalau fungsi ini dijalankan ulang, dia akan:
-
-```text
-1. Buang alarm lama.
-2. Pasang alarm baru.
-```
-
-Ini bagus supaya email tidak terkirim berkali-kali karena trigger dobel.
-
----
-
-### 25.15 Langkah 13 — Cek Timezone Project
-
-Timezone harus:
+Timezone project harus:
 
 ```text
 Asia/Jakarta
 ```
 
-Kenapa?
-
-> Karena jadwal email yang diinginkan adalah jam 07.00 WIB.  
-> Kalau timezone salah, robot bisa bangun bukan jam 7 pagi WIB.
-
 Cara cek:
 
 ```text
-1. Buka Apps Script.
-2. Klik Project Settings.
-3. Cari Time zone.
-4. Pilih Asia/Jakarta.
-5. Simpan kalau ada perubahan.
+Apps Script → Project Settings → Time zone → Asia/Jakarta
 ```
 
-Bahasa bayinya:
+### H. Share Spreadsheet
 
-> Kalau jam dinding robot salah negara, dia bangunnya ikut jam negara lain.
+Bagikan spreadsheet ke PLP / pengelola lab dengan role **Editor**.
+
+Bagian yang boleh diedit:
+
+- data bahan di `BAHAN BHP 2026`;
+- D4 dan D6 di `RINGKASAN`, jika perlu mengubah threshold;
+- tab `LOG`.
+
+Bagian yang sebaiknya tidak diedit sembarangan:
+
+- rumus kolom H dan I;
+- tab `REFERENSI`;
+- kode Apps Script;
+- urutan kolom A sampai M.
 
 ---
 
-### 25.16 Langkah 14 — Share Spreadsheet ke Pengguna Lab
+## 14. Tes Sistem
 
-Setelah sistem hidup, kasih akses ke PLP / pengelola lab.
+Sebelum dipakai, lakukan tes dari awal sampai akhir.
 
-Di Google Sheets:
-
-```text
-1. Klik Share.
-2. Masukkan email PLP / pengelola lab.
-3. Pilih role Editor.
-4. Kirim undangan akses.
-```
-
-Tapi hati-hati:
-
-| Bagian                         | Boleh Diedit?                    |
-| ------------------------------ | -------------------------------- |
-| Data bahan di `BAHAN BHP 2026` | boleh                            |
-| Sel D4 dan D6 di `RINGKASAN`   | boleh kalau perlu ubah threshold |
-| Tab `REFERENSI`                | admin saja                       |
-| Rumus H dan I                  | jangan                           |
-| Kode Apps Script               | developer saja                   |
-
-Bahasa bayinya:
-
-> PLP boleh isi buku.  
-> Tapi jangan bongkar mesin robotnya.
-
----
-
-### 25.17 Langkah 15 — Tes Alur Lengkap Dari Awal Sampai Akhir
-
-Setelah semua dipasang, lakukan tes end-to-end.
-
-Artinya:
-
-> Tes dari input bahan sampai email masuk.
-
-Checklist tes:
+### Tes Manual
 
 ```text
-1. Masukkan satu bahan dummy di BAHAN BHP 2026.
+1. Buat satu bahan dummy di BAHAN BHP 2026.
 2. Isi stok lebih dari 0.
-3. Isi tanggal expired yang masuk batas alert.
-4. Pastikan kolom H menghitung sisa hari.
+3. Isi tanggal expired dalam 1–30 hari ke depan.
+4. Pastikan kolom H muncul angka.
 5. Pastikan kolom I muncul status.
-6. Pastikan RINGKASAN ikut berubah.
-7. Jalankan testKirimEmailSekarang.
-8. Cek email masuk.
-9. Jalankan setupTriggerHarian.
-10. Cek menu Triggers.
+6. Jalankan fungsi testKirimEmailSekarang().
+7. Izinkan akses Google jika diminta.
+8. Cek inbox dan folder Spam.
 ```
 
-Kalau semua lulus, sistem siap dipakai.
+Kalau email masuk, robot bisa mengirim laporan.
 
----
-
-### 25.18 Langkah 16 — Bersihkan Data Dummy
-
-Kalau saat tes kamu membuat bahan palsu, jangan dibiarkan campur dengan data asli.
-
-Pilihan aman:
+Setelah tes selesai:
 
 ```text
-1. Hapus baris dummy.
+Hapus data dummy
 ```
 
 atau:
 
 ```text
-1. Ubah stok dummy menjadi 0.
-2. Tambahkan keterangan bahwa itu data tes.
+Ubah stok dummy menjadi 0
 ```
 
-Kalau stok dibuat 0, robot tidak akan memasukkannya ke email alert.
+### Pasang Trigger Harian
 
-Ini nyambung dengan poin 17:
-
-> Stok 0 artinya barang sudah habis / tidak perlu di-alert.
-
----
-
-### 25.19 Langkah 17 — Masukkan Data Asli Lab
-
-Kalau template masih berisi data contoh, ganti dengan data asli.
-
-Cara aman:
+Jika tes manual berhasil:
 
 ```text
-1. Buka tab BAHAN BHP 2026.
-2. Hapus data dummy dari baris 4 ke bawah.
-3. Masukkan data asli dari stock opname.
-4. Pastikan tanggal masuk dan tanggal expired formatnya benar.
-5. Pastikan kolom H dan I otomatis muncul.
-6. Cek RINGKASAN.
+1. Jalankan fungsi setupTriggerHarian().
+2. Buka menu Triggers / ikon jam.
+3. Pastikan ada trigger untuk kirimEmailAlertED.
 ```
 
-Jangan lupa:
+Trigger yang benar:
 
 ```text
-Tanggal expired harus dilihat dari kemasan fisik.
+Function       : kirimEmailAlertED
+Event source   : Time-driven
+Type           : Day timer
+Jam            : 07.00–08.00
 ```
 
-Kalau kemasan hanya menulis bulan dan tahun:
+Catatan:
 
 ```text
-JUN 2026 → pakai 30/06/2026
-DES 2026 → pakai 31/12/2026
+setupTriggerHarian() menghapus trigger lama dulu, lalu memasang trigger baru.
 ```
 
-Bahasa bayinya:
-
-> Jangan nebak tanggal basi.  
-> Lihat bungkusnya.  
-> Kalau cuma ada bulan, pakai akhir bulan.
+Tujuannya agar email tidak terkirim dobel karena trigger ganda.
 
 ---
 
-### 25.20 Langkah 18 — Catat di Tab `LOG`
+## 15. Masalah Umum dan Solusi
 
-Setelah pemasangan selesai, catat di tab `LOG`.
-
-Contoh isi log:
-
-| Tanggal    | Nama   | Aksi            | Keterangan                         |
-| ---------- | ------ | --------------- | ---------------------------------- |
-| 10/04/2026 | Annisa | Setup sistem    | Trigger harian aktif jam 07.00 WIB |
-| 10/04/2026 | Annisa | Tes email       | Email alert berhasil masuk         |
-| 10/04/2026 | PLP    | Input data awal | Data stock opname dimasukkan       |
-
-Kenapa perlu LOG?
-
-> Supaya kalau nanti ada masalah, orang berikutnya tahu riwayatnya.  
-> Ini seperti buku catatan satpam.
-
----
-
-### 25.21 Checklist Besar Pemasangan
-
-Pakai checklist ini biar tidak ada yang kelewat.
-
-| No  | Cek                                                 | Status |
-| --- | --------------------------------------------------- | ------ |
-| 1   | File spreadsheet sudah diupload ke Google Drive     | ☐      |
-| 2   | File sudah dibuka sebagai Google Sheets             | ☐      |
-| 3   | Tab utama bernama `BAHAN BHP 2026`                  | ☐      |
-| 4   | Tab `REFERENSI`, `RINGKASAN`, `LOG` ada             | ☐      |
-| 5   | Kolom A sampai M sesuai urutan                      | ☐      |
-| 6   | Data mulai dari baris 4                             | ☐      |
-| 7   | Kolom H menghitung sisa hari otomatis               | ☐      |
-| 8   | Kolom I menampilkan status otomatis                 | ☐      |
-| 9   | `RINGKASAN` tidak ada error `#REF!`                 | ☐      |
-| 10  | D4 dan D6 berisi angka murni                        | ☐      |
-| 11  | D6 lebih kecil dari D4                              | ☐      |
-| 12  | ID Spreadsheet sudah disalin                        | ☐      |
-| 13  | Project Apps Script sudah dibuat                    | ☐      |
-| 14  | Kode `monitoring_ed_final.gs` sudah dipaste lengkap | ☐      |
-| 15  | `EMAIL_PENERIMA` sudah diisi benar                  | ☐      |
-| 16  | `ID_SPREADSHEET` sudah diisi benar                  | ☐      |
-| 17  | Fungsi `testKirimEmailSekarang()` berhasil jalan    | ☐      |
-| 18  | Email test berhasil masuk                           | ☐      |
-| 19  | Fungsi `setupTriggerHarian()` sudah dijalankan      | ☐      |
-| 20  | Trigger harian `kirimEmailAlertED` sudah ada        | ☐      |
-| 21  | Timezone project `Asia/Jakarta`                     | ☐      |
-| 22  | Spreadsheet sudah dishare ke PLP                    | ☐      |
-| 23  | Data dummy sudah dibersihkan                        | ☐      |
-| 24  | Data asli sudah dimasukkan                          | ☐      |
-| 25  | Tab `LOG` sudah diisi catatan setup                 | ☐      |
-
----
-
-### 25.22 Kalau Setelah Dipasang Email Tidak Masuk
-
-Jangan langsung panik.
-
-Cek dulu pertanyaan ini:
-
-```text
-1. Apakah ada bahan dengan stok > 0?
-2. Apakah sisa harinya <= D4?
-3. Apakah tanggal expired terbaca sebagai tanggal?
-4. Apakah EMAIL_PENERIMA benar?
-5. Apakah ID_SPREADSHEET benar?
-6. Apakah trigger harian sudah ada?
-7. Apakah timezone sudah Asia/Jakarta?
-8. Apakah email masuk Spam?
-9. Apakah Google sudah memberi izin akses ke robot?
-10. Apakah D4 dan D6 valid?
-```
-
-Ingat:
-
-> Kalau semua bahan aman, email memang tidak dikirim.  
-> Itu tanda sistem sopan, bukan rusak.
-
-Kalau mau memaksa tes, buat data dummy yang masuk alert seperti di langkah 25.13.
-
----
-
-### 25.23 Versi Super Pendek Pemasangan
-
-Kalau mau versi paling pendek:
-
-```text
-1. Upload spreadsheet.
-2. Pastikan tab dan kolom benar.
-3. Ambil ID spreadsheet.
-4. Paste script ke Apps Script.
-5. Isi EMAIL_PENERIMA dan ID_SPREADSHEET.
-6. Run testKirimEmailSekarang.
-7. Izinkan akses Google.
-8. Cek email.
-9. Run setupTriggerHarian.
-10. Cek trigger dan timezone.
-```
-
-Bahasa bayi paling bayi:
-
-> Buku siap.  
-> Robot dikasih otak.  
-> Robot dikasih alamat buku.  
-> Robot dikasih alamat email.  
-> Robot dites.  
-> Robot dikasih alarm pagi.  
-> Selesai.
-
----
-
-## 26. Masalah Umum dan Cara Beresinnya
-
-### Masalah 1 — Kolom H / I Tidak Terisi
+### 1. Kolom H / I Tidak Terisi
 
 Penyebab paling sering:
 
-> tanggal expired di kolom G tidak kebaca sebagai tanggal.
+```text
+Tanggal expired di kolom G tidak terbaca sebagai tanggal.
+```
 
 Solusi:
 
@@ -1628,49 +760,44 @@ Solusi:
 3. Isi ulang tanggal dengan format DD/MM/YYYY.
 ```
 
----
-
-### Masalah 2 — RINGKASAN Muncul `#REF!`
+### 2. `RINGKASAN` Muncul `#REF!`
 
 Penyebab:
 
-> rumus masih nyari nama tab lama, misalnya DATABASE.
+```text
+Rumus masih mencari nama tab lama, misalnya DATABASE.
+```
 
 Solusi:
 
 ```text
-1. Buka tab RINGKASAN.
-2. Tekan Ctrl + H.
-3. Cari: DATABASE!
-4. Ganti dengan: 'BAHAN BHP 2026'!
-5. Centang cari di formula.
-6. Replace All.
+Ctrl + H
+Cari       : DATABASE!
+Ganti      : 'BAHAN BHP 2026'!
+Replace All
 ```
 
-Jangan lupa tanda kutip satu.
+### 3. Email Tidak Masuk
 
----
-
-### Masalah 3 — Email Tidak Masuk
-
-Cek ini:
+Cek:
 
 ```text
-1. Apakah ada bahan stok > 0?
+1. Apakah ada bahan dengan stok > 0?
 2. Apakah sisa hari <= D4?
-3. Apakah email masuk Spam?
-4. Apakah trigger harian sudah ada?
-5. Apakah EMAIL_PENERIMA benar?
-6. Apakah robot sudah diberi izin Google?
+3. Apakah EMAIL_PENERIMA benar?
+4. Apakah ID_SPREADSHEET benar?
+5. Apakah robot sudah diberi izin Google?
+6. Apakah trigger harian sudah ada?
+7. Apakah timezone sudah Asia/Jakarta?
+8. Apakah email masuk Spam?
+9. Apakah D4 dan D6 valid?
 ```
 
-Kalau semua aman tapi tetap tidak masuk, cek menu Executions di Apps Script.
+Kalau semua bahan aman, email memang tidak dikirim.
 
----
+### 4. Threshold Error
 
-### Masalah 4 — Threshold Error
-
-Script sengaja menolak jalan kalau:
+Penyebab:
 
 ```text
 D4 atau D6 bukan angka
@@ -1685,124 +812,98 @@ D6 >= D4
 Solusi:
 
 ```text
-1. Buka RINGKASAN.
-2. Isi D4 dengan angka, misalnya 90.
-3. Isi D6 dengan angka lebih kecil, misalnya 30.
-4. Jangan tulis "90 hari".
-5. Tulis angka saja: 90.
+1. Isi D4 dengan angka, misalnya 90.
+2. Isi D6 dengan angka lebih kecil, misalnya 30.
+3. Jangan tulis "90 hari".
+4. Tulis angka saja: 90.
 ```
 
----
+### 5. Bahan Sudah Habis Tapi Masih Muncul di Email
 
-### Masalah 5 — Bahan Sudah Habis Tapi Masih Muncul
+Penyebab:
 
-Cek kolom E.
-
-Kalau masih lebih dari 0, robot mengira stok masih ada.
+```text
+Stok di kolom E masih lebih dari 0.
+```
 
 Solusi:
 
 ```text
-ubah stok menjadi 0
+Ubah stok menjadi 0.
 ```
 
 ---
 
-## 27. Aturan Jangan Nakal
+## 16. Aturan Aman
 
-Supaya sistem tidak rusak, jangan lakukan ini sembarangan:
+Agar sistem tidak rusak, jangan lakukan ini sembarangan:
 
 ```text
-1. Jangan ubah nama tab tanpa update script dan rumus.
+1. Jangan ubah nama tab tanpa update rumus dan script.
 2. Jangan geser kolom A sampai M tanpa update mapping script.
 3. Jangan isi manual kolom H dan I.
-4. Jangan tulis tanggal asal-asalan.
-5. Jangan isi D4/D6 pakai teks seperti "90 hari".
-6. Jangan hapus trigger kalau tidak tahu fungsinya.
+4. Jangan menulis tanggal asal-asalan.
+5. Jangan isi D4/D6 dengan teks seperti "90 hari".
+6. Jangan hapus trigger jika tidak tahu fungsinya.
 7. Jangan bagikan spreadsheet ke publik.
 ```
 
-Bahasa bayinya:
-
-> Jangan cabut kaki robot, nanti robot jalannya pincang.
-
----
-
-## 28. Keamanan Data
-
-Sistem ini masih di dalam ekosistem Google.
-
-Data tidak dikirim ke aplikasi luar.
-
-Tapi tetap harus hati-hati.
-
-Aturan aman:
+Aturan keamanan data:
 
 ```text
-1. Spreadsheet jangan dibuat public.
-2. Sharing sebaiknya Restricted.
-3. Beri akses hanya ke orang yang perlu.
-4. Jangan sebar ID spreadsheet sembarangan.
-5. Akun robot jangan dipakai untuk hal aneh-aneh.
-6. Kalau email penerima berubah, update CONFIG.
+1. Sharing spreadsheet sebaiknya Restricted.
+2. Beri akses hanya ke orang yang perlu.
+3. Jangan sebar ID spreadsheet sembarangan.
+4. Gunakan akun robot/lab yang aman.
+5. Update CONFIG jika email penerima berubah.
 ```
 
-Ibarat rumah:
-
-> ID spreadsheet itu alamat rumah.  
-> Sharing permission itu kunci pintu.  
-> Jangan kasih kunci ke orang random.
+Sistem ini tidak mengirim data ke aplikasi luar. Data tetap berada dalam ekosistem Google.
 
 ---
 
-## 29. Checklist Setelah Sistem Dipasang
+## 17. Checklist Pemakaian
 
-Gunakan checklist ini.
+### Checklist Setelah Pemasangan
 
 ```text
 [ ] Spreadsheet sudah di Google Sheets
 [ ] Tab utama bernama BAHAN BHP 2026
-[ ] Tab RINGKASAN ada D4 dan D6
-[ ] D4 berisi angka perhatian, contoh 90
-[ ] D6 berisi angka kritis, contoh 30
-[ ] D6 lebih kecil dari D4
+[ ] Tab REFERENSI, RINGKASAN, dan LOG ada
 [ ] Kolom A sampai M sesuai urutan
-[ ] Tanggal expired terbaca sebagai Date
+[ ] Data mulai dari baris 4
+[ ] Kolom H menghitung sisa hari otomatis
+[ ] Kolom I menampilkan status otomatis
+[ ] RINGKASAN tidak error #REF!
+[ ] D4 dan D6 berisi angka
+[ ] D6 lebih kecil dari D4
+[ ] ID Spreadsheet sudah disalin
 [ ] Apps Script sudah dipasang
 [ ] EMAIL_PENERIMA sudah benar
 [ ] ID_SPREADSHEET sudah benar
-[ ] testKirimEmailSekarang berhasil
-[ ] setupTriggerHarian sudah dijalankan
-[ ] Trigger harian muncul di menu Triggers
 [ ] Timezone Apps Script = Asia/Jakarta
-[ ] Email tidak masuk spam
-[ ] PLP sudah diberi akses edit spreadsheet
+[ ] testKirimEmailSekarang() berhasil
+[ ] Email test berhasil masuk
+[ ] setupTriggerHarian() sudah dijalankan
+[ ] Trigger harian kirimEmailAlertED sudah ada
+[ ] Spreadsheet sudah dibagikan ke PLP
+[ ] Data dummy sudah dibersihkan
+[ ] Data asli sudah dimasukkan
+[ ] Setup dicatat di tab LOG
 ```
 
----
-
-## 30. Checklist Harian PLP
-
-Setiap hari, PLP cukup lakukan ini:
+### Checklist Harian PLP
 
 ```text
 [ ] Cek email pagi
-[ ] Kalau ada EXPIRED, pisahkan bahan
-[ ] Kalau ada KRITIS, prioritaskan penggunaan / laporkan
-[ ] Kalau ada PERHATIAN, pantau rutin
-[ ] Update stok kalau ada perubahan
+[ ] Pisahkan bahan EXPIRED
+[ ] Prioritaskan bahan KRITIS
+[ ] Pantau bahan PERHATIAN
+[ ] Update stok jika ada perubahan
 [ ] Catat perubahan penting di LOG
 ```
 
-Tidak perlu hitung manual.
-
-Tidak perlu cek semua bahan satu per satu setiap pagi.
-
-Robot bantu menyaring yang perlu dilihat.
-
----
-
-## 31. Checklist Saat Ada Bahan Baru
+### Checklist Saat Ada Bahan Baru
 
 ```text
 [ ] Isi nama bahan
@@ -1812,72 +913,28 @@ Robot bantu menyaring yang perlu dilihat.
 [ ] Isi tanggal masuk
 [ ] Isi tanggal expired dari kemasan
 [ ] Pastikan kolom H dan I otomatis terisi
-[ ] Isi kode barang kalau ada
+[ ] Isi kode barang jika ada
 [ ] Isi lokasi simpan
-[ ] Isi merk kalau ada
+[ ] Isi merk jika ada
 [ ] Cek status warna muncul benar
 ```
 
 ---
 
-## 32. Penjelasan Paling Pendek Sedunia
-
-Kalau harus dijelaskan dalam 5 kalimat:
-
-> Ini sistem buat mencatat bahan lab dan tanggal expired-nya.  
-> Google Sheets jadi buku catatan pintar.  
-> Apps Script jadi robot yang ngecek setiap pagi.  
-> Kalau ada bahan hampir expired atau sudah expired, robot kirim email.  
-> PLP tinggal cek email, pisahkan bahan expired, dan update stok.
-
----
-
-## 33. Versi “Ngomong ke Bayi”
-
-Halo adek.
-
-Ini ada buku pintar.
-
-Di buku pintar ada banyak nama bahan.
-
-Setiap bahan punya tanggal “jangan dipakai lagi”.
-
-Nanti robot kecil bangun pagi-pagi.
-
-Robot lihat buku.
-
-Kalau bahan masih aman, robot diam.
-
-Kalau bahan mau expired, robot bilang lewat email:
-
-> “Kak, ini bahan udah mau bahaya.”
-
-Kalau bahan sudah expired, robot bilang:
-
-> “Kak, ini jangan dipakai ya.”
-
-Terus kakak lab pisahkan bahan itu.
-
-Selesai.
-
----
-
-## 34. Ringkasan Developer Tapi Tetap Santai
-
-Bagian penting untuk developer:
+## 18. Ringkasan Developer
 
 ```text
-Spreadsheet utama: BAHAN BHP 2026
-Range data: mulai baris 4
-Total kolom aktif: A sampai M
-Threshold perhatian: RINGKASAN!D4
-Threshold kritis: RINGKASAN!D6
-Fungsi utama: kirimEmailAlertED()
-Fungsi trigger: setupTriggerHarian()
-Fungsi test: testKirimEmailSekarang()
-Jadwal: harian jam 07.00
-Timezone: Asia/Jakarta
-Email: MailApp.sendEmail()
+Spreadsheet utama      : BAHAN BHP 2026
+Range data             : mulai baris 4
+Total kolom aktif      : A sampai M
+Threshold perhatian    : RINGKASAN!D4
+Threshold kritis       : RINGKASAN!D6
+Fungsi utama           : kirimEmailAlertED()
+Fungsi trigger         : setupTriggerHarian()
+Fungsi test            : testKirimEmailSekarang()
+Jadwal                 : harian sekitar jam 07.00 WIB
+Timezone               : Asia/Jakarta
+Email                  : MailApp.sendEmail()
 ```
 
 Validasi penting di script:
@@ -1887,38 +944,30 @@ Validasi penting di script:
 2. Sheet RINGKASAN harus ada.
 3. D4 dan D6 harus angka.
 4. D6 harus lebih kecil dari D4.
-5. Data kosong dilewati.
+5. Baris kosong dilewati.
 6. Stok <= 0 dilewati.
-7. Email tidak dikirim kalau total alert = 0.
+7. Email tidak dikirim jika total alert = 0.
 ```
-
-Jadi script sudah cukup sopan:
-
-> Kalau tidak ada yang perlu diberitahu, dia tidak berisik.
 
 ---
 
-## 35. Riwayat Singkat
+## 19. Riwayat dan Penutup
+
+Riwayat singkat:
 
 ```text
 v1.0.0 — peluncuran awal sistem monitoring ED
 v1.1.0 — tambah kode barang, mapping kolom disesuaikan, threshold dibaca dari RINGKASAN D4/D6
 ```
 
----
+Sistem ini dibuat agar:
 
-## 36. Penutup
+- kerja lab lebih ringan;
+- bahan expired tidak terlewat;
+- mahasiswa lebih aman;
+- laporan lebih rapi.
 
-Sistem ini bukan buat bikin kerja jadi ribet.
-
-Justru tujuannya:
-
-> kerja lab lebih ringan,  
-> bahan expired tidak kelewat,  
-> mahasiswa lebih aman,  
-> laporan lebih rapi.
-
-Kalau masih bingung, ingat saja:
+Inti pemakaian:
 
 ```text
 Isi data bahan dengan benar.
@@ -1926,15 +975,10 @@ Isi tanggal expired dengan benar.
 Jangan sentuh kolom otomatis.
 Cek email pagi.
 Update stok kalau berubah.
+Catat perubahan penting di LOG.
 ```
-
-Udah.
-
-Robot yang bantu sisanya.
-
----
 
 **Developer:** Annisa Baizan  
 **Sistem:** Monitoring Expired Date Bahan Praktikum Habis Pakai  
 **Instansi:** Laboratorium Kesehatan Gigi · Poltekkes Kemenkes Palembang  
-**Catatan:** Dokumen ini adalah versi super sederhana untuk non-tech.
+**Catatan:** Dokumen ini adalah versi sederhana, rapi, dan tidak berulang untuk pengguna non-tech.
