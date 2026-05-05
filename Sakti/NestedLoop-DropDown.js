@@ -190,11 +190,11 @@
             await sleep(1000);
 
             // Safety check: kalau jumlah baris tidak berkurang, hentikan agar tidak infinite loop
-            const rowsAfter = document.querySelectorAll("tr.ui-selectable-row.ng-star-inserted").length;
-            if (rowsAfter >= rowsBefore) {
-                console.warn("⚠️ Baris tidak berkurang setelah diproses, automasi dihentikan untuk mencegah infinite loop");
-                break;
-            }
+            //const rowsAfter = document.querySelectorAll("tr.ui-selectable-row.ng-star-inserted").length;
+            //if (rowsAfter >= rowsBefore) {
+                //console.warn("⚠️ Baris tidak berkurang setelah diproses, automasi dihentikan untuk mencegah infinite loop");
+                //break;
+            //}
         }
 
         if (!isRunning) {
@@ -204,16 +204,16 @@
         }
 
         // Cek halaman berikutnya
-        const nextBtn = document.querySelector("a.ui-paginator-next:not(.ui-state-disabled)");
-        if (nextBtn && isRunning) {
-            console.log("➡️ Klik halaman berikutnya...");
-            nextBtn.click();
-            await sleep(3000);
-            await runAutomationWithDelay();
-        } else {
-            console.log("✅ Proses selesai.");
-            alert(`✅ Selesai!\n\n📊 Total baris diproses: ${totalRowProcessed}`);
-        }
+        //const nextBtn = document.querySelector("a.ui-paginator-next:not(.ui-state-disabled)");
+        //if (nextBtn && isRunning) {
+            //console.log("➡️ Klik halaman berikutnya...");
+            //nextBtn.click();
+            //await sleep(3000);
+            //await runAutomationWithDelay();
+        //} else {
+            //console.log("✅ Proses selesai.");
+            //alert(`✅ Selesai!\n\n📊 Total baris diproses: ${totalRowProcessed}`);
+        //}
     }
 
     // ===================================================
