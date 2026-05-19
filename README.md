@@ -76,20 +76,15 @@ Features:
 
 ---
 
-### 5. BMN Repair Request System — [`gworkspace-webapps/surat-usulan-bmn/`](https://github.com/AnnisaBaizan/HelpfullScript/tree/main/gworkspace-webapps/surat-usulan-bmn)
+### 5. SimpelBMN — Sistem Pengelolaan BMN
 
-A zero-infrastructure web app for submitting asset repair requests (Surat Usulan Perbaikan BMN) at Politeknik Kesehatan Palembang's facilities department.
+> 📦 **Extracted to its own repo:** [`AnnisaBaizan/SimpelBMN`](https://github.com/AnnisaBaizan/SimpelBMN) — production: [`simpelbmn.vercel.app`](https://simpelbmn.vercel.app)
 
-Staff fill out a form on a GitHub Pages-hosted HTML page. On submit:
-- Data is saved to Google Sheets (auto-numbered letter reference)
-- Up to 4 photos are uploaded to Google Drive
-- An HTML email notification is sent to the facilities team
-- A WhatsApp notification is sent (supports CallMeBot, Fonnte, or Meta WA Cloud API)
-- A print-ready letter (2 × F4 pages) is generated in the browser
+A web app for managing BMN (Barang Milik Negara) documents at Politeknik Kesehatan Palembang's facilities department — surat usulan perbaikan, berita acara serah terima, laporan pemeliharaan AC, dan laporan kegiatan harian (LKH), lengkap dengan embedded digital signatures.
 
-Runs entirely on free services: GitHub Pages + Google Apps Script + Google Drive/Sheets.
+Backend on Google Apps Script + Google Sheets/Drive; frontend deployed on Vercel with build-time env injection. WhatsApp notifications via Fonnte / CallMeBot / Meta WA Cloud API.
 
-**Stack:** HTML · CSS · JavaScript · Google Apps Script · Google Sheets · Google Drive · WhatsApp API
+**Stack:** HTML · CSS · JavaScript · Google Apps Script · Google Sheets · Google Drive · Vercel · WhatsApp API
 
 ---
 
@@ -120,7 +115,7 @@ HelpfullScript/
 │   ├── paste-bridge-project/     ← PasteBridge (Python server + Tampermonkey)
 │   └── Experiments/              ← Archived approaches (Chrome extension, native messaging)
 └── gworkspace-webapps/
-    └── surat-usulan-bmn/         ← BMN repair request web app
+    └── Monitoring Expired Date/  ← Document expiry monitoring web app
 ```
 
 ---
