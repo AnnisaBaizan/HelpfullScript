@@ -498,6 +498,35 @@
             await waitForElement("h5.MuiTypography-root", 20000);
             await sleep(CONFIG.DELAYS.MEDIUM);
 
+            // ── STEP 0: Cek tahun pada Nomor Naskah ──
+            // Format nomor: "DP.04.03/F.XL/9071/2023" → segmen terakhir = tahun.
+            // List terurut terbaru→terlama, jadi begitu ketemu satu naskah yang
+            // tahunnya ≠ tahun sekarang, sisanya dipastikan tahun lama semua.
+            // → hentikan seluruh proses (terminate), bukan sekadar skip 1 naskah.
+            const nomorCheckEl = document.querySelector(
+                "div.font-medium.flex.items-center.gap-2 p"
+            );
+            const nomorCheck = nomorCheckEl ? nomorCheckEl.textContent.trim() : "";
+            const tahunNaskah = parseInt(nomorCheck.split("/").pop().trim(), 10);
+            const tahunSekarang = new Date().getFullYear();
+
+            if (nomorCheck && !isNaN(tahunNaskah) && tahunNaskah !== tahunSekarang) {
+                console.warn(
+                    `🏁 Berhenti: "${nomorCheck}" tahun ${tahunNaskah} ≠ tahun sekarang ${tahunSekarang}. ` +
+                    `Naskah berikutnya dipastikan tahun lama — proses dihentikan.`
+                );
+                finishAutomation();
+                return;
+            }
+
+            if (!nomorCheck || isNaN(tahunNaskah)) {
+                console.warn(
+                    `⚠️ Tidak bisa membaca tahun dari nomor naskah ("${nomorCheck}") — lanjut proses normal.`
+                );
+            } else {
+                console.log(`✅ Tahun naskah ${tahunNaskah} = tahun sekarang — lanjut proses.`);
+            }
+
             // Cek apakah naskah sudah dikirim sebelumnya
             const bannerSudahKirim = findByText("h5", "Naskah ini telah dikirim");
             if (bannerSudahKirim) {
