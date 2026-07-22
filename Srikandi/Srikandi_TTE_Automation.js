@@ -27,6 +27,9 @@
             AFTER_SUBMIT: 5000,
         },
         STORAGE_KEY: "srikandi_tte_state",
+        // Berapa variasi padding nomor yang dicoba saat server menolak
+        // dengan "Nomor sudah digunakan, mohon ambil ulang nomor naskah"
+        MAX_NOMOR_ATTEMPTS: 10,
     };
 
     let controlBtn = null;
@@ -137,19 +140,25 @@
         await sleep(CONFIG.DELAYS.SHORT);
     }
 
-    /** Tunggu SweetAlert selesai proses (loading → success/error/close) */
+    /**
+     * Tunggu SweetAlert selesai proses (loading → success/error/close).
+     * @returns {Promise<{status: "success"|"error"|"closed"|"timeout", message: string}>}
+     */
     async function waitForSwalComplete(timeout = 60000) {
         const startTime = Date.now();
         console.log("⏳ Menunggu proses TTE selesai...");
 
         while (Date.now() - startTime < timeout) {
-            if (!isRunning()) return;
+            if (!isRunning()) return { status: "closed", message: "" };
 
             const swalContainer = document.querySelector(".swal2-container");
             if (!swalContainer) {
                 console.log("✅ SweetAlert sudah tertutup — proses selesai");
-                return;
+                return { status: "closed", message: "" };
             }
+
+            const msgEl = swalContainer.querySelector("#swal2-html-container");
+            const message = msgEl ? msgEl.textContent.trim() : "";
 
             // Cek apakah muncul icon success
             const successIcon = swalContainer.querySelector(".swal2-icon-success");
@@ -157,22 +166,61 @@
                 console.log("✅ Proses TTE berhasil (success icon)");
                 const okBtn = swalContainer.querySelector("button.swal2-confirm");
                 if (okBtn) { okBtn.click(); await sleep(500); }
-                return;
+                return { status: "success", message };
             }
 
             // Cek apakah muncul icon error
             const errorIcon = swalContainer.querySelector(".swal2-icon-error");
             if (errorIcon) {
-                console.warn("⚠️ Proses TTE gagal (error icon)");
+                console.warn(`⚠️ Proses TTE gagal: ${message || "(tanpa pesan)"}`);
                 const okBtn = swalContainer.querySelector("button.swal2-confirm");
                 if (okBtn) { okBtn.click(); await sleep(500); }
-                return;
+                return { status: "error", message };
             }
 
             await sleep(500);
         }
 
         console.warn("⏰ Timeout menunggu proses SweetAlert selesai");
+        return { status: "timeout", message: "" };
+    }
+
+    /** Deteksi error "Nomor sudah digunakan, mohon ambil ulang nomor naskah" */
+    function isNomorConflict(message) {
+        const m = (message || "").toLowerCase();
+        return m.includes("nomor sudah digunakan") ||
+               (m.includes("nomor") && m.includes("ambil ulang"));
+    }
+
+    /**
+     * Bangun variasi nomor naskah dengan padding "tidak penting" (spasi/titik)
+     * supaya lolos validasi keunikan server TANPA mengubah nomor aslinya.
+     * attempt 0 = nomor apa adanya.
+     */
+    function buildNomorVariant(nomor, attempt) {
+        const pads = [
+            (n) => n,          // 0 — nomor asli
+            (n) => `${n} `,    // 1 — 1 spasi di belakang
+            (n) => ` ${n}`,    // 2 — 1 spasi di depan
+            (n) => `${n}  `,   // 3 — 2 spasi di belakang
+            (n) => ` ${n} `,   // 4 — spasi depan + belakang
+            (n) => `${n}.`,    // 5 — titik di belakang
+            (n) => `.${n}`,    // 6 — titik di depan
+            (n) => `${n} .`,   // 7 — spasi + titik di belakang
+            (n) => `. ${n}`,   // 8 — titik + spasi di depan
+        ];
+        if (attempt < pads.length) return pads[attempt](nomor);
+        // Fallback: terus tambah spasi di belakang
+        return nomor + " ".repeat(attempt - pads.length + 3);
+    }
+
+    /** Tunggu popup SweetAlert lama benar-benar hilang dari DOM */
+    async function waitForSwalGone(timeout = 6000) {
+        const startTime = Date.now();
+        while (Date.now() - startTime < timeout) {
+            if (!document.querySelector(".swal2-container")) return;
+            await sleep(300);
+        }
     }
 
     // ===================================================
@@ -249,10 +297,12 @@
         console.log(`📊 Ditemukan ${links.length} naskah`);
 
         // Simpan state: akan proses di halaman detail
+        // nomorAttempt di-reset supaya naskah baru mulai dari nomor asli
         setState({
             ...state,
             phase: "DETAIL_SETUJU",
             detailUrl: links[0],
+            nomorAttempt: 0,
         });
 
         // Navigasi ke detail (script akan re-init di sana)
@@ -520,13 +570,14 @@
     async function handleDetailTTE() {
         const state = getState();
         const tteRetry = state.tteRetry || 0;
-        console.log(`📦 Fase TTE — isi form (retry ke-${tteRetry})`);
+        let nomorAttempt = state.nomorAttempt || 0;
+        console.log(`📦 Fase TTE — isi form (retry ke-${tteRetry}, variasi nomor ke-${nomorAttempt})`);
 
         try {
             await waitForElement("h5.MuiTypography-root", 20000);
             await sleep(CONFIG.DELAYS.MEDIUM);
 
-            // Copy nomor naskah
+            // Copy nomor naskah (nomor dasar, belum diberi padding)
             const nomorEl = document.querySelector(
                 "div.font-medium.flex.items-center.gap-2 p"
             );
@@ -538,54 +589,95 @@
                 console.warn("⚠️ Nomor naskah tidak ditemukan");
             }
 
-            // Paste ke input + Ambil Nomor
-            const inputNomor = document.querySelector(
-                'input[name="nomor"][placeholder*="nomor naskah"]'
-            );
-            if (inputNomor && nomorNaskah) {
-                await setNativeValue(inputNomor, nomorNaskah);
-                console.log("✅ Paste nomor naskah");
-                await sleep(CONFIG.DELAYS.SHORT);
+            // Loop: kalau server menolak dengan "Nomor sudah digunakan",
+            // ulangi pakai variasi padding (spasi/titik) sampai TTE berhasil.
+            while (true) {
+                if (!isRunning()) return;
 
-                const btnAmbil = findByText("button", "Ambil Nomor");
-                if (btnAmbil) {
-                    btnAmbil.click();
-                    console.log("✅ Klik Ambil Nomor");
+                const nomorDipakai = buildNomorVariant(nomorNaskah, nomorAttempt);
+
+                // Paste ke input + Ambil Nomor
+                const inputNomor = document.querySelector(
+                    'input[name="nomor"][placeholder*="nomor naskah"]'
+                );
+                if (inputNomor && nomorNaskah) {
+                    await setNativeValue(inputNomor, nomorDipakai);
+                    console.log(`✅ Paste nomor naskah: "${nomorDipakai}"`);
+                    await sleep(CONFIG.DELAYS.SHORT);
+
+                    const btnAmbil = findByText("button", "Ambil Nomor");
+                    if (btnAmbil) {
+                        btnAmbil.click();
+                        console.log("✅ Klik Ambil Nomor");
+                        await sleep(CONFIG.DELAYS.LONG);
+                    }
+                }
+
+                // Input Key Phrase
+                const inputKey = document.querySelector(
+                    'input[name="key"][type="password"]'
+                );
+                if (inputKey) {
+                    await setNativeValue(inputKey, CONFIG.KEY_PHRASE);
+                    console.log("✅ Input Key Phrase");
+                    await sleep(CONFIG.DELAYS.SHORT);
+                }
+
+                // Klik Tandatangani
+                const btnTTE = document.querySelector(
+                    'button[type="submit"][form="formTte"]'
+                );
+                if (btnTTE) {
+                    btnTTE.click();
+                    console.log("✅ Klik Tandatangani");
                     await sleep(CONFIG.DELAYS.LONG);
                 }
-            }
 
-            // Input Key Phrase
-            const inputKey = document.querySelector(
-                'input[name="key"][type="password"]'
-            );
-            if (inputKey) {
-                await setNativeValue(inputKey, CONFIG.KEY_PHRASE);
-                console.log("✅ Input Key Phrase");
-                await sleep(CONFIG.DELAYS.SHORT);
-            }
+                // Konfirmasi SweetAlert
+                let hasil = { status: "closed", message: "" };
+                try {
+                    const btnConfirm = await waitForElement(
+                        "button.swal2-confirm", 10000
+                    );
+                    btnConfirm.click();
+                    console.log("✅ Konfirmasi Ya, Tandatangani");
+                    // Tunggu proses TTE selesai (polling, bukan fixed delay)
+                    hasil = await waitForSwalComplete(60000);
+                } catch {
+                    console.warn("⚠️ Dialog konfirmasi tidak muncul");
+                }
 
-            // Klik Tandatangani
-            const btnTTE = document.querySelector(
-                'button[type="submit"][form="formTte"]'
-            );
-            if (btnTTE) {
-                btnTTE.click();
-                console.log("✅ Klik Tandatangani");
-                await sleep(CONFIG.DELAYS.LONG);
-            }
+                // Nomor bentrok → coba lagi dengan padding berbeda
+                if (hasil.status === "error" && isNomorConflict(hasil.message)) {
+                    nomorAttempt++;
+                    setState({ ...state, nomorAttempt });
 
-            // Konfirmasi SweetAlert
-            try {
-                const btnConfirm = await waitForElement(
-                    "button.swal2-confirm", 10000
-                );
-                btnConfirm.click();
-                console.log("✅ Konfirmasi Ya, Tandatangani");
-                // Tunggu proses TTE selesai (polling, bukan fixed delay)
-                await waitForSwalComplete(60000);
-            } catch {
-                console.warn("⚠️ Dialog konfirmasi tidak muncul");
+                    if (nomorAttempt >= CONFIG.MAX_NOMOR_ATTEMPTS) {
+                        console.error(
+                            `❌ Nomor tetap ditolak setelah ${CONFIG.MAX_NOMOR_ATTEMPTS} variasi. Skip surat ini.`
+                        );
+                        setState({ ...state, phase: "LIST", nomorAttempt: 0 });
+                        window.location.href = CONFIG.LIST_URL;
+                        return;
+                    }
+
+                    // Pastikan dialog lama benar-benar tertutup sebelum mengulang,
+                    // supaya tidak mengklik tombol swal yang basi.
+                    await waitForSwalGone();
+
+                    if (!document.querySelector("form#formTte")) {
+                        console.warn("⚠️ Form TTE hilang setelah error — lanjut verifikasi");
+                        break;
+                    }
+
+                    console.warn(
+                        `🔁 "${hasil.message}" — ulangi dengan variasi nomor ke-${nomorAttempt}`
+                    );
+                    await sleep(CONFIG.DELAYS.MEDIUM);
+                    continue;
+                }
+
+                break; // sukses / error lain / dialog tidak muncul → lanjut verifikasi
             }
 
             // Pindah ke fase VERIFY — cek apakah TTE berhasil
@@ -594,6 +686,7 @@
                 phase: "DETAIL_VERIFY_TTE",
                 verifyCount: 0,
                 tteRetry: tteRetry,
+                nomorAttempt: nomorAttempt,
             });
 
             console.log("🔄 Refresh untuk verifikasi TTE...");
